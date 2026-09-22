@@ -1,69 +1,133 @@
-import Image from "next/image";
+import { AppShell } from "@/components/AppShell";
+import { FloodMap } from "@/components/FloodMap";
+import { Provenance } from "@/components/Provenance";
+import { RainStrip } from "@/components/RainStrip";
+import { RiverGauge } from "@/components/RiverGauge";
+import { SourceDown } from "@/components/SourceDown";
+import { RISK_FILL } from "@/components/status";
+import { loadEstado } from "@/lib/estado";
+import { RISK_LABEL } from "@/lib/risk";
 
-export default function Home() {
+export const revalidate = 900;
+
+const CONSEJOS: Record<string, string[]> = {
+  normal: [
+    "Nada que hacer hoy. Lo que anega no es el total de lluvia del día sino cuánta cae junta.",
+    "Si vivís sobre zona marcada, revisá que la rejilla de tu frente no esté tapada.",
+  ],
+  atencion: [
+    "Sacá el auto de la vereda si vivís sobre una zona marcada.",
+    "Despejá rejillas y desagües de tu frente: ahí empieza la mayoría de los anegamientos de macrocentro.",
+    "Evitá programar viajes por las avenidas que cruzan el Ludueña o el Saladillo en las próximas horas.",
+  ],
+  alerta: [
+    "No cruces calles anegadas ni en auto ni a pie: no se ve el cordón ni las bocas de tormenta abiertas.",
+    "Levantá lo que tengas a nivel de piso en cocheras y patios.",
+    "Si estás sobre zona marcada, tené documentación y medicación en algo impermeable.",
+  ],
+  critico: [
+    "Seguí las indicaciones de Defensa Civil: 103.",
+    "Cortá la luz del sector si el agua entra a la vivienda.",
+    "No vuelvas a una zona anegada a buscar cosas hasta que baje.",
+  ],
+};
+
+export default async function VecinosPage() {
+  const { riesgo, rio, lluvia, fallas } = await loadEstado();
+  const consejos = CONSEJOS[riesgo.nivel] ?? CONSEJOS.normal;
+  const fallaDe = (fuente: string) => fallas.find((falla) => falla.fuente === fuente);
+  const titulo = riesgo.sinDatos
+    ? "Sin datos para evaluar ahora"
+    : riesgo.nivel === "normal"
+      ? "Hoy no hay riesgo de anegamiento"
+      : `Riesgo ${RISK_LABEL[riesgo.nivel].toLowerCase()}`;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <AppShell
+      activo="/"
+      nivel={riesgo.nivel}
+      lienzo={<FloodMap zonas={riesgo.zonas} buscador />}
+      rail={
+        <div className="flex flex-col">
+          <section className="px-5 py-6 sm:px-6">
+            <p className="meta">Rosario · ahora{riesgo.incompleto ? " · evaluación parcial" : ""}</p>
+            <h1 className="mt-2 flex items-start gap-3 text-2xl font-semibold leading-tight tracking-tight text-ink">
+              <span
+                className="mt-2.5 size-2.5 shrink-0 rounded-full"
+                style={{ background: riesgo.sinDatos ? "var(--ink-faint)" : RISK_FILL[riesgo.nivel] }}
+                aria-hidden="true"
+              />
+              <span>{titulo}</span>
+            </h1>
+            <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{riesgo.motivo}</p>
+          </section>
+
+          <section className="hairline flex flex-col">
+            {riesgo.factores.map((factor) => (
+              <div key={factor.clave} className="hairline flex flex-col gap-1.5 px-5 py-4 first:border-t-0 sm:px-6">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className="text-sm text-ink">{factor.titulo}</h2>
+                  <span className="flex items-center gap-1.5 text-xs">
+                    <span
+                      className="size-1.5 rounded-full"
+                      style={{ background: factor.disponible ? RISK_FILL[factor.nivel] : "var(--ink-faint)" }}
+                      aria-hidden="true"
+                    />
+                    <span className="text-ink-soft">{factor.disponible ? RISK_LABEL[factor.nivel] : "sin dato"}</span>
+                  </span>
+                </div>
+                <p className="readout text-sm text-ink">{factor.medida}</p>
+                <p className="text-xs leading-relaxed text-ink-soft">{factor.detalle}</p>
+                <p className="meta">
+                  {factor.umbral} · {factor.oficial ? "umbral oficial" : "umbral estimado"}
+                </p>
+              </div>
+            ))}
+          </section>
+
+          <section className="hairline px-5 py-6 sm:px-6">
+            <h2 className="meta">El río</h2>
+            <div className="mt-4">{rio ? <RiverGauge rio={rio} /> : <SourceDown falla={fallaDe("ina")!} />}</div>
+          </section>
+
+          <section className="hairline px-5 py-6 sm:px-6">
+            <h2 className="meta">La lluvia</h2>
+            <div className="mt-4">{lluvia ? <RainStrip lluvia={lluvia} /> : <SourceDown falla={fallaDe("openMeteo")!} />}</div>
+          </section>
+
+          <section className="hairline px-5 py-6 sm:px-6">
+            <h2 className="meta">Qué conviene hacer</h2>
+            <ul className="mt-4 flex flex-col gap-3">
+              {consejos.map((consejo) => (
+                <li key={consejo} className="flex gap-3 text-sm leading-relaxed text-ink-soft">
+                  <span className="mt-2 h-px w-3 shrink-0 bg-ink-faint" aria-hidden="true" />
+                  {consejo}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="hairline px-5 py-6 sm:px-6">
+            <h2 className="meta">De dónde sale cada número</h2>
+            <p className="mt-2 text-xs leading-relaxed text-ink-soft">
+              Ningún dato de este panel es propio. Todos se consultan en vivo y se pueden verificar.
+            </p>
+            <div className="mt-4">
+              <Provenance
+                sellos={[
+                  { id: "ina", consultadoEn: rio?.consultadoEn, falla: fallaDe("ina") },
+                  { id: "openMeteo", consultadoEn: lluvia?.consultadoEn, falla: fallaDe("openMeteo") },
+                ]}
+              />
+            </div>
+          </section>
+
+          <p className="hairline px-5 py-6 text-xs leading-relaxed text-ink-faint sm:px-6">
+            Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103. Los niveles de alerta y evacuación del río son
+            los que publica el INA; el umbral de lluvia es una estimación de este panel y está marcado como tal.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      }
+    />
   );
 }
