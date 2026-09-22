@@ -1,0 +1,21 @@
+{
+  "nombre": "Puntos bajos del terreno — modelo de elevación",
+  "metodo": "Diferencia entre la elevación de cada punto y la media de su entorno de 321 m. Sólo sobre tierra (5–80 m); el agua queda enmascarada.",
+  "fuente": "Mapzen Terrain Tiles en AWS (SRTM, GMTED2010, ETOPO1)",
+  "endpoint": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium",
+  "zoom": 13,
+  "resolucionMetros": 16,
+  "ventanaMetros": 321,
+  "escalaMaximaMetros": 3,
+  "bounds": {
+    "west": -60.8203125,
+    "east": -60.556640625,
+    "north": -32.80574473290686,
+    "south": -33.06392419812064
+  },
+  "ancho": 1536,
+  "alto": 1792,
+  "celdasTierra": 2714729,
+  "celdasHundidas1m": 639800,
+  "calculado": "2026-09-22T23:53:59.217Z"
+}

@@ -12,10 +12,21 @@ const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const ROSARIO_VIEWBOX = "-60.79,-32.83,-60.58,-33.06";
+const TERRAIN_OPACITY = 0.8;
+const TERRAIN_COLOR = "#d6a04a";
+const LOW_POINT_MIN_M = 0.3;
 
 interface FloodMapProps {
   zonas: { zona: string; nivel: RiskLevel }[];
   buscador?: boolean;
+}
+
+interface TerrainMeta {
+  bounds: { west: number; east: number; north: number; south: number };
+  ancho: number;
+  alto: number;
+  escalaMaximaMetros: number;
+  ventanaMetros: number;
 }
 
 interface Hallazgo {
@@ -23,6 +34,7 @@ interface Hallazgo {
   zona?: string;
   nivel?: RiskLevel;
   dentro: boolean;
+  hundimiento: number | null;
 }
 
 function pointInPolygon(lat: number, lon: number, rings: number[][][]): boolean {
@@ -40,11 +52,39 @@ function pointInPolygon(lat: number, lon: number, rings: number[][][]): boolean 
   return inside;
 }
 
+function mercator(lat: number): number {
+  return Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+}
+
+function loadTerrainPixels(meta: TerrainMeta): Promise<Uint8ClampedArray> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = meta.ancho;
+      canvas.height = meta.alto;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        reject(new Error("sin canvas"));
+        return;
+      }
+      context.drawImage(image, 0, 0);
+      resolve(context.getImageData(0, 0, meta.ancho, meta.alto).data);
+    };
+    image.onerror = () => reject(new Error("no se pudo leer el modelo de terreno"));
+    image.src = "/data/terreno.png";
+  });
+}
+
 export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markerRef = useRef<import("leaflet").CircleMarker | null>(null);
+  const terrainLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
+  const terrainPixelsRef = useRef<Uint8ClampedArray | null>(null);
   const [collection, setCollection] = useState<FeatureCollection<Polygon> | null>(null);
+  const [terrain, setTerrain] = useState<TerrainMeta | null>(null);
+  const [mostrarTerreno, setMostrarTerreno] = useState(true);
   const [consulta, setConsulta] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [hallazgo, setHallazgo] = useState<Hallazgo | null>(null);
@@ -65,6 +105,14 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
         }
       })
       .catch(() => setError("No se pudieron cargar las áreas inundables."));
+    fetch("/data/terreno.json")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: TerrainMeta | null) => {
+        if (!cancelled && data) {
+          setTerrain(data);
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -84,6 +132,20 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       mapRef.current = map;
       L.control.zoom({ position: "bottomright" }).addTo(map);
       L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 18 }).addTo(map);
+      if (terrain) {
+        const { bounds } = terrain;
+        terrainLayerRef.current = L.imageOverlay(
+          "/data/terreno.png",
+          [
+            [bounds.south, bounds.west],
+            [bounds.north, bounds.east],
+          ],
+          { opacity: TERRAIN_OPACITY, interactive: false },
+        );
+        if (mostrarTerreno) {
+          terrainLayerRef.current.addTo(map);
+        }
+      }
       L.geoJSON(collection, {
         style: (feature) => {
           const zona = (feature as Feature<Polygon, { zona: string }>).properties?.zona ?? "";
@@ -104,8 +166,26 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       mapRef.current?.remove();
       mapRef.current = null;
       markerRef.current = null;
+      terrainLayerRef.current = null;
     };
-  }, [collection, nivelDeZona]);
+  }, [collection, terrain, nivelDeZona, mostrarTerreno]);
+
+  const hundimientoEn = async (lat: number, lon: number): Promise<number | null> => {
+    if (!terrain) {
+      return null;
+    }
+    if (!terrainPixelsRef.current) {
+      terrainPixelsRef.current = await loadTerrainPixels(terrain);
+    }
+    const { bounds, ancho, alto, escalaMaximaMetros } = terrain;
+    const col = Math.floor(((lon - bounds.west) / (bounds.east - bounds.west)) * ancho);
+    const row = Math.floor(((mercator(bounds.north) - mercator(lat)) / (mercator(bounds.north) - mercator(bounds.south))) * alto);
+    if (col < 0 || row < 0 || col >= ancho || row >= alto) {
+      return null;
+    }
+    const alpha = terrainPixelsRef.current[(row * ancho + col) * 4 + 3];
+    return (alpha / 255) * escalaMaximaMetros;
+  };
 
   const buscar = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -134,6 +214,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       const lon = Number(results[0].lon);
       const match = collection.features.find((feature) => pointInPolygon(lat, lon, feature.geometry.coordinates));
       const zona = (match?.properties as { zona?: string } | undefined)?.zona?.trim();
+      const hundimiento = await hundimientoEn(lat, lon).catch(() => null);
 
       const map = mapRef.current;
       if (map) {
@@ -154,6 +235,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
         zona,
         nivel: zona ? nivelDeZona(zona) : undefined,
         dentro: Boolean(match),
+        hundimiento,
       });
     } catch {
       setError("El buscador de direcciones no respondió. Probá de nuevo en un momento.");
@@ -161,6 +243,8 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       setBuscando(false);
     }
   };
+
+  const esPuntoBajo = hallazgo?.hundimiento !== null && hallazgo?.hundimiento !== undefined && hallazgo.hundimiento >= LOW_POINT_MIN_M;
 
   return (
     <div className="relative isolate h-full w-full">
@@ -188,22 +272,32 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
             </form>
 
             {hallazgo ? (
-              <div className="border-t border-rule px-4 py-3 text-sm">
+              <div className="flex flex-col gap-2 border-t border-rule px-4 py-3 text-sm">
                 <p className="text-xs text-ink-faint">{hallazgo.etiqueta}</p>
                 {hallazgo.dentro ? (
-                  <p className="mt-1 text-ink">
-                    Dentro del área inundable zona {hallazgo.zona}. Hoy:{" "}
+                  <p className="text-ink">
+                    Dentro del área inundable oficial zona {hallazgo.zona}. Hoy:{" "}
                     <span className={hallazgo.nivel === "normal" ? "text-normal" : "text-alerta"}>
                       {RISK_LABEL[hallazgo.nivel ?? "normal"].toLowerCase()}
                     </span>
                     .
                   </p>
                 ) : (
-                  <p className="mt-1 leading-relaxed text-ink">
-                    Fuera de los polígonos publicados. Cubren las cuencas del Ludueña y del Saladillo, no el macrocentro ni el interior de la
-                    ciudad, así que quedar afuera no garantiza que no se anegue.
-                  </p>
+                  <p className="leading-relaxed text-ink">Fuera de los polígonos oficiales, que cubren el Ludueña y el Saladillo.</p>
                 )}
+                {hallazgo.hundimiento !== null ? (
+                  <p className="leading-relaxed text-ink-soft">
+                    {esPuntoBajo ? (
+                      <>
+                        Según el modelo de terreno está{" "}
+                        <span className="readout text-ink">{hallazgo.hundimiento.toFixed(1)} m</span> por debajo de su entorno de{" "}
+                        {terrain?.ventanaMetros} m: ahí el agua tiende a juntarse.
+                      </>
+                    ) : (
+                      <>Según el modelo de terreno no es un punto bajo respecto de su entorno de {terrain?.ventanaMetros} m.</>
+                    )}
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
@@ -213,14 +307,25 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       ) : null}
 
       <div className="pointer-events-none absolute bottom-0 left-0 z-[500] p-3 sm:p-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-rule bg-panel/95 px-3 py-2 backdrop-blur">
+        <div className="pointer-events-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-rule bg-panel/95 px-3 py-2 backdrop-blur">
           {(["normal", "atencion", "alerta", "critico"] as RiskLevel[]).map((nivel) => (
             <span key={nivel} className="flex items-center gap-1.5 text-[11px] text-ink-soft">
               <span className="h-0.5 w-3" style={{ background: RISK_FILL[nivel] }} aria-hidden="true" />
               {RISK_LABEL[nivel]}
             </span>
           ))}
-          <span className="meta">{collection?.features.length ?? 0} polígonos</span>
+          <span className="meta">{collection?.features.length ?? 0} polígonos oficiales</span>
+          {terrain ? (
+            <button
+              type="button"
+              onClick={() => setMostrarTerreno((current) => !current)}
+              aria-pressed={mostrarTerreno}
+              className={`flex items-center gap-1.5 border-l border-rule pl-4 text-[11px] transition-colors ${mostrarTerreno ? "text-ink" : "text-ink-faint hover:text-ink-soft"}`}
+            >
+              <span className="size-2.5 rounded-sm" style={{ background: TERRAIN_COLOR, opacity: mostrarTerreno ? 1 : 0.35 }} aria-hidden="true" />
+              Puntos bajos · modelo
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

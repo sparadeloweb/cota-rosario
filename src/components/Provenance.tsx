@@ -33,7 +33,10 @@ export function Provenance({ sellos }: ProvenanceProps) {
             >
               {fuente.endpoint}
             </a>
-            <p className="text-[11px] text-ink-faint">{fuente.licencia}</p>
+            <p className="text-[11px] text-ink-faint">
+              {fuente.modelo ? <span className="text-atencion">modelo, no dato oficial · </span> : null}
+              {fuente.licencia}
+            </p>
           </article>
         );
       })}
