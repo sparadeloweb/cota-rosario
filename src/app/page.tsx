@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { HELP_HREF } from "@/components/TopBar";
 import { Docs, DocsSection } from "@/components/Docs";
 import { FloodMap } from "@/components/FloodMap";
 import { Provenance } from "@/components/Provenance";
@@ -135,7 +137,11 @@ export default async function VecinosPage() {
           </Docs>
 
           <p className="hairline px-5 py-6 text-xs leading-relaxed text-ink-faint sm:px-6">
-            Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103.
+            Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103.{" "}
+            <Link href={HELP_HREF} className="underline decoration-rule underline-offset-4 hover:text-ink">
+              Cómo funciona todo esto
+            </Link>
+            .
           </p>
         </div>
       }
