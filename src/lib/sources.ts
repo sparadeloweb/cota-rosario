@@ -63,6 +63,15 @@ export const SOURCES: Record<string, SourceRef> = {
     portal: "https://datosabiertos.rosario.gob.ar",
     licencia: "Datos abiertos municipales · lluvia histórica ERA5 vía Open-Meteo, CC BY 4.0",
   },
+  modelos: {
+    id: "modelos",
+    organismo: "Modelos estadísticos de este panel",
+    descripcion: "Regresión de Poisson de anegamientos contra lluvia, distribución de Gumbel de máximos diarios (ERA5 desde 1940) y curva altura–caudal INA–GloFAS. Cada uno publica su ajuste y su error",
+    endpoint: "/data/modelos.json",
+    portal: "/predicciones",
+    licencia: "Calculado en este panel sobre datos públicos · no es pronóstico oficial",
+    modelo: true,
+  },
   terrain: {
     id: "terrain",
     organismo: "Modelo propio sobre Mapzen Terrain Tiles (SRTM, GMTED2010, ETOPO1)",

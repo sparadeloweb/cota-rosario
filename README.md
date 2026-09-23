@@ -11,7 +11,15 @@ Panel que cruza tres fuentes públicas en un solo nivel de riesgo explicable, co
 | Municipalidad de Rosario · Defensa Civil | Anegamientos transitorios atendidos por distrito y mes (2021 a enero de 2024), cruzados con la lluvia mensual del archivo histórico de Open-Meteo |
 | Mapzen Terrain Tiles | Modelo propio de puntos bajos para el resto de la ciudad. No es dato oficial y está marcado como tal |
 
-Dos vistas: `/` para vecinos (¿hay riesgo hoy, y dónde?) y `/operaciones` (red completa, caudal GloFAS, simulador de escenarios). `/api/estado` devuelve el cruce en JSON: 200 completo, 206 si una fuente no respondió, 503 si ninguna.
+Tres vistas: `/` para vecinos (¿hay riesgo hoy, y dónde?), `/operaciones` (red completa, caudal GloFAS, simulador de escenarios) y `/predicciones` (modelos a 7 días). `/api/estado` y `/api/predicciones` devuelven todo en JSON: 200 completo, 206 si una fuente no respondió, 503 si ninguna.
+
+## Predicciones
+
+Tres modelos ajustados en `npm run build:data` (`scripts/build-modelos.mjs`) y evaluados en cada pedido con el pronóstico del momento. Cada uno publica su ajuste y su error en la página y en `public/data/modelos.json`.
+
+- **Anegamientos**: regresión de Poisson de las intervenciones mensuales de Defensa Civil contra la lluvia horaria de ERA5 del mismo mes. Se prueban tres conjuntos de variables (total, pico de 2 h, ambos) y se elige por validación cruzada dejando un mes afuera, descartando cualquier ajuste con coeficiente negativo. Se aplica a los 7 días de pronóstico y se reparte por distrito según la participación histórica.
+- **Lluvia extrema**: Gumbel por momentos sobre el máximo diario de cada año desde 1940; devuelve el período de retorno del día más cargado del pronóstico y los cuantiles de 2 a 100 años. ERA5 suaviza las tormentas convectivas, así que los extremos reales de estación son algo mayores.
+- **Río**: recta de mínimos cuadrados sobre los últimos 14 días del INA (ritmo y días hasta alerta/evacuación) y curva altura–caudal `h = a + b·ln(Q)` ajustada sobre 210 días de INA contra GloFAS, aplicada al caudal pronosticado a 7 días. Bandas de ±2σ.
 
 ## Correr
 

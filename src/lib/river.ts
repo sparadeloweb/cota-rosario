@@ -6,6 +6,8 @@ const MAX_FEATURES = 500;
 const HISTORY_DAYS = 14;
 const REVALIDATE_SECONDS = 900;
 const MILLIS_PER_DAY = 86_400_000;
+const INA_TIMEOUT_MS = 30_000;
+const EXCEPTION_MESSAGE_CHARS = 120;
 
 export interface RiverReading {
   fecha: string;
@@ -111,20 +113,30 @@ function wfsUrl(extra: Record<string, string>): string {
   return `${WFS_BASE}?${params}`;
 }
 
+function serviceExceptionMessage(body: string): string {
+  const match = body.match(/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/);
+  const detail = match ? match[1].replace(/\s+/g, " ").trim() : "";
+  return detail.slice(0, EXCEPTION_MESSAGE_CHARS) || "excepción del servicio sin detalle";
+}
+
 async function getCollection(url: string, etiqueta: string): Promise<{ features: WfsFeature[] }> {
-  const response = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+  const response = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS }, signal: AbortSignal.timeout(INA_TIMEOUT_MS) });
   if (!response.ok) {
     throw new Error(`El servicio del INA respondió ${response.status} al pedir ${etiqueta}`);
   }
-  return (await response.json()) as { features: WfsFeature[] };
+  const body = await response.text();
+  if (body.trimStart().startsWith("<")) {
+    throw new Error(`El INA devolvió una excepción al pedir ${etiqueta}: ${serviceExceptionMessage(body)}`);
+  }
+  return JSON.parse(body) as { features: WfsFeature[] };
 }
 
-export async function fetchRiver(): Promise<RiverSnapshot> {
+export async function fetchRiver(historyDays: number = HISTORY_DAYS): Promise<RiverSnapshot> {
   const [detalle, redCompleta] = await Promise.all([
     getCollection(
       wfsUrl({
         CQL_FILTER: `nombre='${INA_STATION}'`,
-        viewParams: `timeStart:${isoDay(-HISTORY_DAYS)};timeEnd:${isoDay(1)};`,
+        viewParams: `timeStart:${isoDay(-historyDays)};timeEnd:${isoDay(1)};`,
       }),
       `la estación ${INA_STATION}`,
     ),

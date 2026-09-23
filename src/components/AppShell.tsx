@@ -7,6 +7,7 @@ import { RISK_LABEL, type RiskLevel } from "@/lib/risk";
 const VISTAS = [
   { href: "/", etiqueta: "Vecinos" },
   { href: "/operaciones", etiqueta: "Operaciones" },
+  { href: "/predicciones", etiqueta: "Predicciones" },
 ] as const;
 
 interface AppShellProps {
@@ -20,13 +21,13 @@ interface AppShellProps {
 export function AppShell({ activo, nivel, rail, lienzo, lienzoInferior }: AppShellProps) {
   return (
     <div className="flex h-full flex-col">
-      <header className="glass-rail z-40 flex shrink-0 items-center gap-6 border-b border-rule px-4 py-2.5 sm:px-5">
+      <header className="glass-rail z-40 flex shrink-0 items-center gap-4 border-b border-rule px-4 py-2.5 sm:gap-6 sm:px-5">
         <Link href="/" className="flex items-baseline gap-2.5">
           <span className="text-base font-semibold tracking-tight text-ink">Cota</span>
           <span className="meta hidden sm:inline">Rosario</span>
         </Link>
 
-        <nav aria-label="Vistas" className="flex items-center gap-4">
+        <nav aria-label="Vistas" className="flex items-center gap-3 sm:gap-4">
           {VISTAS.map((vista) => {
             const esActivo = vista.href === activo;
             return (
@@ -34,7 +35,7 @@ export function AppShell({ activo, nivel, rail, lienzo, lienzoInferior }: AppShe
                 key={vista.href}
                 href={vista.href}
                 aria-current={esActivo ? "page" : undefined}
-                className={`border-b py-1 text-sm transition-colors ${
+                className={`whitespace-nowrap border-b py-1 text-sm transition-colors ${
                   esActivo ? "border-ink text-ink" : "border-transparent text-ink-soft hover:text-ink"
                 }`}
               >
@@ -44,9 +45,9 @@ export function AppShell({ activo, nivel, rail, lienzo, lienzoInferior }: AppShe
           })}
         </nav>
 
-        <span className="ml-auto flex items-center gap-2 text-sm">
+        <span className="ml-auto flex items-center gap-2 whitespace-nowrap text-sm" aria-label={`Estado: ${RISK_LABEL[nivel]}`}>
           <span className="size-2 rounded-full" style={{ background: RISK_FILL[nivel] }} aria-hidden="true" />
-          <span className="text-ink">{RISK_LABEL[nivel]}</span>
+          <span className="hidden text-ink sm:inline">{RISK_LABEL[nivel]}</span>
         </span>
       </header>
 

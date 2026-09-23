@@ -1,0 +1,819 @@
+{
+  "anegamientos": {
+    "nombre": "Anegamientos mensuales atendidos por Defensa Civil en función de la lluvia",
+    "formula": "λ = exp(β0 + β1·total) · días/30,4",
+    "variables": {
+      "max2h": "mayor acumulado en 2 horas del período, mm",
+      "total": "lluvia total del período, mm"
+    },
+    "variablesUsadas": [
+      "total"
+    ],
+    "candidatos": [
+      {
+        "variables": [
+          "total"
+        ],
+        "maeValidacion": 32.8,
+        "coeficientesNoNegativos": true
+      },
+      {
+        "variables": [
+          "max2h"
+        ],
+        "maeValidacion": 46.1,
+        "coeficientesNoNegativos": true
+      },
+      {
+        "variables": [
+          "max2h",
+          "total"
+        ],
+        "maeValidacion": 32.5,
+        "coeficientesNoNegativos": false
+      }
+    ],
+    "coeficientes": {
+      "intercepto": 2.844036355869722,
+      "max2h": 0,
+      "total": 0.011826119433107806
+    },
+    "n": 36,
+    "devianzaNula": 2148.9,
+    "devianza": 938.6,
+    "pseudoR2": 0.563,
+    "validacionCruzada": {
+      "maeModelo": 32.8,
+      "maeMedia": 48.2
+    },
+    "diasPorMes": 30.4,
+    "participacionDistrito": {
+      "CENTRO": 0.4723,
+      "NOROESTE": 0.1385,
+      "NORTE": 0.1086,
+      "OESTE": 0.1025,
+      "SUDOESTE": 0.0578,
+      "SUR": 0.1202
+    },
+    "entrenamiento": [
+      {
+        "mes": "2021-01",
+        "casos": 307,
+        "total": 179.2,
+        "max2h": 28,
+        "predicho": 143.1
+      },
+      {
+        "mes": "2021-02",
+        "casos": 10,
+        "total": 37.5,
+        "max2h": 7.4,
+        "predicho": 26.8
+      },
+      {
+        "mes": "2021-03",
+        "casos": 167,
+        "total": 144.8,
+        "max2h": 24.5,
+        "predicho": 95.2
+      },
+      {
+        "mes": "2021-04",
+        "casos": 116,
+        "total": 142.1,
+        "max2h": 19.9,
+        "predicho": 92.3
+      },
+      {
+        "mes": "2021-05",
+        "casos": 15,
+        "total": 51.4,
+        "max2h": 5.8,
+        "predicho": 31.6
+      },
+      {
+        "mes": "2021-06",
+        "casos": 6,
+        "total": 10.1,
+        "max2h": 4.4,
+        "predicho": 19.4
+      },
+      {
+        "mes": "2021-07",
+        "casos": 14,
+        "total": 27.6,
+        "max2h": 4.2,
+        "predicho": 23.8
+      },
+      {
+        "mes": "2021-08",
+        "casos": 15,
+        "total": 13,
+        "max2h": 4.6,
+        "predicho": 20
+      },
+      {
+        "mes": "2021-09",
+        "casos": 60,
+        "total": 91.1,
+        "max2h": 10.6,
+        "predicho": 50.5
+      },
+      {
+        "mes": "2021-10",
+        "casos": 77,
+        "total": 42.9,
+        "max2h": 12.4,
+        "predicho": 28.5
+      },
+      {
+        "mes": "2021-11",
+        "casos": 45,
+        "total": 100.9,
+        "max2h": 14.2,
+        "predicho": 56.7
+      },
+      {
+        "mes": "2021-12",
+        "casos": 10,
+        "total": 26.6,
+        "max2h": 7.6,
+        "predicho": 23.5
+      },
+      {
+        "mes": "2022-01",
+        "casos": 4,
+        "total": 159.1,
+        "max2h": 30.5,
+        "predicho": 112.8
+      },
+      {
+        "mes": "2022-02",
+        "casos": 8,
+        "total": 70.7,
+        "max2h": 24.5,
+        "predicho": 39.7
+      },
+      {
+        "mes": "2022-03",
+        "casos": 99,
+        "total": 172.3,
+        "max2h": 22.4,
+        "predicho": 131.9
+      },
+      {
+        "mes": "2022-04",
+        "casos": 40,
+        "total": 52.4,
+        "max2h": 25.7,
+        "predicho": 31.9
+      },
+      {
+        "mes": "2022-05",
+        "casos": 14,
+        "total": 16.3,
+        "max2h": 8.5,
+        "predicho": 20.8
+      },
+      {
+        "mes": "2022-06",
+        "casos": 16,
+        "total": 12.2,
+        "max2h": 3.8,
+        "predicho": 19.9
+      },
+      {
+        "mes": "2022-07",
+        "casos": 4,
+        "total": 16.1,
+        "max2h": 3.8,
+        "predicho": 20.8
+      },
+      {
+        "mes": "2022-08",
+        "casos": 8,
+        "total": 20.3,
+        "max2h": 6.3,
+        "predicho": 21.8
+      },
+      {
+        "mes": "2022-09",
+        "casos": 9,
+        "total": 14.8,
+        "max2h": 3.7,
+        "predicho": 20.5
+      },
+      {
+        "mes": "2022-10",
+        "casos": 19,
+        "total": 55.1,
+        "max2h": 11.6,
+        "predicho": 33
+      },
+      {
+        "mes": "2022-11",
+        "casos": 21,
+        "total": 29,
+        "max2h": 9.1,
+        "predicho": 24.2
+      },
+      {
+        "mes": "2023-01",
+        "casos": 91,
+        "total": 71.1,
+        "max2h": 11.8,
+        "predicho": 39.8
+      },
+      {
+        "mes": "2023-02",
+        "casos": 42,
+        "total": 70.2,
+        "max2h": 11.7,
+        "predicho": 39.4
+      },
+      {
+        "mes": "2023-03",
+        "casos": 85,
+        "total": 215.5,
+        "max2h": 41.7,
+        "predicho": 219.8
+      },
+      {
+        "mes": "2023-04",
+        "casos": 20,
+        "total": 80.1,
+        "max2h": 27.1,
+        "predicho": 44.3
+      },
+      {
+        "mes": "2023-05",
+        "casos": 188,
+        "total": 199.1,
+        "max2h": 28.3,
+        "predicho": 181
+      },
+      {
+        "mes": "2023-06",
+        "casos": 21,
+        "total": 12.5,
+        "max2h": 3.1,
+        "predicho": 19.9
+      },
+      {
+        "mes": "2023-07",
+        "casos": 30,
+        "total": 45.7,
+        "max2h": 8.2,
+        "predicho": 29.5
+      },
+      {
+        "mes": "2023-08",
+        "casos": 10,
+        "total": 28.1,
+        "max2h": 7.2,
+        "predicho": 24
+      },
+      {
+        "mes": "2023-09",
+        "casos": 10,
+        "total": 29.6,
+        "max2h": 10.2,
+        "predicho": 24.4
+      },
+      {
+        "mes": "2023-10",
+        "casos": 62,
+        "total": 93.7,
+        "max2h": 21.6,
+        "predicho": 52
+      },
+      {
+        "mes": "2023-11",
+        "casos": 113,
+        "total": 50.9,
+        "max2h": 11.6,
+        "predicho": 31.4
+      },
+      {
+        "mes": "2023-12",
+        "casos": 137,
+        "total": 140.8,
+        "max2h": 18.7,
+        "predicho": 90.8
+      },
+      {
+        "mes": "2024-01",
+        "casos": 78,
+        "total": 136.2,
+        "max2h": 27.9,
+        "predicho": 86
+      }
+    ],
+    "lluvia": {
+      "fuente": "Open-Meteo archivo histórico (ERA5), horario",
+      "endpoint": "https://archive-api.open-meteo.com/v1/archive"
+    }
+  },
+  "lluviaExtrema": {
+    "nombre": "Máximo diario anual de lluvia, distribución de Gumbel",
+    "formula": "F(x) = exp(−exp(−(x − μ)/β)) · μ y β por momentos",
+    "gumbel": {
+      "mu": 61.75,
+      "beta": 13.58,
+      "n": 86
+    },
+    "periodo": {
+      "desde": 1940,
+      "hasta": 2025
+    },
+    "cuantiles": [
+      {
+        "periodoAnios": 2,
+        "mm": 66.7
+      },
+      {
+        "periodoAnios": 5,
+        "mm": 82.1
+      },
+      {
+        "periodoAnios": 10,
+        "mm": 92.3
+      },
+      {
+        "periodoAnios": 25,
+        "mm": 105.2
+      },
+      {
+        "periodoAnios": 50,
+        "mm": 114.8
+      },
+      {
+        "periodoAnios": 100,
+        "mm": 124.2
+      }
+    ],
+    "maximosAnuales": [
+      {
+        "anio": 1940,
+        "mm": 63.4
+      },
+      {
+        "anio": 1941,
+        "mm": 38.2
+      },
+      {
+        "anio": 1942,
+        "mm": 70.1
+      },
+      {
+        "anio": 1943,
+        "mm": 56.8
+      },
+      {
+        "anio": 1944,
+        "mm": 38.1
+      },
+      {
+        "anio": 1945,
+        "mm": 67.2
+      },
+      {
+        "anio": 1946,
+        "mm": 90.7
+      },
+      {
+        "anio": 1947,
+        "mm": 36.5
+      },
+      {
+        "anio": 1948,
+        "mm": 69.2
+      },
+      {
+        "anio": 1949,
+        "mm": 81.3
+      },
+      {
+        "anio": 1950,
+        "mm": 37.8
+      },
+      {
+        "anio": 1951,
+        "mm": 71.5
+      },
+      {
+        "anio": 1952,
+        "mm": 59.2
+      },
+      {
+        "anio": 1953,
+        "mm": 69.6
+      },
+      {
+        "anio": 1954,
+        "mm": 48.9
+      },
+      {
+        "anio": 1955,
+        "mm": 102.7
+      },
+      {
+        "anio": 1956,
+        "mm": 44.2
+      },
+      {
+        "anio": 1957,
+        "mm": 86.7
+      },
+      {
+        "anio": 1958,
+        "mm": 71.3
+      },
+      {
+        "anio": 1959,
+        "mm": 64.3
+      },
+      {
+        "anio": 1960,
+        "mm": 56.1
+      },
+      {
+        "anio": 1961,
+        "mm": 56.4
+      },
+      {
+        "anio": 1962,
+        "mm": 53.8
+      },
+      {
+        "anio": 1963,
+        "mm": 69.4
+      },
+      {
+        "anio": 1964,
+        "mm": 59.2
+      },
+      {
+        "anio": 1965,
+        "mm": 81.1
+      },
+      {
+        "anio": 1966,
+        "mm": 94.4
+      },
+      {
+        "anio": 1967,
+        "mm": 63.9
+      },
+      {
+        "anio": 1968,
+        "mm": 68
+      },
+      {
+        "anio": 1969,
+        "mm": 47.3
+      },
+      {
+        "anio": 1970,
+        "mm": 50.5
+      },
+      {
+        "anio": 1971,
+        "mm": 61.5
+      },
+      {
+        "anio": 1972,
+        "mm": 59.9
+      },
+      {
+        "anio": 1973,
+        "mm": 55.1
+      },
+      {
+        "anio": 1974,
+        "mm": 73.3
+      },
+      {
+        "anio": 1975,
+        "mm": 66.4
+      },
+      {
+        "anio": 1976,
+        "mm": 72.7
+      },
+      {
+        "anio": 1977,
+        "mm": 39.8
+      },
+      {
+        "anio": 1978,
+        "mm": 103.8
+      },
+      {
+        "anio": 1979,
+        "mm": 67.8
+      },
+      {
+        "anio": 1980,
+        "mm": 94.1
+      },
+      {
+        "anio": 1981,
+        "mm": 66.7
+      },
+      {
+        "anio": 1982,
+        "mm": 71
+      },
+      {
+        "anio": 1983,
+        "mm": 77.1
+      },
+      {
+        "anio": 1984,
+        "mm": 92.5
+      },
+      {
+        "anio": 1985,
+        "mm": 76.7
+      },
+      {
+        "anio": 1986,
+        "mm": 81.8
+      },
+      {
+        "anio": 1987,
+        "mm": 54.5
+      },
+      {
+        "anio": 1988,
+        "mm": 70.2
+      },
+      {
+        "anio": 1989,
+        "mm": 68.2
+      },
+      {
+        "anio": 1990,
+        "mm": 73.2
+      },
+      {
+        "anio": 1991,
+        "mm": 59.4
+      },
+      {
+        "anio": 1992,
+        "mm": 80.1
+      },
+      {
+        "anio": 1993,
+        "mm": 67.5
+      },
+      {
+        "anio": 1994,
+        "mm": 69
+      },
+      {
+        "anio": 1995,
+        "mm": 91.6
+      },
+      {
+        "anio": 1996,
+        "mm": 62.5
+      },
+      {
+        "anio": 1997,
+        "mm": 109.7
+      },
+      {
+        "anio": 1998,
+        "mm": 102.1
+      },
+      {
+        "anio": 1999,
+        "mm": 58.7
+      },
+      {
+        "anio": 2000,
+        "mm": 70.5
+      },
+      {
+        "anio": 2001,
+        "mm": 57.5
+      },
+      {
+        "anio": 2002,
+        "mm": 107.1
+      },
+      {
+        "anio": 2003,
+        "mm": 74
+      },
+      {
+        "anio": 2004,
+        "mm": 44.6
+      },
+      {
+        "anio": 2005,
+        "mm": 87.2
+      },
+      {
+        "anio": 2006,
+        "mm": 63.2
+      },
+      {
+        "anio": 2007,
+        "mm": 76.5
+      },
+      {
+        "anio": 2008,
+        "mm": 71.3
+      },
+      {
+        "anio": 2009,
+        "mm": 113.5
+      },
+      {
+        "anio": 2010,
+        "mm": 71.4
+      },
+      {
+        "anio": 2011,
+        "mm": 66.4
+      },
+      {
+        "anio": 2012,
+        "mm": 72.7
+      },
+      {
+        "anio": 2013,
+        "mm": 79
+      },
+      {
+        "anio": 2014,
+        "mm": 60.6
+      },
+      {
+        "anio": 2015,
+        "mm": 91.1
+      },
+      {
+        "anio": 2016,
+        "mm": 66.6
+      },
+      {
+        "anio": 2017,
+        "mm": 103
+      },
+      {
+        "anio": 2018,
+        "mm": 66.2
+      },
+      {
+        "anio": 2019,
+        "mm": 43.2
+      },
+      {
+        "anio": 2020,
+        "mm": 44.5
+      },
+      {
+        "anio": 2021,
+        "mm": 72.9
+      },
+      {
+        "anio": 2022,
+        "mm": 50
+      },
+      {
+        "anio": 2023,
+        "mm": 76.7
+      },
+      {
+        "anio": 2024,
+        "mm": 77.9
+      },
+      {
+        "anio": 2025,
+        "mm": 82.6
+      }
+    ],
+    "umbralesDiarios": [
+      20,
+      30,
+      50
+    ],
+    "climatologiaMensual": [
+      {
+        "mes": 1,
+        "mediaMm": 101.2,
+        "probabilidadDia": {
+          "20": 0.0488,
+          "30": 0.0266,
+          "50": 0.0098
+        }
+      },
+      {
+        "mes": 2,
+        "mediaMm": 115.3,
+        "probabilidadDia": {
+          "20": 0.0621,
+          "30": 0.0325,
+          "50": 0.0128
+        }
+      },
+      {
+        "mes": 3,
+        "mediaMm": 125.8,
+        "probabilidadDia": {
+          "20": 0.0705,
+          "30": 0.0383,
+          "50": 0.0143
+        }
+      },
+      {
+        "mes": 4,
+        "mediaMm": 94.8,
+        "probabilidadDia": {
+          "20": 0.0488,
+          "30": 0.0252,
+          "50": 0.0081
+        }
+      },
+      {
+        "mes": 5,
+        "mediaMm": 65.1,
+        "probabilidadDia": {
+          "20": 0.0311,
+          "30": 0.0154,
+          "50": 0.0064
+        }
+      },
+      {
+        "mes": 6,
+        "mediaMm": 37.2,
+        "probabilidadDia": {
+          "20": 0.0109,
+          "30": 0.0054,
+          "50": 0.0004
+        }
+      },
+      {
+        "mes": 7,
+        "mediaMm": 42.4,
+        "probabilidadDia": {
+          "20": 0.0165,
+          "30": 0.0075,
+          "50": 0.0008
+        }
+      },
+      {
+        "mes": 8,
+        "mediaMm": 51.2,
+        "probabilidadDia": {
+          "20": 0.0244,
+          "30": 0.0113,
+          "50": 0.0019
+        }
+      },
+      {
+        "mes": 9,
+        "mediaMm": 70.6,
+        "probabilidadDia": {
+          "20": 0.0353,
+          "30": 0.0163,
+          "50": 0.0039
+        }
+      },
+      {
+        "mes": 10,
+        "mediaMm": 102.7,
+        "probabilidadDia": {
+          "20": 0.0533,
+          "30": 0.024,
+          "50": 0.0053
+        }
+      },
+      {
+        "mes": 11,
+        "mediaMm": 101.5,
+        "probabilidadDia": {
+          "20": 0.0535,
+          "30": 0.026,
+          "50": 0.0074
+        }
+      },
+      {
+        "mes": 12,
+        "mediaMm": 90.7,
+        "probabilidadDia": {
+          "20": 0.045,
+          "30": 0.0203,
+          "50": 0.0038
+        }
+      }
+    ],
+    "fuente": "Open-Meteo archivo histórico (ERA5), diario"
+  },
+  "calculado": "2026-09-23T03:10:53.244Z"
+}
