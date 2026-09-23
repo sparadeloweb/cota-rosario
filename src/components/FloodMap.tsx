@@ -1,8 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Feature, FeatureCollection, Polygon } from "geojson";
+import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
+import { LookupResult } from "@/components/LookupResult";
 import { RISK_FILL } from "@/components/status";
+import {
+  categoriaDesdeGris,
+  featureAt,
+  lecturaDistrito,
+  nearestFeature,
+  type ClimaMeta,
+  type DefensaCivil,
+  type Hallazgo,
+  type LecturaTerreno,
+  type TerrainMeta,
+} from "@/lib/lookup";
+import { loadPixels, rasterOffset } from "@/lib/rasters";
 import { RISK_LABEL, type RiskLevel } from "@/lib/risk";
 
 const CENTER: [number, number] = [-32.955, -60.66];
@@ -14,70 +27,56 @@ const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const ROSARIO_VIEWBOX = "-60.79,-32.83,-60.58,-33.06";
 const TERRAIN_OPACITY = 0.8;
 const TERRAIN_COLOR = "#d6a04a";
+const CLIMA_OPACITY = 0.75;
+const CLIMA_COLOR = "#d65c54";
 const LOW_POINT_MIN_M = 1;
 const MASK_THRESHOLD = 127;
+const DATA = {
+  areas: "/data/areas-inundables.json",
+  terreno: "/data/terreno.json",
+  terrenoPng: "/data/terreno.png",
+  clima: "/data/riesgo-clima.json",
+  climaPng: "/data/riesgo-clima.png",
+  defensaCivil: "/data/defensa-civil.json",
+  distritos: "/data/distritos.json",
+  barrios: "/data/barrios.json",
+} as const;
+
+type Areas = FeatureCollection<Polygon | MultiPolygon, Record<string, string>>;
 
 interface FloodMapProps {
   zonas: { zona: string; nivel: RiskLevel }[];
   buscador?: boolean;
 }
 
-interface TerrainMeta {
-  bounds: { west: number; east: number; north: number; south: number };
-  ancho: number;
-  alto: number;
-  escalaMaximaMetros: number;
-  ventanaMetros: number;
-  mascaraEdificado: string;
-}
-
-type LecturaTerreno = { estado: "bajo" | "plano" | "edificado"; metros: number } | null;
-
-interface Hallazgo {
+interface Overlay {
+  visible: boolean;
+  onToggle: () => void;
+  color: string;
   etiqueta: string;
-  zona?: string;
-  nivel?: RiskLevel;
-  dentro: boolean;
-  terreno: LecturaTerreno;
 }
 
-function pointInPolygon(lat: number, lon: number, rings: number[][][]): boolean {
-  let inside = false;
-  for (const ring of rings) {
-    for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
-      const [lonA, latA] = ring[index];
-      const [lonB, latB] = ring[previous];
-      const crosses = latA > lat !== latB > lat && lon < ((lonB - lonA) * (lat - latA)) / (latB - latA) + lonA;
-      if (crosses) {
-        inside = !inside;
-      }
-    }
+async function fetchJson<T>(url: string): Promise<T | null> {
+  try {
+    const response = await fetch(url);
+    return response.ok ? ((await response.json()) as T) : null;
+  } catch {
+    return null;
   }
-  return inside;
 }
 
-function mercator(lat: number): number {
-  return Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
-}
-
-function loadPixels(src: string, meta: TerrainMeta): Promise<Uint8ClampedArray> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = meta.ancho;
-      canvas.height = meta.alto;
-      const context = canvas.getContext("2d");
-      if (!context) {
-        reject(new Error("sin canvas"));
-        return;
-      }
-      context.drawImage(image, 0, 0);
-      resolve(context.getImageData(0, 0, meta.ancho, meta.alto).data);
-    };
-    image.onerror = () => reject(new Error(`no se pudo leer ${src}`));
-    image.src = src;
-  });
+function LegendToggle({ visible, onToggle, color, etiqueta }: Overlay) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={visible}
+      className={`flex items-center gap-1.5 border-l border-rule pl-4 text-[11px] transition-colors ${visible ? "text-ink" : "text-ink-faint hover:text-ink-soft"}`}
+    >
+      <span className="size-2.5 rounded-sm" style={{ background: color, opacity: visible ? 1 : 0.35 }} aria-hidden="true" />
+      {etiqueta}
+    </button>
+  );
 }
 
 export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
@@ -85,11 +84,19 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markerRef = useRef<import("leaflet").CircleMarker | null>(null);
   const terrainLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
+  const climaLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
   const terrainPixelsRef = useRef<Uint8ClampedArray | null>(null);
   const maskPixelsRef = useRef<Uint8ClampedArray | null>(null);
-  const [collection, setCollection] = useState<FeatureCollection<Polygon> | null>(null);
+  const climaPixelsRef = useRef<Uint8ClampedArray | null>(null);
+  const [collection, setCollection] = useState<Areas | null>(null);
   const [terrain, setTerrain] = useState<TerrainMeta | null>(null);
-  const [mostrarTerreno, setMostrarTerreno] = useState(true);
+  const [clima, setClima] = useState<ClimaMeta | null>(null);
+  const [defensaCivil, setDefensaCivil] = useState<DefensaCivil | null>(null);
+  const [distritos, setDistritos] = useState<Areas | null>(null);
+  const [barrios, setBarrios] = useState<Areas | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [mostrarTerreno, setMostrarTerreno] = useState(false);
+  const [mostrarClima, setMostrarClima] = useState(true);
   const [consulta, setConsulta] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [hallazgo, setHallazgo] = useState<Hallazgo | null>(null);
@@ -102,22 +109,21 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/data/areas-inundables.json")
-      .then((response) => response.json())
-      .then((data: FeatureCollection<Polygon>) => {
-        if (!cancelled) {
-          setCollection(data);
-        }
-      })
-      .catch(() => setError("No se pudieron cargar las áreas inundables."));
-    fetch("/data/terreno.json")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: TerrainMeta | null) => {
-        if (!cancelled && data) {
-          setTerrain(data);
-        }
-      })
-      .catch(() => undefined);
+    fetchJson<Areas>(DATA.areas).then((data) => {
+      if (cancelled) {
+        return;
+      }
+      if (data) {
+        setCollection(data);
+      } else {
+        setError("No se pudieron cargar las áreas inundables.");
+      }
+    });
+    fetchJson<TerrainMeta>(DATA.terreno).then((data) => !cancelled && data && setTerrain(data));
+    fetchJson<ClimaMeta>(DATA.clima).then((data) => !cancelled && data && setClima(data));
+    fetchJson<DefensaCivil>(DATA.defensaCivil).then((data) => !cancelled && data && setDefensaCivil(data));
+    fetchJson<Areas>(DATA.distritos).then((data) => !cancelled && data && setDistritos(data));
+    fetchJson<Areas>(DATA.barrios).then((data) => !cancelled && data && setBarrios(data));
     return () => {
       cancelled = true;
     };
@@ -137,20 +143,6 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       mapRef.current = map;
       L.control.zoom({ position: "bottomright" }).addTo(map);
       L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 18 }).addTo(map);
-      if (terrain) {
-        const { bounds } = terrain;
-        terrainLayerRef.current = L.imageOverlay(
-          "/data/terreno.png",
-          [
-            [bounds.south, bounds.west],
-            [bounds.north, bounds.east],
-          ],
-          { opacity: TERRAIN_OPACITY, interactive: false },
-        );
-        if (mostrarTerreno) {
-          terrainLayerRef.current.addTo(map);
-        }
-      }
       L.geoJSON(collection, {
         style: (feature) => {
           const zona = (feature as Feature<Polygon, { zona: string }>).properties?.zona ?? "";
@@ -164,6 +156,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
           );
         },
       }).addTo(map);
+      setMapReady(true);
     });
 
     return () => {
@@ -172,8 +165,44 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       mapRef.current = null;
       markerRef.current = null;
       terrainLayerRef.current = null;
+      climaLayerRef.current = null;
+      setMapReady(false);
     };
-  }, [collection, terrain, nivelDeZona, mostrarTerreno]);
+  }, [collection, nivelDeZona]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) {
+      return;
+    }
+    import("leaflet").then((L) => {
+      const overlays: [typeof terrainLayerRef, TerrainMeta | ClimaMeta | null, string, number, boolean][] = [
+        [terrainLayerRef, terrain, DATA.terrenoPng, TERRAIN_OPACITY, mostrarTerreno],
+        [climaLayerRef, clima, DATA.climaPng, CLIMA_OPACITY, mostrarClima],
+      ];
+      for (const [ref, meta, src, opacity, visible] of overlays) {
+        if (!meta) {
+          continue;
+        }
+        if (!ref.current) {
+          const { bounds } = meta;
+          ref.current = L.imageOverlay(
+            src,
+            [
+              [bounds.south, bounds.west],
+              [bounds.north, bounds.east],
+            ],
+            { opacity, interactive: false },
+          );
+        }
+        if (visible && !map.hasLayer(ref.current)) {
+          ref.current.addTo(map);
+        } else if (!visible && map.hasLayer(ref.current)) {
+          ref.current.remove();
+        }
+      }
+    });
+  }, [mapReady, terrain, clima, mostrarTerreno, mostrarClima]);
 
   const lecturaTerrenoEn = async (lat: number, lon: number): Promise<LecturaTerreno> => {
     if (!terrain) {
@@ -181,23 +210,30 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
     }
     if (!terrainPixelsRef.current || !maskPixelsRef.current) {
       [terrainPixelsRef.current, maskPixelsRef.current] = await Promise.all([
-        loadPixels("/data/terreno.png", terrain),
+        loadPixels(DATA.terrenoPng, terrain),
         loadPixels(`/data/${terrain.mascaraEdificado}`, terrain),
       ]);
     }
-    const { bounds, ancho, alto, escalaMaximaMetros } = terrain;
-    const col = Math.floor(((lon - bounds.west) / (bounds.east - bounds.west)) * ancho);
-    const row = Math.floor(((mercator(bounds.north) - mercator(lat)) / (mercator(bounds.north) - mercator(bounds.south))) * alto);
-    if (col < 0 || row < 0 || col >= ancho || row >= alto) {
+    const offset = rasterOffset(terrain, lat, lon);
+    if (offset === null) {
       return null;
     }
-    const offset = (row * ancho + col) * 4;
     if (maskPixelsRef.current[offset] > MASK_THRESHOLD) {
       return { estado: "edificado", metros: 0 };
     }
-    const alpha = terrainPixelsRef.current[offset + 3];
-    const metros = (alpha / 255) * escalaMaximaMetros;
+    const metros = (terrainPixelsRef.current[offset + 3] / 255) * terrain.escalaMaximaMetros;
     return { estado: metros >= LOW_POINT_MIN_M ? "bajo" : "plano", metros };
+  };
+
+  const lecturaClimaEn = async (lat: number, lon: number) => {
+    if (!clima) {
+      return null;
+    }
+    if (!climaPixelsRef.current) {
+      climaPixelsRef.current = await loadPixels(`/data/${clima.archivoCategorias}`, clima);
+    }
+    const offset = rasterOffset(clima, lat, lon);
+    return offset === null ? null : categoriaDesdeGris(clima, climaPixelsRef.current[offset]);
   };
 
   const buscar = async (event: React.FormEvent) => {
@@ -225,9 +261,11 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       }
       const lat = Number(results[0].lat);
       const lon = Number(results[0].lon);
-      const match = collection.features.find((feature) => pointInPolygon(lat, lon, feature.geometry.coordinates));
-      const zona = (match?.properties as { zona?: string } | undefined)?.zona?.trim();
-      const terreno = await lecturaTerrenoEn(lat, lon).catch(() => null);
+      const match = featureAt(collection, lat, lon);
+      const zona = match?.properties.zona?.trim();
+      const cercano = match ? null : nearestFeature(collection, lat, lon);
+      const distrito = distritos ? featureAt(distritos, lat, lon)?.properties.distrito : undefined;
+      const [terreno, categoriaClima] = await Promise.all([lecturaTerrenoEn(lat, lon).catch(() => null), lecturaClimaEn(lat, lon).catch(() => null)]);
 
       const map = mapRef.current;
       if (map) {
@@ -248,7 +286,11 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
         zona,
         nivel: zona ? nivelDeZona(zona) : undefined,
         dentro: Boolean(match),
+        cercano: cercano ? { zona: cercano.feature.properties.zona?.trim() ?? "?", metros: cercano.metros } : null,
         terreno,
+        clima: categoriaClima,
+        distrito: defensaCivil && distrito ? lecturaDistrito(defensaCivil, distrito) : null,
+        barrio: barrios ? (featureAt(barrios, lat, lon)?.properties.barrio ?? null) : null,
       });
     } catch {
       setError("El buscador de direcciones no respondió. Probá de nuevo en un momento.");
@@ -282,44 +324,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
               </button>
             </form>
 
-            {hallazgo ? (
-              <div className="flex flex-col gap-2 border-t border-rule px-4 py-3 text-sm">
-                <p className="text-xs text-ink-faint">{hallazgo.etiqueta}</p>
-                {hallazgo.dentro ? (
-                  <p className="text-ink">
-                    Dentro del área inundable oficial zona {hallazgo.zona}. Hoy:{" "}
-                    <span className={hallazgo.nivel === "normal" ? "text-normal" : "text-alerta"}>
-                      {RISK_LABEL[hallazgo.nivel ?? "normal"].toLowerCase()}
-                    </span>
-                    .
-                  </p>
-                ) : (
-                  <p className="leading-relaxed text-ink">Fuera de los polígonos oficiales, que cubren el Ludueña y el Saladillo.</p>
-                )}
-                {hallazgo.terreno ? (
-                  <p className="leading-relaxed text-ink-soft">
-                    {hallazgo.terreno.estado === "bajo" ? (
-                      <>
-                        Según el modelo de terreno está{" "}
-                        <span className="readout text-ink">
-                          {terrain && hallazgo.terreno.metros >= terrain.escalaMaximaMetros
-                            ? `más de ${terrain.escalaMaximaMetros} m`
-                            : `${hallazgo.terreno.metros.toFixed(1)} m`}
-                        </span>{" "}
-                        por debajo de la mediana de su entorno de {terrain?.ventanaMetros} m: ahí el agua tiende a juntarse.
-                      </>
-                    ) : hallazgo.terreno.estado === "plano" ? (
-                      <>Según el modelo de terreno no es un punto bajo respecto de la mediana de su entorno de {terrain?.ventanaMetros} m.</>
-                    ) : (
-                      <>
-                        Zona densamente edificada: el modelo de superficie mide techos y no distingue la calle de los edificios, así que acá
-                        no da una lectura confiable.
-                      </>
-                    )}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+            {hallazgo ? <LookupResult hallazgo={hallazgo} terrain={terrain} /> : null}
 
             {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alerta">{error}</p> : null}
           </div>
@@ -338,16 +343,11 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
             </span>
           ))}
           <span className="meta">{collection?.features.length ?? 0} polígonos oficiales</span>
+          {clima ? (
+            <LegendToggle visible={mostrarClima} onToggle={() => setMostrarClima((current) => !current)} color={CLIMA_COLOR} etiqueta="Riesgo por lluvias 2024 · oficial" />
+          ) : null}
           {terrain ? (
-            <button
-              type="button"
-              onClick={() => setMostrarTerreno((current) => !current)}
-              aria-pressed={mostrarTerreno}
-              className={`flex items-center gap-1.5 border-l border-rule pl-4 text-[11px] transition-colors ${mostrarTerreno ? "text-ink" : "text-ink-faint hover:text-ink-soft"}`}
-            >
-              <span className="size-2.5 rounded-sm" style={{ background: TERRAIN_COLOR, opacity: mostrarTerreno ? 1 : 0.35 }} aria-hidden="true" />
-              Puntos bajos · modelo
-            </button>
+            <LegendToggle visible={mostrarTerreno} onToggle={() => setMostrarTerreno((current) => !current)} color={TERRAIN_COLOR} etiqueta="Puntos bajos · modelo" />
           ) : null}
         </div>
       </div>

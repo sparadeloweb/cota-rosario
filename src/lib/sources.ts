@@ -47,6 +47,22 @@ export const SOURCES: Record<string, SourceRef> = {
     portal: "https://datosabiertos.rosario.gob.ar",
     licencia: "Datos abiertos municipales",
   },
+  riesgoClima: {
+    id: "riesgoClima",
+    organismo: "Municipalidad de Rosario · Mapas de Riesgo Climático 2024",
+    descripcion: "Riesgo de afectación a vivienda y hábitat por precipitaciones torrenciales, por radio censal, en cuatro categorías",
+    endpoint: "https://infomapa.rosario.gob.ar/wms/ambiente?LAYERS=riesgo_vivienda_precipita",
+    portal: "https://www.rosario.gob.ar/inicio/mapas-de-riesgo-climatico-rosario-2024",
+    licencia: "Capa pública de InfoMapa · elaborada con NAP Global Network y la Dirección Nacional de Cambio Climático",
+  },
+  defensaCivil: {
+    id: "defensaCivil",
+    organismo: "Municipalidad de Rosario · Defensa Civil",
+    descripcion: "Anegamientos transitorios atendidos por distrito y mes, 2021 a 2024, cruzados con la lluvia mensual del archivo de Open-Meteo",
+    endpoint: "https://datosabiertos.rosario.gob.ar/dataset/intervenciones-defensa-civil",
+    portal: "https://datosabiertos.rosario.gob.ar",
+    licencia: "Datos abiertos municipales · lluvia histórica ERA5 vía Open-Meteo, CC BY 4.0",
+  },
   terrain: {
     id: "terrain",
     organismo: "Modelo propio sobre Mapzen Terrain Tiles (SRTM, GMTED2010, ETOPO1)",
