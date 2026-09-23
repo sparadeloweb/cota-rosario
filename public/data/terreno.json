@@ -8,7 +8,7 @@
   "ventanaMetros": 321,
   "escalaMaximaMetros": 3,
   "umbralEdificadoMetros": 8,
-  "rojoEdificado": 0,
+  "mascaraEdificado": "terreno-edificado.png",
   "bounds": {
     "west": -60.8203125,
     "east": -60.556640625,
@@ -20,5 +20,5 @@
   "celdasTierra": 2714729,
   "celdasHundidas1m": 744373,
   "celdasEdificadas": 463496,
-  "calculado": "2026-09-23T00:12:25.885Z"
+  "calculado": "2026-09-23T00:14:36.822Z"
 }

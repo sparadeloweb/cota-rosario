@@ -15,6 +15,7 @@ const ROSARIO_VIEWBOX = "-60.79,-32.83,-60.58,-33.06";
 const TERRAIN_OPACITY = 0.8;
 const TERRAIN_COLOR = "#d6a04a";
 const LOW_POINT_MIN_M = 1;
+const MASK_THRESHOLD = 127;
 
 interface FloodMapProps {
   zonas: { zona: string; nivel: RiskLevel }[];
@@ -27,7 +28,7 @@ interface TerrainMeta {
   alto: number;
   escalaMaximaMetros: number;
   ventanaMetros: number;
-  rojoEdificado: number;
+  mascaraEdificado: string;
 }
 
 type LecturaTerreno = { estado: "bajo" | "plano" | "edificado"; metros: number } | null;
@@ -59,7 +60,7 @@ function mercator(lat: number): number {
   return Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
 }
 
-function loadTerrainPixels(meta: TerrainMeta): Promise<Uint8ClampedArray> {
+function loadPixels(src: string, meta: TerrainMeta): Promise<Uint8ClampedArray> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
@@ -74,8 +75,8 @@ function loadTerrainPixels(meta: TerrainMeta): Promise<Uint8ClampedArray> {
       context.drawImage(image, 0, 0);
       resolve(context.getImageData(0, 0, meta.ancho, meta.alto).data);
     };
-    image.onerror = () => reject(new Error("no se pudo leer el modelo de terreno"));
-    image.src = "/data/terreno.png";
+    image.onerror = () => reject(new Error(`no se pudo leer ${src}`));
+    image.src = src;
   });
 }
 
@@ -85,6 +86,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
   const markerRef = useRef<import("leaflet").CircleMarker | null>(null);
   const terrainLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
   const terrainPixelsRef = useRef<Uint8ClampedArray | null>(null);
+  const maskPixelsRef = useRef<Uint8ClampedArray | null>(null);
   const [collection, setCollection] = useState<FeatureCollection<Polygon> | null>(null);
   const [terrain, setTerrain] = useState<TerrainMeta | null>(null);
   const [mostrarTerreno, setMostrarTerreno] = useState(true);
@@ -177,21 +179,23 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
     if (!terrain) {
       return null;
     }
-    if (!terrainPixelsRef.current) {
-      terrainPixelsRef.current = await loadTerrainPixels(terrain);
+    if (!terrainPixelsRef.current || !maskPixelsRef.current) {
+      [terrainPixelsRef.current, maskPixelsRef.current] = await Promise.all([
+        loadPixels("/data/terreno.png", terrain),
+        loadPixels(`/data/${terrain.mascaraEdificado}`, terrain),
+      ]);
     }
-    const { bounds, ancho, alto, escalaMaximaMetros, rojoEdificado } = terrain;
+    const { bounds, ancho, alto, escalaMaximaMetros } = terrain;
     const col = Math.floor(((lon - bounds.west) / (bounds.east - bounds.west)) * ancho);
     const row = Math.floor(((mercator(bounds.north) - mercator(lat)) / (mercator(bounds.north) - mercator(bounds.south))) * alto);
     if (col < 0 || row < 0 || col >= ancho || row >= alto) {
       return null;
     }
     const offset = (row * ancho + col) * 4;
-    const red = terrainPixelsRef.current[offset];
-    const alpha = terrainPixelsRef.current[offset + 3];
-    if (alpha === 0 && red === rojoEdificado) {
+    if (maskPixelsRef.current[offset] > MASK_THRESHOLD) {
       return { estado: "edificado", metros: 0 };
     }
+    const alpha = terrainPixelsRef.current[offset + 3];
     const metros = (alpha / 255) * escalaMaximaMetros;
     return { estado: metros >= LOW_POINT_MIN_M ? "bajo" : "plano", metros };
   };

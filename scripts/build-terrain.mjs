@@ -11,7 +11,7 @@ const WINDOW_RADIUS_PX = 20;
 const REFERENCE_BLOCK_PX = 8;
 const REFERENCE_PERCENTILE = 0.5;
 const BUILT_SPREAD_M = 8;
-const BUILT_FLAG_RED = 0;
+const MASK_FILE = "terreno-edificado.png";
 const LOWNESS_MAX_M = 3;
 const OVERLAY_RGB = [214, 160, 74];
 const OUT_DIR = "public/data";
@@ -179,10 +179,6 @@ for (let row = 0; row < height; row += 1) {
     if (spread > BUILT_SPREAD_M) {
       built[index] = 1;
       builtCells += 1;
-      rgba[offset] = BUILT_FLAG_RED;
-      rgba[offset + 1] = OVERLAY_RGB[1];
-      rgba[offset + 2] = OVERLAY_RGB[2];
-      rgba[offset + 3] = 0;
       continue;
     }
     const value = Math.max(0, reference - elevation[index]);
@@ -212,6 +208,11 @@ const metersPerPixel = (40075016.686 * Math.cos((ROSARIO_CENTER.lat * Math.PI) /
 
 await mkdir(OUT_DIR, { recursive: true });
 await sharp(rgba, { raw: { width, height, channels: 4 } }).png({ compressionLevel: 9, palette: true, colours: 128, dither: 0 }).toFile(`${OUT_DIR}/terreno.png`);
+const mask = Buffer.alloc(width * height);
+for (let index = 0; index < built.length; index += 1) {
+  mask[index] = built[index] ? 255 : 0;
+}
+await sharp(mask, { raw: { width, height, channels: 1 } }).png({ compressionLevel: 9, palette: true, colours: 2, dither: 0 }).toFile(`${OUT_DIR}/${MASK_FILE}`);
 
 const metadata = {
   nombre: "Puntos bajos del terreno — modelo de elevación",
@@ -223,7 +224,7 @@ const metadata = {
   ventanaMetros: Math.round(WINDOW_RADIUS_PX * metersPerPixel),
   escalaMaximaMetros: LOWNESS_MAX_M,
   umbralEdificadoMetros: BUILT_SPREAD_M,
-  rojoEdificado: BUILT_FLAG_RED,
+  mascaraEdificado: MASK_FILE,
   bounds,
   ancho: width,
   alto: height,
