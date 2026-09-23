@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { Docs, DocsSection } from "@/components/Docs";
 import { FloodMap } from "@/components/FloodMap";
 import { Provenance } from "@/components/Provenance";
 import { RainStrip } from "@/components/RainStrip";
@@ -79,9 +80,6 @@ export default async function VecinosPage() {
                 </div>
                 <p className="readout text-sm text-ink">{factor.medida}</p>
                 <p className="text-xs leading-relaxed text-ink-soft">{factor.detalle}</p>
-                <p className="meta">
-                  {factor.umbral} · {factor.oficial ? "umbral oficial" : "umbral estimado"}
-                </p>
               </div>
             ))}
           </section>
@@ -108,24 +106,36 @@ export default async function VecinosPage() {
             </ul>
           </section>
 
-          <section className="hairline px-5 py-6 sm:px-6">
-            <h2 className="meta">De dónde sale cada número</h2>
-            <p className="mt-2 text-xs leading-relaxed text-ink-soft">
-              Ningún dato de este panel es propio. Todos se consultan en vivo y se pueden verificar.
-            </p>
-            <div className="mt-4">
+          <Docs>
+            <DocsSection titulo="Cómo se decide el nivel">
+              <ul className="flex flex-col gap-2 text-xs leading-relaxed text-ink-soft">
+                {riesgo.factores.map((factor) => (
+                  <li key={factor.clave}>
+                    <span className="text-ink">{factor.titulo}:</span> {factor.umbral} · {factor.oficial ? "umbral oficial" : "umbral estimado por este panel"}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs leading-relaxed text-ink-soft">
+                El nivel general es el peor de los dos factores. Las zonas oficiales del Ludueña y el Saladillo se pintan con ese nivel, ponderado por
+                su sensibilidad a la lluvia concentrada.
+              </p>
+            </DocsSection>
+            <DocsSection titulo="De dónde sale cada número">
+              <p className="text-xs leading-relaxed text-ink-soft">Ningún dato de este panel es propio. Todos se consultan en vivo y se pueden verificar.</p>
               <Provenance
                 sellos={[
                   { id: "ina", consultadoEn: rio?.consultadoEn, falla: fallaDe("ina") },
                   { id: "openMeteo", consultadoEn: lluvia?.consultadoEn, falla: fallaDe("openMeteo") },
                 ]}
               />
-            </div>
-          </section>
+              <a href="/api/estado" className="readout inline-block text-xs text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
+                GET /api/estado · el cruce completo en JSON
+              </a>
+            </DocsSection>
+          </Docs>
 
           <p className="hairline px-5 py-6 text-xs leading-relaxed text-ink-faint sm:px-6">
-            Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103. Los niveles de alerta y evacuación del río son
-            los que publica el INA; el umbral de lluvia es una estimación de este panel y está marcado como tal.
+            Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103.
           </p>
         </div>
       }

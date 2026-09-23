@@ -1,4 +1,4 @@
-import { etiquetaMes, formatoDistancia, type CategoriaClima, type Hallazgo, type TerrainMeta } from "@/lib/lookup";
+import { formatoDistancia, type CategoriaClima, type Hallazgo, type TerrainMeta } from "@/lib/lookup";
 import { RISK_LABEL } from "@/lib/risk";
 
 const CLIMA_TEXT: Record<CategoriaClima, string> = {
@@ -50,18 +50,18 @@ export function LookupResult({ hallazgo, terrain }: LookupResultProps) {
       {hallazgo.clima ? (
         <p className="leading-relaxed text-ink">
           Riesgo por lluvias torrenciales <span className={`${CLIMA_TEXT[hallazgo.clima]} readout`}>{hallazgo.clima}</span>
-          <span className="text-ink-soft"> — mapa de riesgo climático 2024 de la Municipalidad, por radio censal.</span>
+          <span className="text-ink-soft"> según el mapa oficial de riesgo de la Municipalidad.</span>
         </p>
       ) : null}
 
       {hallazgo.distrito ? (
         <p className="leading-relaxed text-ink-soft">
-          En {hallazgo.distrito.anio} Defensa Civil atendió <span className="readout text-ink">{hallazgo.distrito.casosAnio}</span> anegamientos en este
-          distrito, el {hallazgo.distrito.participacion} % de la ciudad.
+          Este distrito concentra el <span className="readout text-ink">{hallazgo.distrito.participacion} %</span> de los anegamientos que atiende
+          Defensa Civil en la ciudad.
           {hallazgo.distrito.mesPico ? (
             <>
               {" "}
-              El mes más cargado fue {etiquetaMes(hallazgo.distrito.mesPico.mes)}: {hallazgo.distrito.mesPico.casos} casos con{" "}
+              Su mes más cargado registrado tuvo {hallazgo.distrito.mesPico.casos} casos con{" "}
               <span className="readout text-ink">{Math.round(hallazgo.distrito.mesPico.lluviaMm)} mm</span> de lluvia.
             </>
           ) : null}
@@ -81,7 +81,7 @@ export function LookupResult({ hallazgo, terrain }: LookupResultProps) {
           ) : hallazgo.terreno.estado === "plano" ? (
             <>Según el modelo de terreno no es un punto bajo respecto de la mediana de su entorno de {terrain?.ventanaMetros} m.</>
           ) : (
-            <>El modelo de terreno no lee manzanas densas, porque mide techos y no calles; acá pesan el mapa oficial y el historial.</>
+            <>En manzanas densas el relieve no aporta lectura; acá pesan el mapa oficial y el historial.</>
           )}
         </p>
       ) : null}

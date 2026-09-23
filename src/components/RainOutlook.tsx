@@ -1,6 +1,7 @@
 import type { RainForecast } from "@/lib/predicciones";
 
 const PERCENT = 100;
+const DAYS_PER_MONTH = 30.4;
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
 interface RainOutlookProps {
@@ -14,7 +15,7 @@ function fmtDia(fecha: string): string {
 
 function periodoRetorno(anios: number): string {
   if (anios < 1.05) {
-    return "menos de un año";
+    return "año";
   }
   return anios < 10 ? `${anios.toFixed(1)} años` : `${Math.round(anios)} años`;
 }
@@ -37,10 +38,15 @@ export function RainOutlook({ lluvia }: RainOutlookProps) {
         ))}
       </ul>
       <p className="text-xs leading-relaxed text-ink-soft">
-        El día más cargado, {fmtDia(lluvia.maximoDia.fecha)} con <span className="readout text-ink">{lluvia.maximoDia.milimetros} mm</span>, tiene un
-        período de retorno de <span className="readout text-ink">{periodoRetorno(lluvia.periodoRetornoAnios)}</span> como máximo diario anual (
-        {Math.round(lluvia.probabilidadAnual * PERCENT)} % de que un año lo supere). En {lluvia.periodo.desde}–{lluvia.periodo.hasta},{" "}
-        {lluvia.rangoHistorico.mayores} de {lluvia.rangoHistorico.total} años tuvieron un día igual o mayor.
+        {lluvia.maximoDia.milimetros > 0 ? (
+          <>
+            El día más cargado, {fmtDia(lluvia.maximoDia.fecha)} con <span className="readout text-ink">{lluvia.maximoDia.milimetros} mm</span>: una
+            lluvia así, como máximo del año, se da en promedio <span className="readout text-ink">cada {periodoRetorno(lluvia.periodoRetornoAnios)}</span>;
+            en {lluvia.rangoHistorico.mayores} de los últimos {lluvia.rangoHistorico.total} años hubo un día igual o mayor.
+          </>
+        ) : (
+          <>No se pronostica lluvia en la semana.</>
+        )}
       </p>
       <dl className="grid grid-cols-3 gap-x-4 gap-y-3 border-t border-rule-soft pt-4 text-xs sm:grid-cols-6">
         {lluvia.cuantiles.map((cuantil) => (
@@ -51,8 +57,8 @@ export function RainOutlook({ lluvia }: RainOutlookProps) {
         ))}
       </dl>
       <p className="text-xs leading-relaxed text-ink-soft">
-        Climatología de {mesActual}: {lluvia.climatologia.mediaMm} mm por mes y un {(lluvia.climatologia.probabilidadDia * PERCENT).toFixed(1)} % de
-        probabilidad diaria de superar {lluvia.climatologia.umbralMm} mm.
+        Un {mesActual} normal en Rosario trae {lluvia.climatologia.mediaMm} mm; un día de más de {lluvia.climatologia.umbralMm} mm pasa{" "}
+        {(lluvia.climatologia.probabilidadDia * DAYS_PER_MONTH).toFixed(1)} veces por mes en promedio.
       </p>
     </div>
   );

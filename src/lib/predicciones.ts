@@ -1,7 +1,7 @@
 import modelos from "../../public/data/modelos.json";
 import type { SourceFailure, SourceId } from "@/lib/estado";
 import { empiricalRank, exceedanceProbability, returnPeriodYears, type ExtremeRainModel } from "@/lib/forecast/gumbel";
-import { districtExpectations, expectedCases, type DistrictExpectation, type PoissonModel } from "@/lib/forecast/poisson";
+import { districtExpectations, expectedCases, splitByDay, type DistrictExpectation, type PoissonModel } from "@/lib/forecast/poisson";
 import { ratingCurve, trendProjection, type RatingCurve, type TrendProjection } from "@/lib/forecast/river";
 import { fetchDischarge, fetchRainOutlook, type DischargeDay, type RainOutlook } from "@/lib/rain";
 import { fetchRiver, type RiverReading } from "@/lib/river";
@@ -50,7 +50,17 @@ export interface RiverForecast {
   caudal: { actual: number | null; dias: DischargeDay[] } | null;
 }
 
+export interface DailyForecast {
+  fecha: string;
+  lluviaMm: number;
+  probabilidad: number;
+  anegamientosEsperados: number;
+  probabilidadAlMenosUno: number;
+  rioMetros: number | null;
+}
+
 export interface Predicciones {
+  porDia: DailyForecast[];
   anegamientos: FloodingForecast | null;
   lluvia: RainForecast | null;
   rio: RiverForecast | null;
@@ -135,8 +145,24 @@ export async function loadPredicciones(): Promise<Predicciones> {
         }
       : null;
 
+  const anegamientos = outlook ? buildFlooding(outlook) : null;
+  const porDiaCasos = outlook && anegamientos ? splitByDay(poissonModel, anegamientos.esperadosCiudad, outlook.dias.map((dia) => ({ total: dia.milimetros, max2h: dia.max2h }))) : [];
+  const nivelPorDia = new Map([
+    ...(riverForecast?.historia.map((lectura) => [lectura.fecha.slice(0, 10), lectura.metros] as const) ?? []),
+    ...(riverForecast?.tendencia?.proyeccion.map((punto) => [punto.fecha, punto.metros] as const) ?? []),
+  ]);
+  const porDia: DailyForecast[] = (outlook?.dias ?? []).map((dia, index) => ({
+    fecha: dia.fecha,
+    lluviaMm: dia.milimetros,
+    probabilidad: dia.probabilidad,
+    anegamientosEsperados: porDiaCasos[index] ?? 0,
+    probabilidadAlMenosUno: Number((1 - Math.exp(-(porDiaCasos[index] ?? 0))).toFixed(2)),
+    rioMetros: nivelPorDia.get(dia.fecha) ?? null,
+  }));
+
   return {
-    anegamientos: outlook ? buildFlooding(outlook) : null,
+    porDia,
+    anegamientos,
     lluvia: outlook ? buildRain(outlook) : null,
     rio: riverForecast,
     fallas,

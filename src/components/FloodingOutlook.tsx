@@ -17,16 +17,15 @@ export function FloodingOutlook({ anegamientos }: FloodingOutlookProps) {
       <div className="flex items-baseline gap-3">
         <span className="readout text-5xl font-medium text-ink">{anegamientos.esperadosCiudad.toFixed(1)}</span>
         <span className="text-sm leading-tight text-ink-soft">
-          intervenciones por anegamiento
+          anegamientos que Defensa Civil
           <br />
-          esperadas en {anegamientos.ventanaDias} días
+          tendría que atender en {anegamientos.ventanaDias} días
         </span>
       </div>
       <p className="text-xs leading-relaxed text-ink-soft">
         Con <span className="readout text-ink">{anegamientos.lluvia.total} mm</span> pronosticados y un pico de{" "}
-        <span className="readout text-ink">{anegamientos.lluvia.max2h} mm</span> en 2 horas. El modelo se ajustó sobre {anegamientos.modelo.n} meses de
-        intervenciones de Defensa Civil; explica el {Math.round(anegamientos.modelo.pseudoR2 * PERCENT)} % de la varianza mensual y en validación cruzada
-        erra {anegamientos.modelo.validacionCruzada.maeModelo} casos por mes contra {anegamientos.modelo.validacionCruzada.maeMedia} de usar el promedio.
+        <span className="readout text-ink">{anegamientos.lluvia.max2h} mm</span> en 2 horas. Estimación propia a partir del historial de Defensa Civil y
+        la lluvia que cayó cada mes; el error típico es de ±{Math.round(anegamientos.modelo.validacionCruzada.maeModelo)} casos por mes.
       </p>
       <ul className="flex flex-col gap-2">
         {anegamientos.porDistrito.map((entry) => (

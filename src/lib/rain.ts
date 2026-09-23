@@ -39,6 +39,7 @@ export interface RainOutlookDay {
   fecha: string;
   milimetros: number;
   probabilidad: number;
+  max2h: number;
 }
 
 export interface RainOutlook {
@@ -162,13 +163,19 @@ export async function fetchRainOutlook(): Promise<RainOutlook> {
   }
 
   const data = (await response.json()) as OutlookResponse;
+  const horas = data.hourly.precipitation.map((mm) => mm ?? 0);
+  const ventanas = horas.map((mm, index) => mm + (horas[index + 1] ?? 0));
+  const max2hPorDia = data.hourly.time.reduce<Record<string, number>>((acc, hora, index) => {
+    const dia = hora.slice(0, 10);
+    return { ...acc, [dia]: Math.max(acc[dia] ?? 0, ventanas[index]) };
+  }, {});
   const dias = data.daily.time.map((fecha, index) => ({
     fecha,
     milimetros: Number((data.daily.precipitation_sum[index] ?? 0).toFixed(1)),
     probabilidad: data.daily.precipitation_probability_max[index] ?? 0,
+    max2h: Number((max2hPorDia[fecha] ?? 0).toFixed(1)),
   }));
-  const horas = data.hourly.precipitation.map((mm) => mm ?? 0);
-  const max2h = horas.reduce((best, mm, index) => Math.max(best, mm + (horas[index + 1] ?? 0)), 0);
+  const max2h = Math.max(0, ...ventanas);
   const maximoDia = dias.reduce((best, dia) => (dia.milimetros > best.milimetros ? dia : best), dias[0]);
 
   return {

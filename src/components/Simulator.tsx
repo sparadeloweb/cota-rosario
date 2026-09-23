@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSimulation } from "@/components/SimulationContext";
 import { RISK_FILL } from "@/components/status";
 import { RAIN_THRESHOLDS, RISK_LABEL, simulate, type RiskLevel } from "@/lib/risk";
 
@@ -25,29 +26,35 @@ function Estado({ nivel, grande = false }: { nivel: RiskLevel; grande?: boolean 
   );
 }
 
-export function Simulator({ metrosActuales, alerta, evacuacion, picoActualMm }: SimulatorProps) {
+function SimulatorPanel({ metrosActuales, alerta, evacuacion, picoActualMm }: SimulatorProps) {
+  const { setEscenario, reset } = useSimulation();
   const [metros, setMetros] = useState(metrosActuales);
   const [lluvia, setLluvia] = useState(picoActualMm);
   const resultado = simulate({ metros, alerta, evacuacion, picoLluviaMm: lluvia });
   const modificado = metros !== metrosActuales || lluvia !== picoActualMm;
 
+  const aplicar = (nuevosMetros: number, nuevaLluvia: number) => {
+    setMetros(nuevosMetros);
+    setLluvia(nuevaLluvia);
+    const cambia = nuevosMetros !== metrosActuales || nuevaLluvia !== picoActualMm;
+    setEscenario(cambia ? simulate({ metros: nuevosMetros, alerta, evacuacion, picoLluviaMm: nuevaLluvia }) : null);
+  };
+
+  useEffect(() => () => setEscenario(null), [setEscenario]);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <Estado nivel={resultado.nivel} grande />
-        {modificado ? <span className="text-xs text-atencion">escenario simulado</span> : <span className="meta">valores reales de ahora</span>}
-        {modificado ? (
-          <button
-            type="button"
-            onClick={() => {
-              setMetros(metrosActuales);
-              setLluvia(picoActualMm);
-            }}
-            className="ml-auto text-xs text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink"
-          >
-            Volver a los valores reales
-          </button>
-        ) : null}
+        {modificado ? <span className="text-xs text-atencion">escenario simulado · el mapa lo refleja</span> : <span className="meta">valores reales de ahora</span>}
+        <button
+          type="button"
+          onClick={reset}
+          disabled={!modificado}
+          className="ml-auto rounded-md border border-rule px-3 py-1 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-40"
+        >
+          Restablecer
+        </button>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -63,7 +70,7 @@ export function Simulator({ metrosActuales, alerta, evacuacion, picoActualMm }: 
             max={MAX_METERS}
             step={STEP_METERS}
             value={metros}
-            onChange={(event) => setMetros(Number(event.target.value))}
+            onChange={(event) => aplicar(Number(event.target.value), lluvia)}
             className="accent-ink-soft"
           />
           <span className="meta">
@@ -83,7 +90,7 @@ export function Simulator({ metrosActuales, alerta, evacuacion, picoActualMm }: 
             max={MAX_RAIN_MM}
             step={STEP_MM}
             value={lluvia}
-            onChange={(event) => setLluvia(Number(event.target.value))}
+            onChange={(event) => aplicar(metros, Number(event.target.value))}
             className="accent-ink-soft"
           />
           <span className="meta">
@@ -114,11 +121,11 @@ export function Simulator({ metrosActuales, alerta, evacuacion, picoActualMm }: 
           ))}
         </div>
       </div>
-
-      <p className="text-xs leading-relaxed text-ink-faint">
-        La simulación usa exactamente el mismo modelo que la vista pública: mover los controles no altera ningún dato real ni queda guardado.
-        Sirve para ensayar el umbral con el que se quiere disparar un aviso antes de que la situación ocurra.
-      </p>
     </div>
   );
+}
+
+export function Simulator(props: SimulatorProps) {
+  const { version } = useSimulation();
+  return <SimulatorPanel key={version} {...props} />;
 }

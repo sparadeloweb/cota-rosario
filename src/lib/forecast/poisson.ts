@@ -36,6 +36,13 @@ export function expectedCases(model: PoissonModel, lluvia: RainFeatures, dias: n
   return Math.round(monthly * (dias / model.diasPorMes) * ROUNDING) / ROUNDING;
 }
 
+export function splitByDay(model: PoissonModel, total: number, dias: RainFeatures[]): number[] {
+  const { max2h, total: totalCoef } = model.coeficientes;
+  const pesos = dias.map((dia) => Math.exp(max2h * dia.max2h + totalCoef * dia.total));
+  const suma = pesos.reduce((sum, peso) => sum + peso, 0);
+  return pesos.map((peso) => Math.round((total * peso) / suma * ROUNDING) / ROUNDING);
+}
+
 export function districtExpectations(model: PoissonModel, ciudad: number): DistrictExpectation[] {
   return Object.entries(model.participacionDistrito)
     .map(([distrito, participacion]) => {

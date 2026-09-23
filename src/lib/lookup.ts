@@ -34,8 +34,6 @@ export interface DefensaCivil {
 
 export interface LecturaDistrito {
   distrito: string;
-  anio: string;
-  casosAnio: number;
   participacion: number;
   mesPico: MesPico | null;
 }
@@ -62,7 +60,7 @@ export interface Hallazgo {
 
 type AnyPolygonFeature = Feature<Polygon | MultiPolygon, Record<string, string>>;
 
-const MONTHS_IN_YEAR = 12;
+const PERCENT = 100;
 const EARTH_RADIUS_M = 6371000;
 const MES_LABEL = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
@@ -119,18 +117,9 @@ export function lecturaDistrito(datos: DefensaCivil, distrito: string): LecturaD
   if (!propio) {
     return null;
   }
-  const aniosCompletos = Object.entries(datos.mesesPorAnio)
-    .filter(([, meses]) => meses === MONTHS_IN_YEAR)
-    .map(([anio]) => anio)
-    .sort();
-  const anio = aniosCompletos[aniosCompletos.length - 1] ?? datos.periodo.hasta.slice(0, 4);
-  const casosAnio = propio.porAnio[anio] ?? 0;
-  const ciudadAnio = datos.ciudad.porAnio[anio] ?? 0;
   return {
     distrito,
-    anio,
-    casosAnio,
-    participacion: ciudadAnio === 0 ? 0 : Math.round((casosAnio / ciudadAnio) * 100),
+    participacion: datos.ciudad.total === 0 ? 0 : Math.round((propio.total / datos.ciudad.total) * PERCENT),
     mesPico: propio.mesPico,
   };
 }

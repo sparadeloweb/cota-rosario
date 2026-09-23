@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { LookupResult } from "@/components/LookupResult";
+import { useSimulation } from "@/components/SimulationContext";
 import { RISK_FILL } from "@/components/status";
 import {
   categoriaDesdeGris,
@@ -31,6 +32,8 @@ const CLIMA_OPACITY = 0.75;
 const CLIMA_COLOR = "#d65c54";
 const LOW_POINT_MIN_M = 1;
 const MASK_THRESHOLD = 127;
+const ZONE_FILL_OPACITY = 0.18;
+const ZONE_FILL_OPACITY_SIMULATED = 0.32;
 const DATA = {
   areas: "/data/areas-inundables.json",
   terreno: "/data/terreno.json",
@@ -43,6 +46,7 @@ const DATA = {
 } as const;
 
 type Areas = FeatureCollection<Polygon | MultiPolygon, Record<string, string>>;
+type ZoneFeature = Feature<Polygon, { zona: string; sector: string }>;
 
 interface FloodMapProps {
   zonas: { zona: string; nivel: RiskLevel }[];
@@ -82,12 +86,14 @@ function LegendToggle({ visible, onToggle, color, etiqueta }: Overlay) {
 export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
+  const zonesLayerRef = useRef<import("leaflet").GeoJSON | null>(null);
   const markerRef = useRef<import("leaflet").CircleMarker | null>(null);
   const terrainLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
   const climaLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
   const terrainPixelsRef = useRef<Uint8ClampedArray | null>(null);
   const maskPixelsRef = useRef<Uint8ClampedArray | null>(null);
   const climaPixelsRef = useRef<Uint8ClampedArray | null>(null);
+  const { escenario, reset } = useSimulation();
   const [collection, setCollection] = useState<Areas | null>(null);
   const [terrain, setTerrain] = useState<TerrainMeta | null>(null);
   const [clima, setClima] = useState<ClimaMeta | null>(null);
@@ -102,9 +108,22 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
   const [hallazgo, setHallazgo] = useState<Hallazgo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const zonasEfectivas = escenario?.zonas ?? zonas;
   const nivelDeZona = useCallback(
-    (zona: string): RiskLevel => zonas.find((entry) => entry.zona === zona.trim())?.nivel ?? "normal",
-    [zonas],
+    (zona: string): RiskLevel => zonasEfectivas.find((entry) => entry.zona === zona.trim())?.nivel ?? "normal",
+    [zonasEfectivas],
+  );
+  const nivelRef = useRef(nivelDeZona);
+  useEffect(() => {
+    nivelRef.current = nivelDeZona;
+  }, [nivelDeZona]);
+
+  const estiloDeZona = useCallback(
+    (feature: ZoneFeature | undefined) => {
+      const fill = RISK_FILL[nivelRef.current(feature?.properties?.zona ?? "")];
+      return { color: fill, weight: 1, fillColor: fill, fillOpacity: escenario ? ZONE_FILL_OPACITY_SIMULATED : ZONE_FILL_OPACITY };
+    },
+    [escenario],
   );
 
   useEffect(() => {
@@ -143,17 +162,11 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       mapRef.current = map;
       L.control.zoom({ position: "bottomright" }).addTo(map);
       L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 18 }).addTo(map);
-      L.geoJSON(collection, {
-        style: (feature) => {
-          const zona = (feature as Feature<Polygon, { zona: string }>).properties?.zona ?? "";
-          const fill = RISK_FILL[nivelDeZona(zona)];
-          return { color: fill, weight: 1, fillColor: fill, fillOpacity: 0.18 };
-        },
+      zonesLayerRef.current = L.geoJSON(collection, {
+        style: (feature) => estiloDeZona(feature as ZoneFeature | undefined),
         onEachFeature: (feature, layer) => {
-          const properties = (feature as Feature<Polygon, { zona: string; sector: string }>).properties;
-          layer.bindPopup(
-            `Zona ${properties?.zona ?? "?"} · sector ${properties?.sector || "—"}<br/>${RISK_LABEL[nivelDeZona(properties?.zona ?? "")]}`,
-          );
+          const properties = (feature as ZoneFeature).properties;
+          layer.bindPopup(() => `Zona ${properties?.zona ?? "?"} · sector ${properties?.sector || "—"}<br/>${RISK_LABEL[nivelRef.current(properties?.zona ?? "")]}`);
         },
       }).addTo(map);
       setMapReady(true);
@@ -163,12 +176,19 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       cancelled = true;
       mapRef.current?.remove();
       mapRef.current = null;
+      zonesLayerRef.current = null;
       markerRef.current = null;
       terrainLayerRef.current = null;
       climaLayerRef.current = null;
       setMapReady(false);
     };
-  }, [collection, nivelDeZona]);
+    // estiloDeZona sólo se usa para el estilo inicial; los cambios posteriores los aplica el efecto de abajo sin recrear el mapa.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collection]);
+
+  useEffect(() => {
+    zonesLayerRef.current?.setStyle((feature) => estiloDeZona(feature as ZoneFeature | undefined));
+  }, [estiloDeZona, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -331,6 +351,20 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
         </div>
       ) : null}
 
+      {escenario ? (
+        <div className={`pointer-events-none absolute inset-x-0 z-[500] flex justify-center p-3 sm:p-4 ${buscador ? "top-14" : "top-0"}`}>
+          <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-atencion/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
+            <span className="size-2 rounded-full" style={{ background: RISK_FILL[escenario.nivel] }} aria-hidden="true" />
+            <span className="text-ink">
+              Escenario simulado · <span className="text-ink-soft">{RISK_LABEL[escenario.nivel]}</span>
+            </span>
+            <button type="button" onClick={reset} className="border-l border-rule pl-3 text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
+              Restablecer
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div
         data-map-legend
         className="pointer-events-none absolute bottom-[calc(var(--sheet-peek)+0.75rem)] left-0 right-14 z-[500] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
@@ -342,9 +376,9 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
               {RISK_LABEL[nivel]}
             </span>
           ))}
-          <span className="meta">{collection?.features.length ?? 0} polígonos oficiales</span>
+          <span className="meta">{collection?.features.length ?? 0} zonas oficiales</span>
           {clima ? (
-            <LegendToggle visible={mostrarClima} onToggle={() => setMostrarClima((current) => !current)} color={CLIMA_COLOR} etiqueta="Riesgo por lluvias 2024 · oficial" />
+            <LegendToggle visible={mostrarClima} onToggle={() => setMostrarClima((current) => !current)} color={CLIMA_COLOR} etiqueta="Riesgo por lluvias · oficial" />
           ) : null}
           {terrain ? (
             <LegendToggle visible={mostrarTerreno} onToggle={() => setMostrarTerreno((current) => !current)} color={TERRAIN_COLOR} etiqueta="Puntos bajos · modelo" />

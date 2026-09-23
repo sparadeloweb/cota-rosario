@@ -1,5 +1,7 @@
 import modelos from "../../../public/data/modelos.json";
 import { AppShell } from "@/components/AppShell";
+import { DailyOutlook } from "@/components/DailyOutlook";
+import { Docs, DocsSection } from "@/components/Docs";
 import { FloodingOutlook } from "@/components/FloodingOutlook";
 import { ForecastMap } from "@/components/ForecastMap";
 import { ModelNotes } from "@/components/ModelNotes";
@@ -16,39 +18,44 @@ export const revalidate = 300;
 
 const CM_PER_M = 100;
 const WEAK_FIT_R2 = 0.5;
+const DEFAULT_WINDOW_DAYS = 7;
 
 function diasHasta(valor: number | null | undefined): string {
-  return valor === null || valor === undefined ? "no a este ritmo" : `${valor} días`;
+  return valor === null || valor === undefined ? "no a este ritmo" : `en ${valor} días`;
 }
 
 export default async function PrediccionesPage() {
   const [predicciones, estado] = await Promise.all([loadPredicciones(), loadEstado()]);
-  const { anegamientos, lluvia, rio, fallas, consultas, vigencia } = predicciones;
+  const { anegamientos, lluvia, rio, fallas, consultas, vigencia, porDia } = predicciones;
   const fallaDe = (fuente: string) => fallas.find((falla) => falla.fuente === fuente);
   const entrenamiento = (modelos.anegamientos as PoissonModel).entrenamiento;
+  const ventanaDias = anegamientos?.ventanaDias ?? DEFAULT_WINDOW_DAYS;
+  const curvaDebil = rio?.curva ? rio.curva.r2 < WEAK_FIT_R2 : false;
 
   return (
     <AppShell
       activo="/predicciones"
       nivel={estado.riesgo.nivel}
       actualizadoEn={predicciones.generadoEn}
-      lienzo={<ForecastMap distritos={anegamientos?.porDistrito ?? []} ventanaDias={anegamientos?.ventanaDias ?? 7} />}
+      lienzo={<ForecastMap distritos={anegamientos?.porDistrito ?? []} ventanaDias={ventanaDias} />}
       lienzoInferior={
-        <>
-          <h2 className="meta">Ajuste del modelo de anegamientos · observado / predicho por mes</h2>
-          <div className="mt-4">
-            <TrainingTable entrenamiento={entrenamiento} />
-          </div>
-        </>
+        porDia.length ? (
+          <>
+            <h2 className="meta">Día por día · próximos {ventanaDias} días</h2>
+            <div className="mt-4">
+              <DailyOutlook dias={porDia} alerta={rio?.alerta ?? null} />
+            </div>
+          </>
+        ) : undefined
       }
       rail={
         <div className="flex flex-col">
           <section className="px-5 py-6 sm:px-6">
-            <p className="meta">Próximos 7 días{fallas.length ? " · evaluación parcial" : ""}</p>
-            <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">Predicciones</h1>
+            <p className="meta">Próximos {ventanaDias} días{fallas.length ? " · evaluación parcial" : ""}</p>
+            <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">Qué esperar esta semana</h1>
             <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              Tres modelos ajustados sobre datos públicos: cuántos anegamientos atenderá Defensa Civil según la lluvia pronosticada, qué tan rara es esa
-              lluvia frente a 86 años de registro, y a dónde va el río según su tendencia y el caudal modelado.
+              Cuántos anegamientos tendría que atender Defensa Civil con la lluvia pronosticada, qué tan rara es esa lluvia para Rosario y a dónde va el
+              río. Todo se recalcula con cada pronóstico nuevo.
             </p>
           </section>
 
@@ -58,7 +65,7 @@ export default async function PrediccionesPage() {
           </section>
 
           <section className="hairline px-5 py-6 sm:px-6">
-            <h2 className="meta">Qué tan rara es la lluvia prevista</h2>
+            <h2 className="meta">La lluvia que viene</h2>
             <div className="mt-4">{lluvia ? <RainOutlook lluvia={lluvia} /> : <SourceDown falla={fallaDe("openMeteo")!} />}</div>
           </section>
 
@@ -70,7 +77,7 @@ export default async function PrediccionesPage() {
                   <RiverProjection rio={rio} />
                   <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-rule-soft pt-4 text-xs sm:grid-cols-3">
                     <div className="flex flex-col gap-0.5">
-                      <dt className="meta">Tendencia</dt>
+                      <dt className="meta">Ritmo actual</dt>
                       <dd className="readout text-ink">{rio.tendencia ? `${(rio.tendencia.metrosPorDia * CM_PER_M).toFixed(1)} cm/día` : "—"}</dd>
                     </div>
                     <div className="flex flex-col gap-0.5">
@@ -82,21 +89,16 @@ export default async function PrediccionesPage() {
                       <dd className="readout text-ink">{diasHasta(rio.tendencia?.diasHasta.evacuacion)}</dd>
                     </div>
                     <div className="flex flex-col gap-0.5">
-                      <dt className="meta">En 7 días, por tendencia</dt>
+                      <dt className="meta">En {ventanaDias} días, siguiendo el ritmo</dt>
                       <dd className="readout text-ink">{rio.tendencia ? `${rio.tendencia.proyeccion[rio.tendencia.proyeccion.length - 1].metros.toFixed(2)} m` : "—"}</dd>
                     </div>
                     <div className="flex flex-col gap-0.5">
-                      <dt className="meta">En 7 días, por caudal</dt>
+                      <dt className="meta">En {ventanaDias} días, según el caudal</dt>
                       <dd className="readout text-ink">{rio.curva?.proyeccion.length ? `${rio.curva.proyeccion[rio.curva.proyeccion.length - 1].metros.toFixed(2)} m` : "—"}</dd>
-                      {rio.curva ? (
-                        <dd className={`meta ${rio.curva.r2 < WEAK_FIT_R2 ? "text-atencion" : ""}`}>
-                          R² {rio.curva.r2.toFixed(2)}
-                          {rio.curva.r2 < WEAK_FIT_R2 ? " · ajuste débil" : ""}
-                        </dd>
-                      ) : null}
+                      {curvaDebil ? <dd className="meta text-atencion">estimación poco confiable</dd> : null}
                     </div>
                     <div className="flex flex-col gap-0.5">
-                      <dt className="meta">Caudal GloFAS hoy</dt>
+                      <dt className="meta">Caudal hoy</dt>
                       <dd className="readout text-ink">{rio.caudal?.actual ? `${Math.round(rio.caudal.actual)} m³/s` : "—"}</dd>
                     </div>
                   </dl>
@@ -108,46 +110,44 @@ export default async function PrediccionesPage() {
             </div>
           </section>
 
-          <section className="hairline px-5 py-6 sm:px-6">
-            <h2 className="meta">Cómo se calcula</h2>
-            <div className="mt-4">
+          <Docs titulo="Documentación: cómo se calcula y vigencia de los datos">
+            <DocsSection titulo="Los modelos">
               <ModelNotes predicciones={predicciones} />
-            </div>
-            <a href="/api/predicciones" className="readout mt-4 inline-block text-xs text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
-              GET /api/predicciones · todo en JSON
-            </a>
-          </section>
-
-          <section className="hairline px-5 py-6 sm:px-6">
-            <h2 className="meta">Vigencia de cada dato</h2>
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
-              <div className="flex flex-col gap-0.5">
-                <dt className="meta">Pronóstico y caudal</dt>
-                <dd className="text-ink">en vivo, caché de 5 min</dd>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <dt className="meta">Última lectura del río</dt>
-                <dd className="readout text-ink">{vigencia.ultimaMedicionRio ? `${vigencia.ultimaMedicionRio.slice(0, 10)} · diaria` : "—"}</dd>
-                {rio ? <dd className="meta">serie desde {rio.serieDesde.slice(0, 10)}</dd> : null}
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <dt className="meta">Defensa Civil publicada hasta</dt>
-                <dd className="readout text-ink">{vigencia.defensaCivilHasta}</dd>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <dt className="meta">Lluvia histórica hasta</dt>
-                <dd className="readout text-ink">{vigencia.lluviaHistoricaHasta}</dd>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <dt className="meta">Modelos ajustados</dt>
-                <dd className="readout text-ink">{vigencia.modelosCalculados.slice(0, 10)}</dd>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <dt className="meta">Esta vista</dt>
-                <dd className="readout text-ink">{predicciones.generadoEn.slice(11, 16)} UTC</dd>
-              </div>
-            </dl>
-            <div className="mt-6">
+            </DocsSection>
+            <DocsSection titulo="Hasta cuándo llega cada dato">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                <div className="flex flex-col gap-0.5">
+                  <dt className="meta">Pronóstico y caudal</dt>
+                  <dd className="text-ink">en vivo, caché de 5 min</dd>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <dt className="meta">Última lectura del río</dt>
+                  <dd className="readout text-ink">{vigencia.ultimaMedicionRio ? `${vigencia.ultimaMedicionRio.slice(0, 10)} · diaria` : "—"}</dd>
+                  {rio ? <dd className="meta">serie desde {rio.serieDesde.slice(0, 10)}</dd> : null}
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <dt className="meta">Registro de Defensa Civil publicado hasta</dt>
+                  <dd className="readout text-ink">{vigencia.defensaCivilHasta}</dd>
+                  <dd className="meta">el municipio no publicó más</dd>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <dt className="meta">Lluvia histórica hasta</dt>
+                  <dd className="readout text-ink">{vigencia.lluviaHistoricaHasta}</dd>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <dt className="meta">Modelos ajustados</dt>
+                  <dd className="readout text-ink">{vigencia.modelosCalculados.slice(0, 10)}</dd>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <dt className="meta">Esta vista</dt>
+                  <dd className="readout text-ink">{predicciones.generadoEn.slice(11, 16)} UTC</dd>
+                </div>
+              </dl>
+            </DocsSection>
+            <DocsSection titulo="Ajuste del modelo de anegamientos · observado / predicho por mes">
+              <TrainingTable entrenamiento={entrenamiento} />
+            </DocsSection>
+            <DocsSection titulo="Fuentes y última consulta">
               <Provenance
                 sellos={[
                   { id: "ina", consultadoEn: consultas.ina, falla: fallaDe("ina") },
@@ -155,12 +155,14 @@ export default async function PrediccionesPage() {
                   { id: "glofas", consultadoEn: consultas.glofas, falla: fallaDe("glofas") },
                 ]}
               />
-            </div>
-          </section>
+              <a href="/api/predicciones" className="readout inline-block text-xs text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
+                GET /api/predicciones · todo en JSON
+              </a>
+            </DocsSection>
+          </Docs>
 
           <p className="hairline px-5 py-6 text-xs leading-relaxed text-ink-faint sm:px-6">
-            Son modelos estadísticos de este panel, no pronósticos oficiales. Cada uno declara su ajuste y su error; ninguno reemplaza al INA ni a Defensa
-            Civil (103).
+            Son estimaciones estadísticas de este panel, no pronósticos oficiales; ninguna reemplaza al INA ni a Defensa Civil (103).
           </p>
         </div>
       }
