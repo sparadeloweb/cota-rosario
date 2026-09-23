@@ -21,16 +21,12 @@ export default async function OperacionesPage() {
     <AppShell
       activo="/operaciones"
       nivel={riesgo.nivel}
-      lienzo={
-        <div className="flex h-full flex-col">
-          <div className="min-h-0 flex-1">
-            <FloodMap zonas={riesgo.zonas} />
-          </div>
-          <div className="glass-rail max-h-[45%] shrink-0 overflow-y-auto border-t border-rule px-5 py-5 sm:px-6">
-            <h2 className="meta">Red hidrométrica del INA</h2>
-            <div className="mt-4">{rio ? <StationTable estaciones={rio.red} /> : <SourceDown falla={fallaDe("ina")!} />}</div>
-          </div>
-        </div>
+      lienzo={<FloodMap zonas={riesgo.zonas} />}
+      lienzoInferior={
+        <>
+          <h2 className="meta">Red hidrométrica del INA</h2>
+          <div className="mt-4">{rio ? <StationTable estaciones={rio.red} /> : <SourceDown falla={fallaDe("ina")!} />}</div>
+        </>
       }
       rail={
         <div className="flex flex-col">

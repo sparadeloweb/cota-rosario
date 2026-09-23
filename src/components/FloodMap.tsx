@@ -326,7 +326,10 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute bottom-0 left-0 z-[500] p-3 sm:p-4">
+      <div
+        data-map-legend
+        className="pointer-events-none absolute bottom-[calc(var(--sheet-peek)+0.75rem)] left-0 right-14 z-[500] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
+      >
         <div className="pointer-events-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-rule bg-panel/95 px-3 py-2 backdrop-blur">
           {(["normal", "atencion", "alerta", "critico"] as RiskLevel[]).map((nivel) => (
             <span key={nivel} className="flex items-center gap-1.5 text-[11px] text-ink-soft">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BottomSheet } from "@/components/BottomSheet";
 import { RISK_FILL } from "@/components/status";
 import { RISK_LABEL, type RiskLevel } from "@/lib/risk";
 
@@ -13,12 +14,13 @@ interface AppShellProps {
   nivel: RiskLevel;
   rail: ReactNode;
   lienzo: ReactNode;
+  lienzoInferior?: ReactNode;
 }
 
-export function AppShell({ activo, nivel, rail, lienzo }: AppShellProps) {
+export function AppShell({ activo, nivel, rail, lienzo, lienzoInferior }: AppShellProps) {
   return (
     <div className="flex h-full flex-col">
-      <header className="glass-rail z-30 flex shrink-0 items-center gap-6 border-b border-rule px-4 py-2.5 sm:px-5">
+      <header className="glass-rail z-40 flex shrink-0 items-center gap-6 border-b border-rule px-4 py-2.5 sm:px-5">
         <Link href="/" className="flex items-baseline gap-2.5">
           <span className="text-base font-semibold tracking-tight text-ink">Cota</span>
           <span className="meta hidden sm:inline">Rosario</span>
@@ -48,11 +50,20 @@ export function AppShell({ activo, nivel, rail, lienzo }: AppShellProps) {
         </span>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col-reverse lg:flex-row">
-        <aside className="glass-rail z-20 flex w-full shrink-0 flex-col overflow-y-auto border-rule lg:w-[27rem] lg:border-r xl:w-[30rem]">
+      <div className="relative flex min-h-0 flex-1 lg:flex-row">
+        <BottomSheet>
           {rail}
-        </aside>
-        <div className="relative min-h-[18rem] flex-1 lg:min-h-0">{lienzo}</div>
+          {lienzoInferior ? <div className="hairline px-5 py-6 lg:hidden">{lienzoInferior}</div> : null}
+        </BottomSheet>
+
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className="relative min-h-0 flex-1">{lienzo}</div>
+          {lienzoInferior ? (
+            <div className="glass-rail hidden max-h-[45%] shrink-0 overflow-y-auto border-t border-rule px-5 py-5 sm:px-6 lg:block">
+              {lienzoInferior}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --sheet-peek: 152px;
   --ground: #0b0c0e;
   --panel: #141619;
   --panel-soft: #1b1e22;
@@ -60,6 +61,12 @@ body {
     background: color-mix(in srgb, var(--ground) 80%, transparent);
     backdrop-filter: blur(24px) saturate(1.2);
     -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  }
+
+  .glass-sheet {
+    background: color-mix(in srgb, var(--ground) 94%, transparent);
+    backdrop-filter: blur(28px) saturate(1.1);
+    -webkit-backdrop-filter: blur(28px) saturate(1.1);
   }
 
   .meta {
@@ -136,4 +143,19 @@ body {
 .leaflet-popup-content {
   font-size: 12px;
   line-height: 1.5;
+}
+
+@media (max-width: 1023px) {
+  .leaflet-bottom {
+    bottom: calc(var(--sheet-peek) + 0.75rem);
+  }
+
+  .leaflet-control-attribution {
+    display: none;
+  }
+
+  html[data-sheet-open="true"] .leaflet-bottom,
+  html[data-sheet-open="true"] [data-map-legend] {
+    display: none;
+  }
 }

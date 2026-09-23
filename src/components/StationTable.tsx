@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { RiverStation } from "@/lib/river";
 import { hasUsableThresholds } from "@/lib/risk";
 
@@ -22,6 +22,7 @@ export function StationTable({ estaciones }: StationTableProps) {
   const [filtro, setFiltro] = useState<Filtro>("con-umbral");
   const [busqueda, setBusqueda] = useState("");
   const [visibles, setVisibles] = useState(PAGE_SIZE);
+  const inputId = useId();
 
   const filtradas = useMemo(() => {
     const termino = busqueda.trim().toLowerCase();
@@ -61,7 +62,7 @@ export function StationTable({ estaciones }: StationTableProps) {
           </button>
         ))}
         <input
-          id="buscar-estacion"
+          id={inputId}
           value={busqueda}
           onChange={(event) => {
             setBusqueda(event.target.value);
