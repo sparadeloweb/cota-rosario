@@ -8,7 +8,7 @@ import { RISK_FILL } from "@/components/status";
 import { loadEstado } from "@/lib/estado";
 import { RISK_LABEL } from "@/lib/risk";
 
-export const revalidate = 900;
+export const revalidate = 300;
 
 const CONSEJOS: Record<string, string[]> = {
   normal: [
@@ -46,6 +46,7 @@ export default async function VecinosPage() {
     <AppShell
       activo="/"
       nivel={riesgo.nivel}
+      actualizadoEn={new Date().toISOString()}
       lienzo={<FloodMap zonas={riesgo.zonas} buscador />}
       rail={
         <div className="flex flex-col">

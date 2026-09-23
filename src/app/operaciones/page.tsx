@@ -8,7 +8,7 @@ import { StationTable } from "@/components/StationTable";
 import { loadEstado } from "@/lib/estado";
 import { PARANA_GLOFAS_CELL, ROSARIO } from "@/lib/sources";
 
-export const revalidate = 900;
+export const revalidate = 300;
 
 const CAUDAL_DECIMALS = 0;
 
@@ -21,6 +21,7 @@ export default async function OperacionesPage() {
     <AppShell
       activo="/operaciones"
       nivel={riesgo.nivel}
+      actualizadoEn={new Date().toISOString()}
       lienzo={<FloodMap zonas={riesgo.zonas} />}
       lienzoInferior={
         <>

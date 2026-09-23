@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "build:data": "node scripts/build-flood-zones.mjs && node scripts/build-terrain.mjs && node scripts/build-riesgo-climatico.mjs && node scripts/build-defensa-civil.mjs && node scripts/build-modelos.mjs",
+    "build:data": "node scripts/build-flood-zones.mjs && node scripts/build-terrain.mjs && node scripts/build-riesgo-climatico.mjs && node scripts/build-defensa-civil.mjs && node scripts/build-modelos.mjs && node scripts/build-river-history.mjs",
     "tunnel": "cloudflared tunnel --config cloudflared.yml --url http://127.0.0.1:3200"
   },
   "dependencies": {

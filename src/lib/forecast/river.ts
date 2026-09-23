@@ -21,12 +21,19 @@ export interface RatingCurve {
   r2: number;
   sigmaMetros: number;
   n: number;
+  desfaseDias: number;
   proyeccion: ProjectedLevel[];
+}
+
+interface DischargeDay {
+  fecha: string;
+  caudal: number;
 }
 
 const MILLIS_PER_DAY = 86_400_000;
 const BAND_SIGMAS = 2;
 const MIN_POINTS = 5;
+const MAX_LAG_DAYS = 10;
 
 function ols(xs: number[], ys: number[]): { slope: number; intercept: number; sigma: number; r2: number } {
   const n = xs.length;
@@ -40,10 +47,6 @@ function ols(xs: number[], ys: number[]): { slope: number; intercept: number; si
   const sse = residuals.reduce((sum, value) => sum + value ** 2, 0);
   const sst = ys.reduce((sum, value) => sum + (value - meanY) ** 2, 0);
   return { slope, intercept, sigma: Math.sqrt(sse / Math.max(1, n - 2)), r2: sst === 0 ? 0 : 1 - sse / sst };
-}
-
-function dayKey(fecha: string): string {
-  return fecha.slice(0, 10);
 }
 
 function addDays(fecha: string, days: number): string {
@@ -83,23 +86,33 @@ export function trendProjection(serie: RiverReading[], ventanaDias: number, hori
   return { ventanaDias, metrosPorDia: Number(slope.toFixed(3)), sigmaMetros: round(sigma), proyeccion, diasHasta };
 }
 
-export function ratingCurve(serie: RiverReading[], caudalPasado: { fecha: string; caudal: number }[], caudalFuturo: { fecha: string; caudal: number }[]): RatingCurve | null {
-  const nivelPorDia = new Map(serie.map((reading) => [dayKey(reading.fecha), reading.metros]));
-  const pares = caudalPasado
-    .filter((dia) => dia.caudal > 0 && nivelPorDia.has(dia.fecha))
-    .map((dia) => ({ x: Math.log(dia.caudal), y: nivelPorDia.get(dia.fecha) as number }));
+function fitLaggedCurve(serie: RiverReading[], caudalPorDia: Map<string, number>, lag: number) {
+  const pares = serie.flatMap((reading) => {
+    const caudal = caudalPorDia.get(addDays(reading.fecha, -lag));
+    return caudal && caudal > 0 ? [{ x: Math.log(caudal), y: reading.metros }] : [];
+  });
   if (pares.length < MIN_POINTS) {
     return null;
   }
-  const { slope, intercept, sigma, r2 } = ols(
-    pares.map((par) => par.x),
-    pares.map((par) => par.y),
-  );
-  const proyeccion = caudalFuturo
-    .filter((dia) => dia.caudal > 0)
-    .map((dia) => {
-      const metros = intercept + slope * Math.log(dia.caudal);
-      return { fecha: dia.fecha, metros: round(metros), inferior: round(metros - BAND_SIGMAS * sigma), superior: round(metros + BAND_SIGMAS * sigma) };
-    });
-  return { a: Number(intercept.toFixed(3)), b: Number(slope.toFixed(3)), r2: Number(r2.toFixed(3)), sigmaMetros: round(sigma), n: pares.length, proyeccion };
+  return { lag, n: pares.length, ...ols(pares.map((par) => par.x), pares.map((par) => par.y)) };
+}
+
+export function ratingCurve(serie: RiverReading[], caudalPasado: DischargeDay[], caudalFuturo: DischargeDay[]): RatingCurve | null {
+  const caudalPorDia = new Map([...caudalPasado, ...caudalFuturo].map((dia) => [dia.fecha, dia.caudal]));
+  const mejor = Array.from({ length: MAX_LAG_DAYS + 1 }, (_, lag) => fitLaggedCurve(serie, caudalPorDia, lag))
+    .filter((fit): fit is NonNullable<typeof fit> => fit !== null)
+    .reduce<ReturnType<typeof fitLaggedCurve>>((best, fit) => (best === null || fit.r2 > best.r2 ? fit : best), null);
+  if (!mejor) {
+    return null;
+  }
+  const { slope, intercept, sigma, r2, lag, n } = mejor;
+  const proyeccion = caudalFuturo.flatMap((dia) => {
+    const caudal = caudalPorDia.get(addDays(dia.fecha, -lag));
+    if (!caudal || caudal <= 0) {
+      return [];
+    }
+    const metros = intercept + slope * Math.log(caudal);
+    return [{ fecha: dia.fecha, metros: round(metros), inferior: round(metros - BAND_SIGMAS * sigma), superior: round(metros + BAND_SIGMAS * sigma) }];
+  });
+  return { a: Number(intercept.toFixed(3)), b: Number(slope.toFixed(3)), r2: Number(r2.toFixed(3)), sigmaMetros: round(sigma), n, desfaseDias: lag, proyeccion };
 }

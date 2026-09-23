@@ -47,10 +47,13 @@ export function ModelNotes({ predicciones }: ModelNotesProps) {
           <dt className="text-ink">Río · tendencia y curva altura–caudal</dt>
           <dd>
             Tendencia: recta de mínimos cuadrados sobre los últimos {rio.tendencia?.ventanaDias ?? "—"} días de la serie del INA
-            {rio.tendencia ? ` (${(rio.tendencia.metrosPorDia * 100).toFixed(1)} cm/día, σ ${rio.tendencia.sigmaMetros} m)` : ""}. Curva: h = a + b·ln(Q) con Q el caudal GloFAS del
-            mismo día
-            {rio.curva ? ` (a ${rio.curva.a}, b ${rio.curva.b}, R² ${rio.curva.r2}, σ ${rio.curva.sigmaMetros} m, ${rio.curva.n} días)` : ", sin ajuste disponible"}; se aplica al caudal
-            pronosticado a 7 días. GloFAS es un modelo hidrológico global, no una medición: la curva hereda su sesgo.
+            {rio.tendencia ? ` (${(rio.tendencia.metrosPorDia * 100).toFixed(1)} cm/día, σ ${rio.tendencia.sigmaMetros} m)` : ""}. Curva: h = a + b·ln(Q) con Q el caudal GloFAS,
+            probando desfases de 0 a 10 días entre caudal y altura y quedándose con el de mayor R²
+            {rio.curva
+              ? ` (desfase ${rio.curva.desfaseDias} días, a ${rio.curva.a}, b ${rio.curva.b}, R² ${rio.curva.r2}, σ ${rio.curva.sigmaMetros} m, ${rio.curva.n} días)`
+              : ", sin ajuste disponible"}
+            ; se aplica al caudal pronosticado a 7 días. GloFAS es un modelo hidrológico global, no una medición: cuando el R² es bajo la curva no sigue
+            la escala de Rosario y la tendencia pesa más.
           </dd>
         </div>
       ) : null}

@@ -21,6 +21,22 @@ Tres modelos ajustados en `npm run build:data` (`scripts/build-modelos.mjs`) y e
 - **Lluvia extrema**: Gumbel por momentos sobre el máximo diario de cada año desde 1940; devuelve el período de retorno del día más cargado del pronóstico y los cuantiles de 2 a 100 años. ERA5 suaviza las tormentas convectivas, así que los extremos reales de estación son algo mayores.
 - **Río**: recta de mínimos cuadrados sobre los últimos 14 días del INA (ritmo y días hasta alerta/evacuación) y curva altura–caudal `h = a + b·ln(Q)` ajustada sobre 210 días de INA contra GloFAS, aplicada al caudal pronosticado a 7 días. Bandas de ±2σ.
 
+El GeoServer del INA tarda proporcionalmente a los días pedidos (14 días ≈ 3 s, 60 ≈ 22 s, 210 ≈ 55 s) y a veces cae con `Cannot get a connection, pool error`. Por eso la serie larga se guarda como instantánea (`scripts/build-river-history.mjs` → `public/data/rio-historia.json`), en cada pedido se fusiona con los últimos 14 días en vivo, y cuando la instantánea queda más de 3 días atrás el servidor la renueva en segundo plano sin bloquear la vista.
+
+## Qué tan al día está cada dato
+
+| Dato | Cadencia | Cómo se actualiza |
+|---|---|---|
+| Altura del Paraná en Rosario (INA) | Una lectura diaria, publicada con hasta un día de demora | En vivo, caché de 5 min |
+| Red de 357 estaciones (INA) | Horaria en la mayoría | En vivo, caché de 5 min |
+| Pronóstico de lluvia (Open-Meteo) | Corridas horarias | En vivo, caché de 5 min |
+| Caudal GloFAS | Diario | En vivo, caché de 5 min |
+| Lluvia histórica (ERA5 vía Open-Meteo) | Llega hasta el día actual | Se reajusta con `build:data` |
+| Intervenciones de Defensa Civil | Publicadas hasta enero de 2024; el municipio no cargó más | Se reajusta con `build:data` cuando publiquen |
+| Áreas inundables, riesgo climático 2024, distritos, barrios | Capas estáticas | `build:data` |
+
+Toda vista abierta se renueva sola cada 5 minutos y al volver a la pestaña; el header muestra la hora de generación.
+
 ## Correr
 
 ```bash

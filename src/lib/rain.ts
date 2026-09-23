@@ -7,7 +7,7 @@ const FORECAST_DAYS = 3;
 const OUTLOOK_DAYS = 7;
 const DISCHARGE_FORECAST_DAYS = 7;
 const WINDOW_HOURS = 2;
-const REVALIDATE_SECONDS = 900;
+const REVALIDATE_SECONDS = 300;
 
 export interface RainHour {
   hora: string;
