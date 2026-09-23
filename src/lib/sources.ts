@@ -50,7 +50,7 @@ export const SOURCES: Record<string, SourceRef> = {
   terrain: {
     id: "terrain",
     organismo: "Modelo propio sobre Mapzen Terrain Tiles (SRTM, GMTED2010, ETOPO1)",
-    descripcion: "Puntos bajos del terreno: cuánto más bajo está cada punto que su entorno. No es una designación oficial",
+    descripcion: "Puntos bajos del terreno: cuánto más bajo está cada punto que la mediana de su entorno. No es una designación oficial",
     endpoint: "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
     portal: "https://registry.opendata.aws/terrain-tiles/",
     licencia: "Dominio público y CC0 según fuente · procesado en este panel",

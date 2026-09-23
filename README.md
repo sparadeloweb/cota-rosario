@@ -33,7 +33,7 @@ Imprime una URL `*.trycloudflare.com`. Usa `cloudflared.yml` con un `ingress` ex
 - GloFAS en las coordenadas del centro devuelve 0,03 m³/s: esa celda no tiene cauce. Se consulta la celda del canal (-32,975 / -60,675), que devuelve el caudal real (~17.000 m³/s).
 - 265 estaciones del INA publican `nivel_de_alerta: 0` como relleno. Los umbrales sólo se comparan cuando son mayores a cero.
 - El archivo municipal se llama "Saladillo" pero tres cuartos de sus polígonos son del Ludueña.
-- El modelo de terreno mide cuánto más bajo está cada punto que su entorno de 321 m: encuentra pozos locales (macrocentro), no llanuras de inundación. Por eso marca la zona 1 del Ludueña a 1,94 m bajo su entorno y deja en cero el valle del Saladillo, que es bajo pero plano.
+- El modelo de terreno mide cuánto más bajo está cada punto que la **mediana** de su entorno de 321 m. Se usa la mediana y no la media porque SRTM es un modelo de superficie: mide techos, y con la media una calle plana del microcentro leía 3 m "por debajo" de las torres de al lado. Encuentra pozos locales, no llanuras de inundación: por eso deja en cero el valle del Saladillo, que es bajo pero plano.
 - Cada fuente falla por separado: si un organismo no responde, el bloque queda vacío con la hora de la falla. Nunca un 500 ni un falso "sin riesgo".
 
 Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103.

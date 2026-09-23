@@ -14,7 +14,7 @@ const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const ROSARIO_VIEWBOX = "-60.79,-32.83,-60.58,-33.06";
 const TERRAIN_OPACITY = 0.8;
 const TERRAIN_COLOR = "#d6a04a";
-const LOW_POINT_MIN_M = 0.3;
+const LOW_POINT_MIN_M = 1;
 
 interface FloodMapProps {
   zonas: { zona: string; nivel: RiskLevel }[];
@@ -27,14 +27,17 @@ interface TerrainMeta {
   alto: number;
   escalaMaximaMetros: number;
   ventanaMetros: number;
+  rojoEdificado: number;
 }
+
+type LecturaTerreno = { estado: "bajo" | "plano" | "edificado"; metros: number } | null;
 
 interface Hallazgo {
   etiqueta: string;
   zona?: string;
   nivel?: RiskLevel;
   dentro: boolean;
-  hundimiento: number | null;
+  terreno: LecturaTerreno;
 }
 
 function pointInPolygon(lat: number, lon: number, rings: number[][][]): boolean {
@@ -170,21 +173,27 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
     };
   }, [collection, terrain, nivelDeZona, mostrarTerreno]);
 
-  const hundimientoEn = async (lat: number, lon: number): Promise<number | null> => {
+  const lecturaTerrenoEn = async (lat: number, lon: number): Promise<LecturaTerreno> => {
     if (!terrain) {
       return null;
     }
     if (!terrainPixelsRef.current) {
       terrainPixelsRef.current = await loadTerrainPixels(terrain);
     }
-    const { bounds, ancho, alto, escalaMaximaMetros } = terrain;
+    const { bounds, ancho, alto, escalaMaximaMetros, rojoEdificado } = terrain;
     const col = Math.floor(((lon - bounds.west) / (bounds.east - bounds.west)) * ancho);
     const row = Math.floor(((mercator(bounds.north) - mercator(lat)) / (mercator(bounds.north) - mercator(bounds.south))) * alto);
     if (col < 0 || row < 0 || col >= ancho || row >= alto) {
       return null;
     }
-    const alpha = terrainPixelsRef.current[(row * ancho + col) * 4 + 3];
-    return (alpha / 255) * escalaMaximaMetros;
+    const offset = (row * ancho + col) * 4;
+    const red = terrainPixelsRef.current[offset];
+    const alpha = terrainPixelsRef.current[offset + 3];
+    if (alpha === 0 && red === rojoEdificado) {
+      return { estado: "edificado", metros: 0 };
+    }
+    const metros = (alpha / 255) * escalaMaximaMetros;
+    return { estado: metros >= LOW_POINT_MIN_M ? "bajo" : "plano", metros };
   };
 
   const buscar = async (event: React.FormEvent) => {
@@ -214,7 +223,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       const lon = Number(results[0].lon);
       const match = collection.features.find((feature) => pointInPolygon(lat, lon, feature.geometry.coordinates));
       const zona = (match?.properties as { zona?: string } | undefined)?.zona?.trim();
-      const hundimiento = await hundimientoEn(lat, lon).catch(() => null);
+      const terreno = await lecturaTerrenoEn(lat, lon).catch(() => null);
 
       const map = mapRef.current;
       if (map) {
@@ -235,7 +244,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
         zona,
         nivel: zona ? nivelDeZona(zona) : undefined,
         dentro: Boolean(match),
-        hundimiento,
+        terreno,
       });
     } catch {
       setError("El buscador de direcciones no respondió. Probá de nuevo en un momento.");
@@ -243,8 +252,6 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
       setBuscando(false);
     }
   };
-
-  const esPuntoBajo = hallazgo?.hundimiento !== null && hallazgo?.hundimiento !== undefined && hallazgo.hundimiento >= LOW_POINT_MIN_M;
 
   return (
     <div className="relative isolate h-full w-full">
@@ -285,16 +292,21 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
                 ) : (
                   <p className="leading-relaxed text-ink">Fuera de los polígonos oficiales, que cubren el Ludueña y el Saladillo.</p>
                 )}
-                {hallazgo.hundimiento !== null ? (
+                {hallazgo.terreno ? (
                   <p className="leading-relaxed text-ink-soft">
-                    {esPuntoBajo ? (
+                    {hallazgo.terreno.estado === "bajo" ? (
                       <>
                         Según el modelo de terreno está{" "}
-                        <span className="readout text-ink">{hallazgo.hundimiento.toFixed(1)} m</span> por debajo de su entorno de{" "}
+                        <span className="readout text-ink">{hallazgo.terreno.metros.toFixed(1)} m</span> por debajo de la mediana de su entorno de{" "}
                         {terrain?.ventanaMetros} m: ahí el agua tiende a juntarse.
                       </>
+                    ) : hallazgo.terreno.estado === "plano" ? (
+                      <>Según el modelo de terreno no es un punto bajo respecto de la mediana de su entorno de {terrain?.ventanaMetros} m.</>
                     ) : (
-                      <>Según el modelo de terreno no es un punto bajo respecto de su entorno de {terrain?.ventanaMetros} m.</>
+                      <>
+                        Zona densamente edificada: el modelo de superficie mide techos y no distingue la calle de los edificios, así que acá
+                        no da una lectura confiable.
+                      </>
                     )}
                   </p>
                 ) : null}
