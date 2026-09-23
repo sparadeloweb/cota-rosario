@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:data": "node scripts/build-flood-zones.mjs && node scripts/build-terrain.mjs",
+    "tunnel": "cloudflared tunnel --config cloudflared.yml --url http://127.0.0.1:3200"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

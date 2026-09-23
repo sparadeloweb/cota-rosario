@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cota · riesgo hídrico de Rosario
 
-## Getting Started
+Panel que cruza tres fuentes públicas en un solo nivel de riesgo explicable, con cada número enlazado a su origen y hora de consulta.
 
-First, run the development server:
+| Fuente | Qué aporta |
+|---|---|
+| INA · GeoServer WFS público | Altura del Paraná en Rosario, tendencia y los niveles oficiales de alerta (5,00 m) y evacuación (5,25 m), más la red completa de 357 estaciones |
+| Open-Meteo | Precipitación horaria pronosticada; el modelo mira la ventana de 2 h más cargada de las próximas 48 |
+| Municipalidad de Rosario | Polígonos oficiales de áreas inundables: 67 en la cuenca del Ludueña y 20 en la del Saladillo |
+| Mapzen Terrain Tiles | Modelo propio de puntos bajos para el resto de la ciudad. No es dato oficial y está marcado como tal |
+
+Dos vistas: `/` para vecinos (¿hay riesgo hoy, y dónde?) y `/operaciones` (red completa, caudal GloFAS, simulador de escenarios). `/api/estado` devuelve el cruce en JSON: 200 completo, 206 si una fuente no respondió, 503 si ninguna.
+
+## Correr
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run build:data     # polígonos municipales y capa de terreno → public/data
+npm run build
+npm start -- -p 3200
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Exponerlo con Cloudflare
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run tunnel
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Imprime una URL `*.trycloudflare.com`. Usa `cloudflared.yml` con un `ingress` explícito: en cloudflared 2026.9 el atajo `--url` registra el túnel pero no enruta los pedidos y responde 404 él mismo.
 
-## Learn More
+## Datos y sus trampas
 
-To learn more about Next.js, take a look at the following resources:
+- GloFAS en las coordenadas del centro devuelve 0,03 m³/s: esa celda no tiene cauce. Se consulta la celda del canal (-32,975 / -60,675), que devuelve el caudal real (~17.000 m³/s).
+- 265 estaciones del INA publican `nivel_de_alerta: 0` como relleno. Los umbrales sólo se comparan cuando son mayores a cero.
+- El archivo municipal se llama "Saladillo" pero tres cuartos de sus polígonos son del Ludueña.
+- El modelo de terreno mide cuánto más bajo está cada punto que su entorno de 321 m: encuentra pozos locales (macrocentro), no llanuras de inundación. Por eso marca la zona 1 del Ludueña a 1,94 m bajo su entorno y deja en cero el valle del Saladillo, que es bajo pero plano.
+- Cada fuente falla por separado: si un organismo no responde, el bloque queda vacío con la hora de la falla. Nunca un 500 ni un falso "sin riesgo".
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103.
