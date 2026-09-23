@@ -301,8 +301,12 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
                     {hallazgo.terreno.estado === "bajo" ? (
                       <>
                         Según el modelo de terreno está{" "}
-                        <span className="readout text-ink">{hallazgo.terreno.metros.toFixed(1)} m</span> por debajo de la mediana de su entorno de{" "}
-                        {terrain?.ventanaMetros} m: ahí el agua tiende a juntarse.
+                        <span className="readout text-ink">
+                          {terrain && hallazgo.terreno.metros >= terrain.escalaMaximaMetros
+                            ? `más de ${terrain.escalaMaximaMetros} m`
+                            : `${hallazgo.terreno.metros.toFixed(1)} m`}
+                        </span>{" "}
+                        por debajo de la mediana de su entorno de {terrain?.ventanaMetros} m: ahí el agua tiende a juntarse.
                       </>
                     ) : hallazgo.terreno.estado === "plano" ? (
                       <>Según el modelo de terreno no es un punto bajo respecto de la mediana de su entorno de {terrain?.ventanaMetros} m.</>
