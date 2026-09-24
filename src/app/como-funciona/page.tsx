@@ -66,8 +66,9 @@ export default async function ComoFuncionaPage() {
     {
       id: "portada",
       titulo: "Portada",
+      resplandor: true,
       contenido: (
-        <div className="deck-glow -m-10 flex flex-col gap-8 p-10">
+        <div className="flex flex-col gap-8">
           <span className="readout text-xs text-ink-faint">Guía para cualquiera · sin saber de clima ni de ríos</span>
           <h1 className="text-5xl font-semibold leading-[0.95] tracking-tight text-ink sm:text-7xl lg:text-8xl">
             Cómo funciona
@@ -225,8 +226,9 @@ export default async function ComoFuncionaPage() {
     {
       id: "cierre",
       titulo: "Cierre",
+      resplandor: true,
       contenido: (
-        <div className="deck-glow -m-10 flex flex-col gap-8 p-10">
+        <div className="flex flex-col gap-8">
           <span className="readout text-xs text-ink-faint">07</span>
           <h2 className="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-6xl">
             Entender antes,

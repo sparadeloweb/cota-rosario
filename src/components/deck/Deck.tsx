@@ -6,6 +6,7 @@ export interface DeckSlide {
   id: string;
   titulo: string;
   contenido: ReactNode;
+  resplandor?: boolean;
 }
 
 interface DeckProps {
@@ -92,6 +93,7 @@ export function Deck({ slides }: DeckProps) {
             className="deck-slide relative flex snap-start flex-col justify-center px-5 pb-24 pt-14 sm:px-10 lg:px-16"
             style={{ minHeight: "100%" }}
           >
+            {slide.resplandor ? <div className="deck-glow pointer-events-none absolute inset-0" aria-hidden="true" /> : null}
             <div className="deck-grid pointer-events-none absolute inset-0" aria-hidden="true" />
             <div className="relative mx-auto w-full max-w-5xl">{slide.contenido}</div>
           </section>
