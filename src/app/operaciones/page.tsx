@@ -1,5 +1,9 @@
 import { AppShell } from "@/components/AppShell";
 import { Docs, DocsSection } from "@/components/Docs";
+import { KpiGrid, type KpiTile } from "@/components/kpis/KpiGrid";
+import { RainBalanceBars } from "@/components/kpis/RainBalanceBars";
+import { Sparkline } from "@/components/kpis/Sparkline";
+import { UpstreamStrip } from "@/components/kpis/UpstreamStrip";
 import { FloodMap } from "@/components/FloodMap";
 import { Provenance } from "@/components/Provenance";
 import { RiverGauge } from "@/components/RiverGauge";
@@ -9,14 +13,80 @@ import { SourceDown } from "@/components/SourceDown";
 import { StationTable } from "@/components/StationTable";
 import { WeatherBadge } from "@/components/WeatherBadge";
 import { loadEstado } from "@/lib/estado";
+import { loadKpis, type Kpis } from "@/lib/kpis";
 import { PARANA_GLOFAS_CELL, ROSARIO } from "@/lib/sources";
 
 export const revalidate = 300;
 
 const CAUDAL_DECIMALS = 0;
+const PERCENT = 100;
+
+function signo(valor: number | null, unidad: string): string {
+  if (valor === null) {
+    return "—";
+  }
+  return `${valor > 0 ? "+" : ""}${valor} ${unidad}`;
+}
+
+function tilesRio(kpis: Kpis): KpiTile[] {
+  const { rio } = kpis;
+  if (!rio) {
+    return [];
+  }
+  const margen = rio.margenAlertaM;
+  return [
+    { etiqueta: "Río ahora", valor: rio.actual.toFixed(2), unidad: "m", detalle: `${signo(rio.variacion24hCm, "cm")} en 24 h · ${signo(rio.variacion7dCm, "cm")} en 7 días` },
+    {
+      etiqueta: "Margen a alerta",
+      valor: margen === null ? "—" : margen.toFixed(2),
+      unidad: "m",
+      detalle: rio.diasHastaAlerta === null ? (rio.ritmoCmDia === null ? "sin tendencia" : `${rio.ritmoCmDia} cm/día · no la alcanza a este ritmo`) : `${rio.ritmoCmDia} cm/día · alerta en ${rio.diasHastaAlerta} días`,
+      tono: margen !== null && margen <= 0.5 ? "atencion" : "neutro",
+    },
+    { etiqueta: "Frente a los últimos 210 días", valor: `p${rio.percentil210}`, detalle: `mín ${rio.minimo210.metros.toFixed(2)} · máx ${rio.maximo210.metros.toFixed(2)} m` },
+  ];
+}
+
+function tilesLluvia(kpis: Kpis): KpiTile[] {
+  const { lluvia } = kpis;
+  if (!lluvia) {
+    return [];
+  }
+  const { balance, mes, mesNormalMm } = lluvia;
+  const porcentajeMes = mes && mesNormalMm ? Math.round((mes.acumuladoMm / mesNormalMm) * PERCENT) : null;
+  return [
+    { etiqueta: "Lluvia caída", valor: balance.caido24h.toFixed(0), unidad: "mm / 24 h", detalle: `${balance.caido72h.toFixed(0)} mm en 72 h` },
+    { etiqueta: "Lluvia prevista", valor: balance.prevista48h.toFixed(0), unidad: "mm / 48 h", detalle: `${balance.prevista24h.toFixed(0)} mm en 24 h · prob. máx ${balance.probabilidadMax24h} %`, tono: balance.prevista48h >= 30 ? "atencion" : "neutro" },
+    {
+      etiqueta: "Mes en curso",
+      valor: mes ? mes.acumuladoMm.toFixed(0) : "—",
+      unidad: "mm",
+      detalle: porcentajeMes === null ? "sin climatología" : `${porcentajeMes} % de un mes normal (${mesNormalMm} mm)`,
+    },
+  ];
+}
+
+function tilesRedYReportes(kpis: Kpis): KpiTile[] {
+  const { red, reportes } = kpis;
+  const tipoTop = [...reportes.porTipo].sort((a, b) => b.cantidad - a.cantidad)[0];
+  return [
+    ...(red
+      ? [
+          { etiqueta: "Estaciones sobre alerta", valor: String(red.sobreAlerta), detalle: `${red.sobreEvacuacion} sobre evacuación · de ${red.conUmbral} con umbral`, tono: red.sobreAlerta > 0 ? ("alerta" as const) : ("neutro" as const) },
+          { etiqueta: "Estaciones creciendo", valor: String(red.creciendo), detalle: `de ${red.conUmbral} con umbral válido` },
+        ]
+      : []),
+    {
+      etiqueta: "Reportes de vecinos",
+      valor: String(reportes.activos),
+      detalle: reportes.activos === 0 ? "ninguno en 24 h" : `${reportes.ultimas6h} en las últimas 6 h · ${reportes.confirmaciones} confirmaciones${tipoTop && tipoTop.cantidad > 0 ? ` · ${tipoTop.etiqueta.toLowerCase()}` : ""}`,
+      tono: reportes.ultimas6h > 0 ? ("atencion" as const) : ("neutro" as const),
+    },
+  ];
+}
 
 export default async function OperacionesPage() {
-  const { riesgo, rio, lluvia, caudal, clima, fallas } = await loadEstado();
+  const [{ riesgo, rio, lluvia, caudal, clima, fallas }, kpis] = await Promise.all([loadEstado(), loadKpis()]);
   const fallaDe = (fuente: string) => fallas.find((falla) => falla.fuente === fuente);
   const caudalMaximo = caudal ? Math.max(...caudal.dias.map((dia) => dia.caudal), 1) : 1;
 
@@ -43,6 +113,72 @@ export default async function OperacionesPage() {
                 escenarios sobre el mapa.
               </p>
             </section>
+
+            <section className="hairline px-5 py-6 sm:px-6">
+              <h2 className="meta">Indicadores</h2>
+              <div className="mt-4 flex flex-col gap-5">
+                <KpiGrid tiles={[...tilesRio(kpis), ...tilesLluvia(kpis), ...tilesRedYReportes(kpis)]}>
+                  {kpis.rio ? (
+                    <div className="flex flex-col gap-1">
+                      <Sparkline
+                        valores={kpis.rio.sparkline.map((lectura) => lectura.metros)}
+                        marcas={rio?.estacion.alerta ? [{ valor: rio.estacion.alerta, color: "var(--alerta)" }] : []}
+                      />
+                      <span className="meta">altura del río, últimos 60 días · línea punteada: alerta</span>
+                    </div>
+                  ) : null}
+                </KpiGrid>
+              </div>
+            </section>
+
+            {kpis.aguasArriba.length ? (
+              <section className="hairline px-5 py-6 sm:px-6">
+                <h2 className="meta">Aguas arriba · Paraná</h2>
+                <p className="mt-2 text-xs leading-relaxed text-ink-soft">
+                  De Corrientes a San Nicolás: cuánto de su nivel de alerta tiene ocupado cada estación y hacia dónde va. Lo que sube arriba llega días después.
+                </p>
+                <div className="mt-4">
+                  <UpstreamStrip estaciones={kpis.aguasArriba} />
+                </div>
+              </section>
+            ) : null}
+
+            {kpis.lluvia ? (
+              <section className="hairline px-5 py-6 sm:px-6">
+                <h2 className="meta">Lluvia caída y prevista</h2>
+                <div className="mt-4">
+                  <RainBalanceBars balance={kpis.lluvia.balance} />
+                </div>
+                <p className="meta mt-3">lleno: caída · tenue: prevista · seis días alrededor de hoy</p>
+              </section>
+            ) : null}
+
+            {kpis.reportes.activos > 0 ? (
+              <section className="hairline px-5 py-6 sm:px-6">
+                <h2 className="meta">Reportes de vecinos · 24 h</h2>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <ul className="flex flex-col gap-1.5 text-xs">
+                    {kpis.reportes.porTipo.map((tipo) => (
+                      <li key={tipo.tipo} className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-2 text-ink-soft">
+                          <span className="size-2 rounded-full" style={{ background: tipo.color }} aria-hidden="true" />
+                          {tipo.etiqueta}
+                        </span>
+                        <span className="readout text-ink">{tipo.cantidad}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <ul className="flex flex-col gap-1.5 text-xs">
+                    {kpis.reportes.porDistrito.map((distrito) => (
+                      <li key={distrito.distrito} className="flex items-center justify-between gap-3">
+                        <span className="text-ink-soft">{distrito.distrito.charAt(0) + distrito.distrito.slice(1).toLowerCase()}</span>
+                        <span className="readout text-ink">{distrito.cantidad}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            ) : null}
 
             <section className="hairline px-5 py-6 sm:px-6">
               <h2 className="meta">Simulador de escenarios</h2>
@@ -96,6 +232,14 @@ export default async function OperacionesPage() {
             </section>
 
             <Docs>
+              <DocsSection titulo="Los indicadores">
+                <p className="text-xs leading-relaxed text-ink-soft">
+                  Río: variaciones sobre la serie diaria del INA; el percentil compara la altura de hoy con los últimos 210 días; el ritmo es una recta de
+                  mínimos cuadrados sobre 14 días. Lluvia caída: horas pasadas del modelo de Open-Meteo, no un pluviómetro de Rosario. Mes en curso:
+                  archivo ERA5 hasta hoy contra la media 1940–2025 del mismo mes. Aguas arriba: ocupación = altura ÷ nivel de alerta de cada estación.
+                  Reportes: los cargados por vecinos en las últimas 24 h, ubicados por distrito. Todo en JSON en <span className="readout">/api/kpis</span>.
+                </p>
+              </DocsSection>
               <DocsSection titulo="El simulador">
                 <p className="text-xs leading-relaxed text-ink-soft">
                   Usa exactamente el mismo modelo que la vista pública: mover los controles pinta el mapa con el escenario, no altera ningún dato real ni

@@ -187,3 +187,94 @@ export async function fetchRainOutlook(): Promise<RainOutlook> {
     consultadoEn: new Date().toISOString(),
   };
 }
+
+const ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive";
+const BALANCE_PAST_DAYS = 3;
+const BALANCE_FORECAST_DAYS = 3;
+const HOURS_24 = 24;
+const HOURS_48 = 48;
+const HOURS_72 = 72;
+
+export interface RainBalance {
+  ahoraLocal: string;
+  caido24h: number;
+  caido72h: number;
+  prevista24h: number;
+  prevista48h: number;
+  probabilidadMax24h: number;
+  porDia: { fecha: string; caidoMm: number; previstoMm: number }[];
+  consultadoEn: string;
+}
+
+export interface MonthRain {
+  mes: string;
+  acumuladoMm: number;
+  diasConDato: number;
+  consultadoEn: string;
+}
+
+interface BalanceResponse {
+  hourly: { time: string[]; precipitation: (number | null)[]; precipitation_probability: (number | null)[] };
+}
+
+interface ArchiveResponse {
+  daily: { time: string[]; precipitation_sum: (number | null)[] };
+}
+
+function localNowKey(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false }).formatToParts(new Date());
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour") === "24" ? "00" : get("hour")}`;
+}
+
+function sum(values: number[]): number {
+  return Number(values.reduce((total, value) => total + value, 0).toFixed(1));
+}
+
+export async function fetchRainBalance(): Promise<RainBalance> {
+  const params = new URLSearchParams({
+    latitude: String(ROSARIO.lat),
+    longitude: String(ROSARIO.lon),
+    hourly: "precipitation,precipitation_probability",
+    past_days: String(BALANCE_PAST_DAYS),
+    forecast_days: String(BALANCE_FORECAST_DAYS),
+    timezone: TIMEZONE,
+  });
+  const response = await fetch(`${FORECAST_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
+  if (!response.ok) {
+    throw new Error(`Open-Meteo respondió ${response.status}`);
+  }
+  const data = (await response.json()) as BalanceResponse;
+  const ahora = localNowKey();
+  const horas = data.hourly.time.map((hora, index) => ({ hora, mm: data.hourly.precipitation[index] ?? 0, prob: data.hourly.precipitation_probability[index] ?? 0 }));
+  const pasadas = horas.filter((hora) => hora.hora.slice(0, 13) < ahora);
+  const futuras = horas.filter((hora) => hora.hora.slice(0, 13) >= ahora);
+  const dias = [...new Set(horas.map((hora) => hora.hora.slice(0, 10)))].sort();
+  return {
+    ahoraLocal: ahora,
+    caido24h: sum(pasadas.slice(-HOURS_24).map((hora) => hora.mm)),
+    caido72h: sum(pasadas.slice(-HOURS_72).map((hora) => hora.mm)),
+    prevista24h: sum(futuras.slice(0, HOURS_24).map((hora) => hora.mm)),
+    prevista48h: sum(futuras.slice(0, HOURS_48).map((hora) => hora.mm)),
+    probabilidadMax24h: Math.max(0, ...futuras.slice(0, HOURS_24).map((hora) => hora.prob)),
+    porDia: dias.map((fecha) => ({
+      fecha,
+      caidoMm: sum(pasadas.filter((hora) => hora.hora.startsWith(fecha)).map((hora) => hora.mm)),
+      previstoMm: sum(futuras.filter((hora) => hora.hora.startsWith(fecha)).map((hora) => hora.mm)),
+    })),
+    consultadoEn: new Date().toISOString(),
+  };
+}
+
+export async function fetchMonthToDateRain(): Promise<MonthRain> {
+  const hoy = localNowKey().slice(0, 10);
+  const inicio = `${hoy.slice(0, 7)}-01`;
+  const params = new URLSearchParams({ latitude: String(ROSARIO.lat), longitude: String(ROSARIO.lon), start_date: inicio, end_date: hoy, daily: "precipitation_sum", timezone: TIMEZONE });
+  const response = await fetch(`${ARCHIVE_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
+  if (!response.ok) {
+    throw new Error(`Open-Meteo archivo respondió ${response.status}`);
+  }
+  const data = (await response.json()) as ArchiveResponse;
+  const valores = data.daily.precipitation_sum.filter((value): value is number => value !== null);
+  return { mes: hoy.slice(0, 7), acumuladoMm: sum(valores), diasConDato: valores.length, consultadoEn: new Date().toISOString() };
+}
