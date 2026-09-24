@@ -150,7 +150,7 @@ function buildNetwork(red: RiverStation[]): NetworkKpis {
     total: red.length,
     conUmbral: conUmbral.length,
     sobreAlerta: enAlerta.length,
-    sobreEvacuacion: conUmbral.filter((station) => station.evacuacion !== null && station.metros >= station.evacuacion).length,
+    sobreEvacuacion: conUmbral.filter((station) => station.evacuacion !== null && station.evacuacion > 0 && station.metros >= station.evacuacion).length,
     creciendo: conUmbral.filter((station) => station.tendencia.toLowerCase() === "crece").length,
     enAlerta: enAlerta.sort((a, b) => b.metros / (b.alerta ?? 1) - a.metros / (a.alerta ?? 1)),
   };
