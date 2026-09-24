@@ -51,7 +51,7 @@ export default async function VecinosPage() {
       activo="/"
       nivel={riesgo.nivel}
       actualizadoEn={new Date().toISOString()}
-      lienzo={<FloodMap zonas={riesgo.zonas} buscador reportes esquina={<WeatherBadge clima={clima} />} />}
+      lienzo={<FloodMap zonas={riesgo.zonas} buscador reportes reportar esquina={<WeatherBadge clima={clima} />} />}
       rail={
         <div className="flex flex-col">
           <section className="px-5 py-6 sm:px-6">

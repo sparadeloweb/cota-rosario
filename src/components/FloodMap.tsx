@@ -55,6 +55,7 @@ interface FloodMapProps {
   zonas: { zona: string; nivel: RiskLevel }[];
   buscador?: boolean;
   reportes?: boolean;
+  reportar?: boolean;
   esquina?: ReactNode;
 }
 
@@ -77,7 +78,7 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
-export function FloodMap({ zonas, buscador = false, reportes = false, esquina }: FloodMapProps) {
+export function FloodMap({ zonas, buscador = false, reportes = false, reportar = false, esquina }: FloodMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const zonesLayerRef = useRef<import("leaflet").GeoJSON | null>(null);
@@ -378,7 +379,7 @@ export function FloodMap({ zonas, buscador = false, reportes = false, esquina }:
         </div>
 
         <div className="flex flex-col items-start gap-2 sm:flex-row">
-          {reportes ? <ReportPanel estado={estadoReportes} /> : null}
+          {reportes ? <ReportPanel estado={estadoReportes} soloLectura={!reportar} /> : null}
           {escenario ? (
             <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-atencion/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur sm:mx-auto">
               <span className="size-2 rounded-full" style={{ background: RISK_FILL[escenario.nivel] }} aria-hidden="true" />

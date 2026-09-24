@@ -7,9 +7,10 @@ const LIST_LIMIT = 8;
 
 interface ReportPanelProps {
   estado: ReportsState;
+  soloLectura?: boolean;
 }
 
-export function ReportPanel({ estado }: ReportPanelProps) {
+export function ReportPanel({ estado, soloLectura = false }: ReportPanelProps) {
   const { reportes, colocando, borrador, enviando, error, empezarColocacion, cancelar, actualizarBorrador, enviar, confirmar } = estado;
   const [listaAbierta, setListaAbierta] = useState(false);
 
@@ -73,23 +74,39 @@ export function ReportPanel({ estado }: ReportPanelProps) {
           </div>
         ) : (
           <div className="flex items-center gap-2 px-2 py-2">
-            <button
-              type="button"
-              onClick={empezarColocacion}
-              className="flex flex-1 items-center gap-2 rounded-md border border-rule px-3 py-1.5 text-sm text-ink transition-colors hover:border-ink-soft"
-            >
-              <span className="size-2 rounded-full bg-water" aria-hidden="true" />
-              Reportar agua en mi cuadra
-            </button>
-            <button
-              type="button"
-              onClick={() => setListaAbierta((current) => !current)}
-              aria-expanded={listaAbierta}
-              className="readout shrink-0 rounded-md border border-rule px-2 py-1.5 text-xs text-ink-soft transition-colors hover:text-ink"
-              title={`Reportes de vecinos en las últimas ${REPORT_TTL_HOURS} h`}
-            >
-              {reportes.length}
-            </button>
+            {soloLectura ? (
+              <button
+                type="button"
+                onClick={() => setListaAbierta((current) => !current)}
+                aria-expanded={listaAbierta}
+                className="flex flex-1 items-center gap-2 rounded-md border border-rule px-3 py-1.5 text-sm text-ink transition-colors hover:border-ink-soft"
+                title={`Reportes de vecinos en las últimas ${REPORT_TTL_HOURS} h`}
+              >
+                <span className="size-2 rounded-full bg-water" aria-hidden="true" />
+                Reportes de vecinos
+                <span className="readout ml-auto text-xs text-ink-soft">{reportes.length}</span>
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={empezarColocacion}
+                  className="flex flex-1 items-center gap-2 rounded-md border border-rule px-3 py-1.5 text-sm text-ink transition-colors hover:border-ink-soft"
+                >
+                  <span className="size-2 rounded-full bg-water" aria-hidden="true" />
+                  Reportar agua en mi cuadra
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setListaAbierta((current) => !current)}
+                  aria-expanded={listaAbierta}
+                  className="readout shrink-0 rounded-md border border-rule px-2 py-1.5 text-xs text-ink-soft transition-colors hover:text-ink"
+                  title={`Reportes de vecinos en las últimas ${REPORT_TTL_HOURS} h`}
+                >
+                  {reportes.length}
+                </button>
+              </>
+            )}
           </div>
         )}
         {error ? <p className="border-t border-rule px-3 py-2 text-xs text-alerta">{error}</p> : null}
