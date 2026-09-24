@@ -2,6 +2,7 @@ import { AppShell } from "@/components/AppShell";
 import { Docs, DocsSection } from "@/components/Docs";
 import { KpiGrid, type KpiTile } from "@/components/kpis/KpiGrid";
 import { RainBalanceBars } from "@/components/kpis/RainBalanceBars";
+import { Recomendaciones } from "@/components/Recomendaciones";
 import { Sparkline } from "@/components/kpis/Sparkline";
 import { UpstreamStrip } from "@/components/kpis/UpstreamStrip";
 import { FloodMap } from "@/components/FloodMap";
@@ -14,6 +15,8 @@ import { StationTable } from "@/components/StationTable";
 import { WeatherBadge } from "@/components/WeatherBadge";
 import { loadEstado } from "@/lib/estado";
 import { loadKpis, type Kpis } from "@/lib/kpis";
+import { loadPredicciones } from "@/lib/predicciones";
+import { buildParte, buildRecomendaciones } from "@/lib/recomendaciones";
 import { PARANA_GLOFAS_CELL, ROSARIO } from "@/lib/sources";
 
 export const revalidate = 300;
@@ -86,7 +89,10 @@ function tilesRedYReportes(kpis: Kpis): KpiTile[] {
 }
 
 export default async function OperacionesPage() {
-  const [{ riesgo, rio, lluvia, caudal, clima, fallas }, kpis] = await Promise.all([loadEstado(), loadKpis()]);
+  const [estado, kpis, predicciones] = await Promise.all([loadEstado(), loadKpis(), loadPredicciones()]);
+  const { riesgo, rio, lluvia, caudal, clima, fallas } = estado;
+  const recomendaciones = buildRecomendaciones({ estado, kpis, predicciones });
+  const parte = buildParte({ estado, kpis, predicciones });
   const fallaDe = (fuente: string) => fallas.find((falla) => falla.fuente === fuente);
   const caudalMaximo = caudal ? Math.max(...caudal.dias.map((dia) => dia.caudal), 1) : 1;
 
@@ -112,6 +118,17 @@ export default async function OperacionesPage() {
                 Las mismas fuentes que ve el vecino, sin redondear: la red completa del INA, el caudal del Paraná y un simulador para ensayar
                 escenarios sobre el mapa.
               </p>
+            </section>
+
+            <section className="hairline px-5 py-6 sm:px-6">
+              <h2 className="meta">Qué hacer ahora</h2>
+              <p className="mt-2 text-xs leading-relaxed text-ink-soft">
+                Recomendaciones derivadas de los datos de esta vista, con el número que las dispara. Son reglas fijas y explicadas en la documentación, no una
+                opinión: la decisión sigue siendo de quien opera.
+              </p>
+              <div className="mt-4">
+                <Recomendaciones recomendaciones={recomendaciones} parte={parte} />
+              </div>
             </section>
 
             <section className="hairline px-5 py-6 sm:px-6">
@@ -232,6 +249,16 @@ export default async function OperacionesPage() {
             </section>
 
             <Docs>
+              <DocsSection titulo="Las recomendaciones">
+                <p className="text-xs leading-relaxed text-ink-soft">
+                  Reglas fijas sobre los mismos datos del panel, ordenadas por urgencia (ahora / hoy / cuando se pueda). Río: umbrales del INA superados;
+                  margen a alerta de 0,50 m o menos, o alerta a 7 días o menos al ritmo actual; dos o más estaciones aguas arriba al 80 % de su alerta y
+                  creciendo; ritmo de 2 cm/día o más. Lluvia: pico de 2 h sobre los umbrales de atención/alerta del panel; 30 mm o más en 48 h; un día con
+                  período de retorno de 5 años o más; mes en curso al 150 % de lo normal. Anegamientos: 10 o más esperados en la semana, o 3 en un distrito.
+                  Reportes: agua en viviendas, 3 o más en 6 horas, calles cortadas. Fuentes: INA sin responder. Si nada aplica, se sugiere trabajo preventivo.
+                  El parte de situación se arma con las mismas cifras. Todo en JSON en <span className="readout">/api/recomendaciones</span>.
+                </p>
+              </DocsSection>
               <DocsSection titulo="Los indicadores">
                 <p className="text-xs leading-relaxed text-ink-soft">
                   Río: variaciones sobre la serie diaria del INA; el percentil compara la altura de hoy con los últimos 210 días; el ritmo es una recta de

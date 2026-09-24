@@ -36,7 +36,7 @@ Cota no inventa ningún número. Toma lo que ya publican el Instituto Nacional d
 | Vista | Para quién | Qué ofrece |
 |---|---|---|
 | **Vecinos** `/` | Cualquier persona | Semáforo del día con su motivo · buscador de dirección (zona oficial, riesgo por lluvias, historial del distrito, relieve) · reportes de vecinos estilo Waze · clima actual · consejos según el nivel |
-| **Operaciones** `/operaciones` | Defensa Civil, distritos, prensa | Indicadores de situación · Paraná aguas arriba de Corrientes a San Nicolás · simulador que pinta el mapa · red completa del INA (357 estaciones) · caudal |
+| **Operaciones** `/operaciones` | Defensa Civil, distritos, prensa | Qué hacer ahora: recomendaciones por reglas con su porqué y parte de situación copiable · indicadores · Paraná aguas arriba de Corrientes a San Nicolás · simulador que pinta el mapa · red completa del INA (357 estaciones) · caudal |
 | **Predicciones** `/predicciones` | Mirar la semana | Anegamientos esperados por distrito y día · qué tan rara es la lluvia prevista · a dónde va el río |
 | **Cómo funciona** `/como-funciona` | Todos | Presentación de 16 diapositivas: conceptos en criollo, fuentes, herramientas, preguntas frecuentes |
 
@@ -57,7 +57,7 @@ Cota no inventa ningún número. Toma lo que ya publican el Instituto Nacional d
 | **Municipalidad de Rosario** · InfoMapa | Mapa de Riesgo Climático 2024: afectación a vivienda por lluvias torrenciales, por radio censal | Capa fija |
 | **Mapzen Terrain Tiles** | Modelo propio de puntos bajos del terreno · marcado como modelo | Capa fija |
 
-Todo el detalle técnico (fórmulas, umbrales, endpoints, vigencia de cada dato) está al pie de cada vista en un bloque "Documentación" colapsado, y en los JSON públicos `/api/estado`, `/api/predicciones`, `/api/kpis` y `/api/reportes`.
+Todo el detalle técnico (fórmulas, umbrales, endpoints, vigencia de cada dato) está al pie de cada vista en un bloque "Documentación" colapsado, y en los JSON públicos `/api/estado`, `/api/predicciones`, `/api/kpis`, `/api/recomendaciones` y `/api/reportes`.
 
 ## Cómo se decide el nivel
 

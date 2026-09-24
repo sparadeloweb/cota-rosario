@@ -60,6 +60,7 @@ export const HERRAMIENTAS: Herramienta[] = [
     href: "/operaciones",
     para: "Para quien tiene que tomar decisiones: Defensa Civil, distritos, prensa, equipos de guardia.",
     ofrece: [
+      "Qué hacer ahora: recomendaciones accionables derivadas de los datos (limpiar sumideros antes de tal hora, reforzar guardias en tal distrito, preparar el plan ribereño), cada una con el número que la dispara y ordenadas por urgencia, más un parte de situación en texto listo para copiar y compartir.",
       "Un simulador: dos deslizadores, altura del río y lluvia en dos horas, para preguntarse '¿y si el río llegara a 5 metros?' y ver al instante cómo quedaría el semáforo y cómo se pintaría el mapa. Nada de lo que se mueve ahí toca los datos reales; el botón Restablecer vuelve a ellos.",
       "La red completa del Instituto Nacional del Agua: 357 estaciones con su altura, sus niveles de alerta y evacuación y su tendencia, con filtros y buscador.",
       "El caudal del Paraná, es decir cuánta agua pasa por segundo frente a la ciudad, hoy y en los próximos siete días.",
