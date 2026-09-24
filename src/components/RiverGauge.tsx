@@ -1,4 +1,5 @@
 import type { RiverSnapshot } from "@/lib/river";
+import { fechaHoraArgentina } from "@/lib/time";
 
 const SCALE_HEADROOM = 1.15;
 const MIN_SCALE_METERS = 6;
@@ -76,7 +77,7 @@ export function RiverGauge({ rio }: RiverGaugeProps) {
         </div>
         <div className="flex flex-col gap-0.5">
           <dt className="meta">Medición</dt>
-          <dd className="readout text-ink">{estacion.fecha.slice(0, 16).replace("T", " ")} UTC</dd>
+          <dd className="readout text-ink">{fechaHoraArgentina(estacion.fecha)}</dd>
         </div>
       </dl>
     </div>

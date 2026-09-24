@@ -7,6 +7,7 @@ import { SimulationProvider } from "@/components/SimulationContext";
 import { Simulator } from "@/components/Simulator";
 import { SourceDown } from "@/components/SourceDown";
 import { StationTable } from "@/components/StationTable";
+import { WeatherBadge } from "@/components/WeatherBadge";
 import { loadEstado } from "@/lib/estado";
 import { PARANA_GLOFAS_CELL, ROSARIO } from "@/lib/sources";
 
@@ -15,7 +16,7 @@ export const revalidate = 300;
 const CAUDAL_DECIMALS = 0;
 
 export default async function OperacionesPage() {
-  const { riesgo, rio, lluvia, caudal, fallas } = await loadEstado();
+  const { riesgo, rio, lluvia, caudal, clima, fallas } = await loadEstado();
   const fallaDe = (fuente: string) => fallas.find((falla) => falla.fuente === fuente);
   const caudalMaximo = caudal ? Math.max(...caudal.dias.map((dia) => dia.caudal), 1) : 1;
 
@@ -25,7 +26,7 @@ export default async function OperacionesPage() {
         activo="/operaciones"
         nivel={riesgo.nivel}
         actualizadoEn={new Date().toISOString()}
-        lienzo={<FloodMap zonas={riesgo.zonas} />}
+        lienzo={<FloodMap zonas={riesgo.zonas} reportes esquina={<WeatherBadge clima={clima} />} />}
         lienzoInferior={
           <>
             <h2 className="meta">Red hidrométrica del INA</h2>

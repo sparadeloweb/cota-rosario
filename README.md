@@ -37,6 +37,10 @@ El GeoServer del INA tarda proporcionalmente a los días pedidos (14 días ≈ 3
 
 Toda vista abierta se renueva sola cada 5 minutos y al volver a la pestaña; el header muestra la hora de generación.
 
+## Reportes de vecinos
+
+`POST /api/reportes` recibe `{ lat, lon, tipo, descripcion? }` (tipos: `calle`, `vivienda`, `desague`, `corte`) y `GET /api/reportes` devuelve los activos; `POST /api/reportes/{id}/confirmar` suma una confirmación. Se guardan en `data/reportes.json` (variable `COTA_DATA_DIR` para cambiar la carpeta), caducan a las 24 h, se validan contra los límites de Rosario y 140 caracteres, llevan un campo trampa `web` que debe ir vacío, y cada IP puede cargar 5 reportes y 20 confirmaciones por hora. No hay cuentas ni moderación: son una señal, no un dato oficial, y la guía lo dice así.
+
 ## Correr
 
 ```bash

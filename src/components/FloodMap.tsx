@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { LookupResult } from "@/components/LookupResult";
+import { MapLegend, type LegendOverlay } from "@/components/MapLegend";
+import { ReportPanel } from "@/components/reports/ReportPanel";
+import { useReports } from "@/components/reports/useReports";
 import { useSimulation } from "@/components/SimulationContext";
 import { RISK_FILL } from "@/components/status";
 import {
@@ -51,14 +54,19 @@ type ZoneFeature = Feature<Polygon, { zona: string; sector: string }>;
 interface FloodMapProps {
   zonas: { zona: string; nivel: RiskLevel }[];
   buscador?: boolean;
+  reportes?: boolean;
+  esquina?: ReactNode;
 }
 
-interface Overlay {
-  visible: boolean;
-  onToggle: () => void;
-  color: string;
-  etiqueta: string;
-}
+const CLIMA_MUESTRAS = [
+  { etiqueta: "bajo", opacidad: 0.25 },
+  { etiqueta: "medio", opacidad: 0.55 },
+  { etiqueta: "alto", opacidad: 0.9 },
+];
+const TERRENO_MUESTRAS = [
+  { etiqueta: "1 m bajo el entorno", opacidad: 0.35 },
+  { etiqueta: "3 m o más", opacidad: 1 },
+];
 
 async function fetchJson<T>(url: string): Promise<T | null> {
   try {
@@ -69,21 +77,7 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
-function LegendToggle({ visible, onToggle, color, etiqueta }: Overlay) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={visible}
-      className={`flex items-center gap-1.5 border-l border-rule pl-4 text-[11px] transition-colors ${visible ? "text-ink" : "text-ink-faint hover:text-ink-soft"}`}
-    >
-      <span className="size-2.5 rounded-sm" style={{ background: color, opacity: visible ? 1 : 0.35 }} aria-hidden="true" />
-      {etiqueta}
-    </button>
-  );
-}
-
-export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
+export function FloodMap({ zonas, buscador = false, reportes = false, esquina }: FloodMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const zonesLayerRef = useRef<import("leaflet").GeoJSON | null>(null);
@@ -107,6 +101,7 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
   const [buscando, setBuscando] = useState(false);
   const [hallazgo, setHallazgo] = useState<Hallazgo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const estadoReportes = useReports(mapRef, mapReady && reportes);
 
   const zonasEfectivas = escenario?.zonas ?? zonas;
   const nivelDeZona = useCallback(
@@ -319,71 +314,90 @@ export function FloodMap({ zonas, buscador = false }: FloodMapProps) {
     }
   };
 
+  const overlays: LegendOverlay[] = [
+    ...(clima
+      ? [
+          {
+            clave: "clima",
+            etiqueta: "Riesgo por lluvias torrenciales · mapa municipal",
+            color: CLIMA_COLOR,
+            visible: mostrarClima,
+            onToggle: () => setMostrarClima((current) => !current),
+            muestras: CLIMA_MUESTRAS,
+            nota: "Cuánto se vería afectada la vivienda por una lluvia extrema, por radio censal. No cambia con el pronóstico.",
+          },
+        ]
+      : []),
+    ...(terrain
+      ? [
+          {
+            clave: "terreno",
+            etiqueta: "Puntos bajos del terreno · modelo",
+            color: TERRAIN_COLOR,
+            visible: mostrarTerreno,
+            onToggle: () => setMostrarTerreno((current) => !current),
+            muestras: TERRENO_MUESTRAS,
+            nota: "Dónde el suelo está más hundido que su entorno y el agua tiende a juntarse. Sin lectura en manzanas densas.",
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="relative isolate h-full w-full">
       <div ref={container} className="absolute inset-0" />
 
-      {buscador ? (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] p-3 sm:p-4">
-          <div className="pointer-events-auto flex w-full max-w-lg flex-col overflow-hidden rounded-md border border-rule bg-panel shadow-xl">
-            <form onSubmit={buscar} className="flex items-center">
-              <input
-                id="direccion"
-                value={consulta}
-                onChange={(event) => setConsulta(event.target.value)}
-                placeholder="Buscá tu dirección"
-                aria-label="Dirección a consultar"
-                className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-ink-faint"
-              />
-              <button
-                type="submit"
-                disabled={buscando}
-                className="shrink-0 px-4 py-3 text-sm text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
-              >
-                {buscando ? "Buscando" : "Consultar"}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3 sm:p-4">
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">
+          {buscador ? (
+            <div className="pointer-events-auto flex w-full max-w-lg flex-col overflow-hidden rounded-md border border-rule bg-panel shadow-xl">
+              <form onSubmit={buscar} className="flex items-center">
+                <input
+                  id="direccion"
+                  value={consulta}
+                  onChange={(event) => setConsulta(event.target.value)}
+                  placeholder="Buscá tu dirección"
+                  aria-label="Dirección a consultar"
+                  className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-ink-faint"
+                />
+                <button
+                  type="submit"
+                  disabled={buscando}
+                  className="shrink-0 px-4 py-3 text-sm text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
+                >
+                  {buscando ? "Buscando" : "Consultar"}
+                </button>
+              </form>
+              {hallazgo ? <LookupResult hallazgo={hallazgo} terrain={terrain} /> : null}
+              {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alerta">{error}</p> : null}
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
+          {esquina ? <div className="flex shrink-0 justify-end sm:ml-auto">{esquina}</div> : null}
+        </div>
+
+        <div className="flex flex-col items-start gap-2 sm:flex-row">
+          {reportes ? <ReportPanel estado={estadoReportes} /> : null}
+          {escenario ? (
+            <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-atencion/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur sm:mx-auto">
+              <span className="size-2 rounded-full" style={{ background: RISK_FILL[escenario.nivel] }} aria-hidden="true" />
+              <span className="text-ink">
+                Escenario simulado · <span className="text-ink-soft">{RISK_LABEL[escenario.nivel]}</span>
+              </span>
+              <button type="button" onClick={reset} className="border-l border-rule pl-3 text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
+                Restablecer
               </button>
-            </form>
-
-            {hallazgo ? <LookupResult hallazgo={hallazgo} terrain={terrain} /> : null}
-
-            {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alerta">{error}</p> : null}
-          </div>
+            </div>
+          ) : null}
         </div>
-      ) : null}
-
-      {escenario ? (
-        <div className={`pointer-events-none absolute inset-x-0 z-[500] flex justify-center p-3 sm:p-4 ${buscador ? "top-14" : "top-0"}`}>
-          <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-atencion/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
-            <span className="size-2 rounded-full" style={{ background: RISK_FILL[escenario.nivel] }} aria-hidden="true" />
-            <span className="text-ink">
-              Escenario simulado · <span className="text-ink-soft">{RISK_LABEL[escenario.nivel]}</span>
-            </span>
-            <button type="button" onClick={reset} className="border-l border-rule pl-3 text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
-              Restablecer
-            </button>
-          </div>
-        </div>
-      ) : null}
+      </div>
 
       <div
         data-map-legend
         className="pointer-events-none absolute bottom-[calc(var(--sheet-peek)+0.75rem)] left-0 right-14 z-[500] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
       >
-        <div className="pointer-events-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-rule bg-panel/95 px-3 py-2 backdrop-blur">
-          {(["normal", "atencion", "alerta", "critico"] as RiskLevel[]).map((nivel) => (
-            <span key={nivel} className="flex items-center gap-1.5 text-[11px] text-ink-soft">
-              <span className="h-0.5 w-3" style={{ background: RISK_FILL[nivel] }} aria-hidden="true" />
-              {RISK_LABEL[nivel]}
-            </span>
-          ))}
-          <span className="meta">{collection?.features.length ?? 0} zonas oficiales</span>
-          {clima ? (
-            <LegendToggle visible={mostrarClima} onToggle={() => setMostrarClima((current) => !current)} color={CLIMA_COLOR} etiqueta="Riesgo por lluvias · oficial" />
-          ) : null}
-          {terrain ? (
-            <LegendToggle visible={mostrarTerreno} onToggle={() => setMostrarTerreno((current) => !current)} color={TERRAIN_COLOR} etiqueta="Puntos bajos · modelo" />
-          ) : null}
-        </div>
+        <MapLegend zonasOficiales={collection?.features.length ?? 0} overlays={overlays} conReportes={reportes} />
       </div>
     </div>
   );

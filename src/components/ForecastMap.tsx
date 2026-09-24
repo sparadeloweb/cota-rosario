@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import type { DistrictExpectation } from "@/lib/forecast/poisson";
 
@@ -18,13 +18,14 @@ type Districts = FeatureCollection<Polygon | MultiPolygon, { distrito: string }>
 interface ForecastMapProps {
   distritos: DistrictExpectation[];
   ventanaDias: number;
+  esquina?: ReactNode;
 }
 
 function titulo(texto: string): string {
   return texto.charAt(0) + texto.slice(1).toLowerCase();
 }
 
-export function ForecastMap({ distritos, ventanaDias }: ForecastMapProps) {
+export function ForecastMap({ distritos, ventanaDias, esquina }: ForecastMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const [collection, setCollection] = useState<Districts | null>(null);
@@ -91,6 +92,7 @@ export function ForecastMap({ distritos, ventanaDias }: ForecastMapProps) {
   return (
     <div className="relative isolate h-full w-full">
       <div ref={container} className="absolute inset-0" />
+      {esquina ? <div className="pointer-events-none absolute right-0 top-0 z-[500] flex justify-end p-3 sm:p-4">{esquina}</div> : null}
       <div data-map-legend className="pointer-events-none absolute bottom-[calc(var(--sheet-peek)+0.75rem)] left-0 right-14 z-[500] p-3 sm:p-4 lg:bottom-0 lg:right-auto">
         <div className="pointer-events-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-rule bg-panel/95 px-3 py-2 backdrop-blur">
           <span className="flex items-center gap-1.5 text-[11px] text-ink-soft">

@@ -1,5 +1,6 @@
 import type { SourceFailure } from "@/lib/estado";
 import { SOURCES } from "@/lib/sources";
+import { fechaHoraArgentina, horaArgentina } from "@/lib/time";
 
 interface ProvenanceProps {
   sellos: { id: keyof typeof SOURCES; consultadoEn?: string; falla?: SourceFailure }[];
@@ -19,9 +20,9 @@ export function Provenance({ sellos }: ProvenanceProps) {
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <h3 className="text-sm font-medium text-ink">{fuente.organismo}</h3>
               {falla ? (
-                <span className="readout text-[11px] text-alerta">sin respuesta {falla.en.slice(11, 16)} UTC</span>
+                <span className="readout text-[11px] text-alerta">sin respuesta {horaArgentina(falla.en)}</span>
               ) : consultado ? (
-                <span className="readout text-[11px] text-ink-faint">consultado {consultado.slice(0, 16).replace("T", " ")} UTC</span>
+                <span className="readout text-[11px] text-ink-faint">consultado {fechaHoraArgentina(consultado)}</span>
               ) : null}
             </div>
             <p className="text-xs text-ink-soft">{fuente.descripcion}</p>

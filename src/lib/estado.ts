@@ -1,5 +1,6 @@
 import { fetchDischarge, fetchRain, type DischargeSnapshot, type RainSnapshot } from "@/lib/rain";
 import { fetchRiver, type RiverSnapshot } from "@/lib/river";
+import { fetchWeather, type WeatherNow } from "@/lib/weather";
 import { assessRisk, type RiskAssessment } from "@/lib/risk";
 import type { SOURCES } from "@/lib/sources";
 
@@ -16,6 +17,7 @@ export interface Estado {
   rio: RiverSnapshot | null;
   lluvia: RainSnapshot | null;
   caudal: DischargeSnapshot | null;
+  clima: WeatherNow | null;
   fallas: SourceFailure[];
 }
 
@@ -35,10 +37,11 @@ function settle<T>(fuente: SourceId, result: PromiseSettledResult<T>, fallas: So
 }
 
 export async function loadEstado(): Promise<Estado> {
-  const [rioResult, lluviaResult, caudalResult] = await Promise.allSettled([fetchRiver(), fetchRain(), fetchDischarge()]);
+  const [rioResult, lluviaResult, caudalResult, climaResult] = await Promise.allSettled([fetchRiver(), fetchRain(), fetchDischarge(), fetchWeather()]);
   const fallas: SourceFailure[] = [];
   const rio = settle("ina", rioResult, fallas);
   const lluvia = settle("openMeteo", lluviaResult, fallas);
   const caudal = settle("glofas", caudalResult, fallas);
-  return { riesgo: assessRisk(rio, lluvia), rio, lluvia, caudal, fallas };
+  const clima = climaResult.status === "fulfilled" ? climaResult.value : null;
+  return { riesgo: assessRisk(rio, lluvia), rio, lluvia, caudal, clima, fallas };
 }

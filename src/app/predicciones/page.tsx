@@ -10,9 +10,11 @@ import { RainOutlook } from "@/components/RainOutlook";
 import { RiverProjection } from "@/components/RiverProjection";
 import { SourceDown } from "@/components/SourceDown";
 import { TrainingTable } from "@/components/TrainingTable";
+import { WeatherBadge } from "@/components/WeatherBadge";
 import type { PoissonModel } from "@/lib/forecast/poisson";
 import { loadEstado } from "@/lib/estado";
 import { loadPredicciones } from "@/lib/predicciones";
+import { horaArgentina } from "@/lib/time";
 
 export const revalidate = 300;
 
@@ -37,7 +39,7 @@ export default async function PrediccionesPage() {
       activo="/predicciones"
       nivel={estado.riesgo.nivel}
       actualizadoEn={predicciones.generadoEn}
-      lienzo={<ForecastMap distritos={anegamientos?.porDistrito ?? []} ventanaDias={ventanaDias} />}
+      lienzo={<ForecastMap distritos={anegamientos?.porDistrito ?? []} ventanaDias={ventanaDias} esquina={<WeatherBadge clima={estado.clima} />} />}
       lienzoInferior={
         porDia.length ? (
           <>
@@ -140,7 +142,7 @@ export default async function PrediccionesPage() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <dt className="meta">Esta vista</dt>
-                  <dd className="readout text-ink">{predicciones.generadoEn.slice(11, 16)} UTC</dd>
+                  <dd className="readout text-ink">{horaArgentina(predicciones.generadoEn)}</dd>
                 </div>
               </dl>
             </DocsSection>

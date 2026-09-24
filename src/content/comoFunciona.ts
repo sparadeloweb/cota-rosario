@@ -51,6 +51,8 @@ export const HERRAMIENTAS: Herramienta[] = [
       "El buscador de dirección: escribís tu calle y altura y te dice si estás dentro de una zona inundable oficial, cuál es la zona más cercana y a qué distancia, qué riesgo por lluvias torrenciales le asigna la Municipalidad a tu radio censal, cuánto pesa tu distrito en los anegamientos que atiende Defensa Civil y si tu punto es un bajo del terreno.",
       "El mapa con las zonas oficiales pintadas según el nivel de hoy, la capa de riesgo por lluvias y una capa de puntos bajos que se puede prender y apagar.",
       "La altura del río con sus marcas de alerta y evacuación, la lluvia hora por hora de los próximos dos días y consejos concretos según el nivel.",
+      "Reportes de vecinos: con el botón 'Reportar agua en mi cuadra' tocás el mapa donde está el agua, elegís qué ves (calle anegada, agua en viviendas, desagüe tapado, calle cortada) y queda un ícono en el mapa por 24 horas para que otros lo vean y lo confirmen. Sin cuenta ni registro.",
+      "El clima actual arriba a la derecha: temperatura, humedad, presión y probabilidad de lluvia en las próximas horas.",
     ],
   },
   {
@@ -127,6 +129,10 @@ export function conceptos(umbrales: UmbralesRio): Concepto[] {
       explicacion: "Cuando el panel dice '2,5 anegamientos esperados, 92 %', el primer número es el promedio que da el modelo y el segundo la chance de que haya por lo menos un caso. Pueden ser cero o pueden ser seis; el promedio resume la apuesta.",
     },
     {
+      termino: "Reportes de vecinos",
+      explicacion: "Lo que la gente ve en su cuadra, marcado en el mapa con una gota de color. No pasan por ningún filtro humano: son una señal, no un dato oficial. Cada reporte dura 24 horas, otros pueden confirmarlo, y una misma conexión no puede cargar más de unos pocos por hora para evitar abusos.",
+    },
+    {
       termino: "Radio censal",
       explicacion: "La unidad más chica en que el censo divide la ciudad, de unas pocas manzanas. El mapa de riesgo por lluvias está hecho a esa escala: cuando buscás una dirección, el panel mira en qué radio cae.",
     },
@@ -141,6 +147,10 @@ export const SEMAFORO: Concepto[] = [
 ];
 
 export const PREGUNTAS: Pregunta[] = [
+  {
+    pregunta: "¿Qué son los tres tipos de color del mapa?",
+    respuesta: "Son tres capas distintas y se pueden prender y apagar desde la leyenda de abajo a la izquierda. Los polígonos con contorno son las zonas oficiales de inundación por arroyo, pintadas con el color del nivel de hoy (verde si no hay riesgo). El sombreado rojizo es el mapa municipal de riesgo por lluvias torrenciales: más intenso, más riesgo, y no cambia con el pronóstico. El punteado dorado son los puntos bajos del terreno. Las gotas de color son reportes de vecinos.",
+  },
   {
     pregunta: "¿Por qué la altura del río es de ayer?",
     respuesta: "Porque en Rosario el INA publica una lectura por día, tomada a la medianoche y cargada al día siguiente. Otras estaciones de la red son horarias; ésta no. El panel muestra siempre la fecha de la lectura.",

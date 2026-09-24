@@ -7,6 +7,7 @@ import { Provenance } from "@/components/Provenance";
 import { RainStrip } from "@/components/RainStrip";
 import { RiverGauge } from "@/components/RiverGauge";
 import { SourceDown } from "@/components/SourceDown";
+import { WeatherBadge } from "@/components/WeatherBadge";
 import { RISK_FILL } from "@/components/status";
 import { loadEstado } from "@/lib/estado";
 import { RISK_LABEL } from "@/lib/risk";
@@ -36,7 +37,7 @@ const CONSEJOS: Record<string, string[]> = {
 };
 
 export default async function VecinosPage() {
-  const { riesgo, rio, lluvia, fallas } = await loadEstado();
+  const { riesgo, rio, lluvia, clima, fallas } = await loadEstado();
   const consejos = CONSEJOS[riesgo.nivel] ?? CONSEJOS.normal;
   const fallaDe = (fuente: string) => fallas.find((falla) => falla.fuente === fuente);
   const titulo = riesgo.sinDatos
@@ -50,7 +51,7 @@ export default async function VecinosPage() {
       activo="/"
       nivel={riesgo.nivel}
       actualizadoEn={new Date().toISOString()}
-      lienzo={<FloodMap zonas={riesgo.zonas} buscador />}
+      lienzo={<FloodMap zonas={riesgo.zonas} buscador reportes esquina={<WeatherBadge clima={clima} />} />}
       rail={
         <div className="flex flex-col">
           <section className="px-5 py-6 sm:px-6">
