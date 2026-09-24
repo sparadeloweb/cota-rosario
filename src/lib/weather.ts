@@ -15,6 +15,7 @@ export interface WeatherNow {
   viento: number;
   lluviaAhora: number;
   probabilidadLluvia: number;
+  ventanaHoras: number;
   codigo: number;
   descripcion: string;
   icono: WeatherIcon;
@@ -82,6 +83,7 @@ export async function fetchWeather(): Promise<WeatherNow> {
     viento: Math.round(data.current.wind_speed_10m),
     lluviaAhora: data.current.precipitation,
     probabilidadLluvia: Math.max(0, ...proximas.map((entry) => entry.p)),
+    ventanaHoras: PROBABILITY_HOURS,
     codigo: data.current.weather_code,
     descripcion,
     icono,

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Deck, type DeckSlide } from "@/components/deck/Deck";
 import { RISK_FILL } from "@/components/status";
@@ -16,6 +17,11 @@ const CIFRAS = [
   { valor: "357", etiqueta: "estaciones del INA en la red" },
   { valor: "86", etiqueta: "años de lluvia para medir rarezas" },
   { valor: "5 min", etiqueta: "entre una actualización y la siguiente" },
+];
+const INSTITUCIONES = [
+  { nombre: "Tecnoteca", archivo: "/logos/tecnoteca.png", ancho: 1200, alto: 597 },
+  { nombre: "Ministerio de Ambiente y Cambio Climático · Provincia de Santa Fe", archivo: "/logos/ministerio-ambiente-santa-fe.png", ancho: 1200, alto: 137 },
+  { nombre: "Gobierno de Santa Fe", archivo: "/logos/gobierno-santa-fe.png", ancho: 757, alto: 164 },
 ];
 const CADENCIA: Record<string, string> = {
   ina: "una lectura diaria · en vivo",
@@ -224,12 +230,31 @@ export default async function ComoFuncionaPage() {
       ),
     })),
     {
+      id: "instituciones",
+      titulo: "Instituciones",
+      contenido: (
+        <div className="flex flex-col">
+          <Capitulo numero="07" titulo="Las instituciones" bajada="Las organizaciones que acompañan este proyecto." />
+          <div className="grid gap-6 sm:grid-cols-3">
+            {INSTITUCIONES.map((institucion) => (
+              <figure key={institucion.nombre} className="flex flex-col gap-4 rounded-lg border border-rule bg-panel/60 p-8">
+                <div className="flex h-32 items-center justify-center">
+                  <Image src={institucion.archivo} alt={institucion.nombre} width={institucion.ancho} height={institucion.alto} className="max-h-28 w-auto max-w-full object-contain" />
+                </div>
+                <figcaption className="meta text-center">{institucion.nombre}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    {
       id: "cierre",
       titulo: "Cierre",
       resplandor: true,
       contenido: (
         <div className="flex flex-col gap-8">
-          <span className="readout text-xs text-ink-faint">07</span>
+          <span className="readout text-xs text-ink-faint">08</span>
           <h2 className="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-6xl">
             Entender antes,
             <br />
@@ -244,6 +269,11 @@ export default async function ComoFuncionaPage() {
               <Link key={herramienta.href} href={herramienta.href} className="rounded-md border border-rule px-4 py-2 text-sm text-ink transition-colors hover:border-ink-soft">
                 {herramienta.vista}
               </Link>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-10 gap-y-6 border-t border-rule pt-8 opacity-80">
+            {INSTITUCIONES.map((institucion) => (
+              <Image key={institucion.nombre} src={institucion.archivo} alt={institucion.nombre} width={institucion.ancho} height={institucion.alto} className="h-10 w-auto object-contain sm:h-12" />
             ))}
           </div>
         </div>

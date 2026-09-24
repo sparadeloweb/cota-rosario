@@ -36,7 +36,7 @@ export function WeatherBadge({ clima }: WeatherBadgeProps) {
           <span className="hidden sm:inline">
             humedad {clima.humedad} % · {clima.presion} hPa ·{" "}
           </span>
-          lluvia {clima.probabilidadLluvia} %
+          lluvia próx. {clima.ventanaHoras} h {clima.probabilidadLluvia} %
         </span>
       </div>
     </div>
