@@ -1,72 +1,130 @@
-# Cota · riesgo hídrico de Rosario
+<p align="center">
+  <img src="src/app/icon.svg" width="72" alt="Cota" />
+</p>
 
-Panel que cruza tres fuentes públicas en un solo nivel de riesgo explicable, con cada número enlazado a su origen y hora de consulta.
+<h1 align="center">Cota · riesgo hídrico de Rosario</h1>
 
-| Fuente | Qué aporta |
-|---|---|
-| INA · GeoServer WFS público | Altura del Paraná en Rosario, tendencia y los niveles oficiales de alerta (5,00 m) y evacuación (5,25 m), más la red completa de 357 estaciones |
-| Open-Meteo | Precipitación horaria pronosticada; el modelo mira la ventana de 2 h más cargada de las próximas 48 |
-| Municipalidad de Rosario | Polígonos oficiales de áreas inundables: 67 en la cuenca del Ludueña y 20 en la del Saladillo |
-| Municipalidad de Rosario · InfoMapa | Mapa de Riesgo Climático 2024, capa "afectación a vivienda y hábitat por precipitaciones torrenciales" por radio censal, en cuatro categorías; cubre toda la ciudad |
-| Municipalidad de Rosario · Defensa Civil | Anegamientos transitorios atendidos por distrito y mes (2021 a enero de 2024), cruzados con la lluvia mensual del archivo histórico de Open-Meteo |
-| Mapzen Terrain Tiles | Modelo propio de puntos bajos para el resto de la ciudad. No es dato oficial y está marcado como tal |
+<p align="center">
+  ¿Hay hoy riesgo de que el agua entre a las casas o corte las calles, y dónde?<br/>
+  Un panel que cruza datos públicos y verificables en un semáforo de cuatro niveles, con cada número enlazado a su origen.
+</p>
 
-Tres vistas: `/` para vecinos (¿hay riesgo hoy, y dónde?), `/operaciones` (red completa, caudal GloFAS, simulador de escenarios) y `/predicciones` (modelos a 7 días). `/api/estado` y `/api/predicciones` devuelven todo en JSON: 200 completo, 206 si una fuente no respondió, 503 si ninguna.
+<p align="center">
+  <a href="https://cota.pegasustudio.com">cota.pegasustudio.com</a> ·
+  <a href="https://cota.pegasustudio.com/como-funciona">cómo funciona</a> ·
+  <a href="https://cota.pegasustudio.com/api/estado">/api/estado</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-0b0c0e?logo=nextdotjs&logoColor=white" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/React-19-0b0c0e?logo=react&logoColor=61dafb" alt="React 19" />
+  <img src="https://img.shields.io/badge/Leaflet-1.9-0b0c0e?logo=leaflet&logoColor=199900" alt="Leaflet" />
+  <img src="https://img.shields.io/badge/datos-p%C3%BAblicos%20y%20verificables-5f9bb8" alt="datos públicos" />
+  <img src="https://img.shields.io/badge/licencia-MIT-d2a13a" alt="MIT" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/vecinos.png" width="100%" alt="Vista Vecinos: mapa de Rosario con las zonas oficiales, el buscador de dirección y el semáforo del día" />
+</p>
+
+---
+
+## Qué hace
+
+Cota no inventa ningún número. Toma lo que ya publican el Instituto Nacional del Agua, Open-Meteo, Copernicus y la Municipalidad de Rosario, lo cruza y lo explica en lenguaje llano. Cuando una fuente no responde, el bloque queda vacío y avisa; nunca rellena con un dato viejo ni pone "sin riesgo" por falta de datos.
+
+| Vista | Para quién | Qué ofrece |
+|---|---|---|
+| **Vecinos** `/` | Cualquier persona | Semáforo del día con su motivo · buscador de dirección (zona oficial, riesgo por lluvias, historial del distrito, relieve) · reportes de vecinos estilo Waze · clima actual · consejos según el nivel |
+| **Operaciones** `/operaciones` | Defensa Civil, distritos, prensa | Indicadores de situación · Paraná aguas arriba de Corrientes a San Nicolás · simulador que pinta el mapa · red completa del INA (357 estaciones) · caudal |
+| **Predicciones** `/predicciones` | Mirar la semana | Anegamientos esperados por distrito y día · qué tan rara es la lluvia prevista · a dónde va el río |
+| **Cómo funciona** `/como-funciona` | Todos | Presentación de 16 diapositivas: conceptos en criollo, fuentes, herramientas, preguntas frecuentes |
+
+<p align="center">
+  <img src="docs/screenshots/operaciones.png" width="49%" alt="Vista Operaciones con indicadores, aguas arriba y simulador" />
+  <img src="docs/screenshots/predicciones.png" width="49%" alt="Vista Predicciones con anegamientos esperados por distrito y día" />
+</p>
+
+## De dónde sale cada dato
+
+| Fuente | Qué aporta | Cadencia |
+|---|---|---|
+| **INA** · GeoServer WFS público | Altura del Paraná en Rosario, tendencia, niveles oficiales de alerta y evacuación, red de 357 estaciones | Una lectura diaria en Rosario · en vivo |
+| **Open-Meteo** | Lluvia pronosticada hora por hora, clima actual, lluvia caída (modelo) | Cada hora · en vivo |
+| **GloFAS** · Copernicus vía Open-Meteo | Caudal del Paraná, 210 días atrás y 7 adelante | Diario · en vivo |
+| **ERA5** vía Open-Meteo | Lluvia diaria y horaria desde 1940, para climatología y extremos | Hasta el día actual |
+| **Municipalidad de Rosario** · datos abiertos | 87 polígonos oficiales de áreas inundables (Ludueña y Saladillo), distritos, barrios, intervenciones de Defensa Civil por distrito y mes | Capas fijas · registro hasta donde el municipio publicó |
+| **Municipalidad de Rosario** · InfoMapa | Mapa de Riesgo Climático 2024: afectación a vivienda por lluvias torrenciales, por radio censal | Capa fija |
+| **Mapzen Terrain Tiles** | Modelo propio de puntos bajos del terreno · marcado como modelo | Capa fija |
+
+Todo el detalle técnico (fórmulas, umbrales, endpoints, vigencia de cada dato) está al pie de cada vista en un bloque "Documentación" colapsado, y en los JSON públicos `/api/estado`, `/api/predicciones`, `/api/kpis` y `/api/reportes`.
+
+## Cómo se decide el nivel
+
+El nivel general es el peor de dos factores. **Río:** la altura de hoy contra los niveles de alerta (5,00 m) y evacuación (5,25 m) que fija el INA para Rosario. **Lluvia concentrada:** la ventana de dos horas más cargada del pronóstico contra umbrales de 15 / 25 / 30 mm; esos umbrales son una estimación de este panel y están marcados como tales. Las 87 zonas oficiales se pintan con ese nivel, ponderado por su sensibilidad a la lluvia.
 
 ## Predicciones
 
-Tres modelos ajustados en `npm run build:data` (`scripts/build-modelos.mjs`) y evaluados en cada pedido con el pronóstico del momento. Cada uno publica su ajuste y su error en la página y en `public/data/modelos.json`.
+Tres modelos ajustados con `npm run build:data` y evaluados en cada pedido con el pronóstico del momento. Cada uno publica su ajuste y su error.
 
-- **Anegamientos**: regresión de Poisson de las intervenciones mensuales de Defensa Civil contra la lluvia horaria de ERA5 del mismo mes. Se prueban tres conjuntos de variables (total, pico de 2 h, ambos) y se elige por validación cruzada dejando un mes afuera, descartando cualquier ajuste con coeficiente negativo. Se aplica a los 7 días de pronóstico y se reparte por distrito según la participación histórica.
-- **Lluvia extrema**: Gumbel por momentos sobre el máximo diario de cada año desde 1940; devuelve el período de retorno del día más cargado del pronóstico y los cuantiles de 2 a 100 años. ERA5 suaviza las tormentas convectivas, así que los extremos reales de estación son algo mayores.
-- **Río**: recta de mínimos cuadrados sobre los últimos 14 días del INA (ritmo y días hasta alerta/evacuación) y curva altura–caudal `h = a + b·ln(Q)` ajustada sobre 210 días de INA contra GloFAS, aplicada al caudal pronosticado a 7 días. Bandas de ±2σ.
-
-El GeoServer del INA tarda proporcionalmente a los días pedidos (14 días ≈ 3 s, 60 ≈ 22 s, 210 ≈ 55 s) y a veces cae con `Cannot get a connection, pool error`. Por eso la serie larga se guarda como instantánea (`scripts/build-river-history.mjs` → `public/data/rio-historia.json`), en cada pedido se fusiona con los últimos 14 días en vivo, y cuando la instantánea queda más de 3 días atrás el servidor la renueva en segundo plano sin bloquear la vista.
-
-## Qué tan al día está cada dato
-
-| Dato | Cadencia | Cómo se actualiza |
-|---|---|---|
-| Altura del Paraná en Rosario (INA) | Una lectura diaria, publicada con hasta un día de demora | En vivo, caché de 5 min |
-| Red de 357 estaciones (INA) | Horaria en la mayoría | En vivo, caché de 5 min |
-| Pronóstico de lluvia (Open-Meteo) | Corridas horarias | En vivo, caché de 5 min |
-| Caudal GloFAS | Diario | En vivo, caché de 5 min |
-| Lluvia histórica (ERA5 vía Open-Meteo) | Llega hasta el día actual | Se reajusta con `build:data` |
-| Intervenciones de Defensa Civil | Publicadas hasta enero de 2024; el municipio no cargó más | Se reajusta con `build:data` cuando publiquen |
-| Áreas inundables, riesgo climático 2024, distritos, barrios | Capas estáticas | `build:data` |
-
-Toda vista abierta se renueva sola cada 5 minutos y al volver a la pestaña; el header muestra la hora de generación.
+- **Anegamientos** · regresión de Poisson de las intervenciones mensuales de Defensa Civil contra la lluvia horaria de ERA5. Se prueban tres variables (total, pico de 2 h, ambas) y gana la que mejor predice meses que no vio; cualquier ajuste con coeficiente negativo se descarta. Se aplica a los 7 días de pronóstico y se reparte por distrito y por día.
+- **Lluvia extrema** · Gumbel sobre el máximo diario de cada año desde 1940: período de retorno del día más cargado del pronóstico y cuantiles de 2 a 100 años.
+- **Río** · tendencia de mínimos cuadrados sobre 14 días (ritmo, días hasta alerta) y curva altura–caudal `h = a + b·ln(Q)` contra GloFAS buscando el mejor desfase de 0 a 10 días; cuando el ajuste es débil la página lo dice.
 
 ## Reportes de vecinos
 
-`POST /api/reportes` recibe `{ lat, lon, tipo, descripcion? }` (tipos: `calle`, `vivienda`, `desague`, `corte`) y `GET /api/reportes` devuelve los activos; `POST /api/reportes/{id}/confirmar` suma una confirmación. Se guardan en `data/reportes.json` (variable `COTA_DATA_DIR` para cambiar la carpeta), caducan a las 24 h, se validan contra los límites de Rosario y 140 caracteres, llevan un campo trampa `web` que debe ir vacío, y cada IP puede cargar 5 reportes y 20 confirmaciones por hora. No hay cuentas ni moderación: son una señal, no un dato oficial, y la guía lo dice así.
+Cualquiera puede marcar en el mapa dónde ve agua (calle anegada, agua en viviendas, desagüe tapado, calle cortada), sin cuenta. Los reportes duran 24 h, se pueden confirmar y aparecen como gotas de color. Se validan contra los límites de Rosario y 140 caracteres, llevan un campo trampa y cada conexión puede cargar 5 reportes y 20 confirmaciones por hora. Son una señal, no un dato oficial.
 
-## Correr
+## Correr en local
 
 ```bash
 npm install
-npm run build:data     # polígonos, terreno, riesgo climático, Defensa Civil, distritos y barrios → public/data
-npm run build
-npm start -- -p 3200
+npm run build:data     # descarga y procesa las capas → public/data (ya vienen versionadas)
+npm run dev            # http://localhost:3000
 ```
 
-## Exponerlo con Cloudflare
+Producción:
 
 ```bash
-npm run tunnel
+npm run build && npm start -- -p 3000
 ```
 
-Imprime una URL `*.trycloudflare.com`. Usa `cloudflared.yml` con un `ingress` explícito: en cloudflared 2026.9 el atajo `--url` registra el túnel pero no enruta los pedidos y responde 404 él mismo.
+O con Docker (imagen `node:22-alpine`, Next en modo standalone, reportes persistidos en el volumen `/data`):
+
+```bash
+docker build -t cota .
+docker run -p 3000:3000 -v cota-data:/data cota
+```
+
+## Deploy
+
+Cada push a `main` corre CI (`tsc` + `eslint`) y dispara el deploy en EasyPanel a través del hook guardado en el secret `EASYPANEL_DEPLOY_HOOK`. La app vive en `cota.pegasustudio.com` detrás de Cloudflare.
 
 ## Datos y sus trampas
 
-- GloFAS en las coordenadas del centro devuelve 0,03 m³/s: esa celda no tiene cauce. Se consulta la celda del canal (-32,975 / -60,675), que devuelve el caudal real (~17.000 m³/s).
-- 265 estaciones del INA publican `nivel_de_alerta: 0` como relleno. Los umbrales sólo se comparan cuando son mayores a cero.
-- El archivo municipal se llama "Saladillo" pero tres cuartos de sus polígonos son del Ludueña.
-- El modelo de terreno mide cuánto más bajo está cada punto que la **mediana** de su entorno de 321 m. Se usa la mediana y no la media porque SRTM es un modelo de superficie: mide techos, y con la media una calle plana del microcentro leía 3 m "por debajo" de las torres de al lado. Encuentra pozos locales, no llanuras de inundación: por eso deja en cero el valle del Saladillo, que es bajo pero plano.
-- El mapa de riesgo climático no está en el portal de datos abiertos: vive en el WMS de InfoMapa (`/wms/ambiente`), que no permite `GetFeatureInfo` ni WFS y limita `GetMap` a 2048 px. Se rasteriza a 2048 px (≈11 m/px), se rellenan los contornos negros con la categoría vecina dominante y se reproyecta fila por fila a Mercator para consultarlo por dirección.
-- Las intervenciones de Defensa Civil vienen por distrito, no por cuadra, y mezclan densidad de población y de reclamos con el terreno. El archivo 2021 usa otro formato (punto y coma, meses con nombre), al 2022 le falta diciembre y el de 2024 sólo trae enero; el panel compara sobre el último año completo.
-- El mismo servidor tiene `/wms/infraestructura` con conductos, sumideros y drenajes a cielo abierto, y la IDE provincial (`aswe.santafe.gov.ar/idesf/wms`) publica curvas de nivel y líneas de riesgo históricas, pero ninguna de esas capas tiene datos dentro de Rosario.
-- Cada fuente falla por separado: si un organismo no responde, el bloque queda vacío con la hora de la falla. Nunca un 500 ni un falso "sin riesgo".
+Cosas que costaron encontrar y conviene saber antes de tocar los scripts:
 
-Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil 103.
+- El INA no tiene API pública documentada; el GeoServer WFS sí funciona (`public2:ultimas_alturas_con_timeseries`). 265 de sus 357 estaciones publican `nivel_de_alerta: 0` como relleno: los umbrales sólo se comparan cuando son mayores a cero. Tarda proporcional a los días pedidos (14 ≈ 3 s, 210 ≈ 55 s) y a veces cae con `pool error`; por eso la serie larga se versiona como instantánea y se fusiona con los últimos 14 días en vivo.
+- GloFAS en las coordenadas del centro de Rosario devuelve 0,03 m³/s (celda sin cauce); se consulta la celda del canal (−32,975 / −60,675).
+- El archivo municipal de áreas inundables se llama "Saladillo" pero tres cuartos de sus polígonos son del Ludueña.
+- El mapa de riesgo climático no está en el portal de datos abiertos: vive en el WMS de InfoMapa, sin `GetFeatureInfo` ni WFS y con `GetMap` limitado a 2048 px. Se rasteriza, se rellenan los contornos y se reproyecta fila por fila a Mercator para poder consultarlo por dirección.
+- Las intervenciones de Defensa Civil vienen por distrito y mes, publicadas hasta enero de 2024; el archivo 2021 usa otro formato y al 2022 le falta diciembre.
+- El modelo de terreno usa la **mediana** del entorno, no la media: SRTM mide techos, y con la media una calle plana del microcentro leía 3 m "por debajo" de las torres de al lado. En manzanas densas no da lectura y lo dice.
+- La IDE provincial y la capa de desagües de InfoMapa existen, pero no tienen datos dentro de Rosario.
+
+## Estructura
+
+```
+scripts/           build:data → polígonos, terreno, riesgo climático, Defensa Civil, modelos, serie del río
+src/app/           vistas (/, /operaciones, /predicciones, /como-funciona) y rutas /api
+src/lib/           fuentes (river, rain, weather), riesgo, modelos (forecast/), kpis, reportes, lookup
+src/components/    mapa, bottom sheet, deck de la guía, kpis, reportes
+src/content/       textos de la guía
+public/data/       capas procesadas, versionadas
+```
+
+## Licencia
+
+MIT. Los datos pertenecen a sus organismos y se citan en cada vista.
+
+Cota no es un servicio oficial de alerta. Ante una emergencia, Defensa Civil **103**.
