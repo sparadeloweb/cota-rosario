@@ -33,11 +33,11 @@ export function TrainingTable({ entrenamiento }: TrainingTableProps) {
           lo que habría dicho el modelo
         </span>
       </div>
-      <ul className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-x-6 gap-y-3 xl:grid-cols-2">
         {entrenamiento.map((fila) => (
           <li key={fila.mes} className="flex flex-col gap-1 text-xs">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="readout text-ink-soft">{etiqueta(fila.mes)}</span>
+              <span className="readout whitespace-nowrap text-ink-soft">{etiqueta(fila.mes)}</span>
               <span className="readout text-ink">
                 {fila.casos} atendidos <span className="text-ink-faint">· modelo {fila.predicho.toFixed(0)}</span>
               </span>
