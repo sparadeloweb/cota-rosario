@@ -372,6 +372,8 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
               {hallazgo ? <LookupResult hallazgo={hallazgo} terrain={terrain} /> : null}
               {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alerta">{error}</p> : null}
             </div>
+          ) : reportes ? (
+            <ReportPanel estado={estadoReportes} soloLectura={!reportar} />
           ) : (
             <div className="flex-1" />
           )}
@@ -379,7 +381,7 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
         </div>
 
         <div className="flex flex-col items-start gap-2 sm:flex-row">
-          {reportes ? <ReportPanel estado={estadoReportes} soloLectura={!reportar} /> : null}
+          {buscador && reportes ? <ReportPanel estado={estadoReportes} soloLectura={!reportar} /> : null}
           {escenario ? (
             <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-atencion/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur sm:mx-auto">
               <span className="size-2 rounded-full" style={{ background: RISK_FILL[escenario.nivel] }} aria-hidden="true" />
