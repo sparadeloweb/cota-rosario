@@ -120,11 +120,11 @@ export default async function OperacionesPage() {
                 <KpiGrid tiles={[...tilesRio(kpis), ...tilesLluvia(kpis), ...tilesRedYReportes(kpis)]}>
                   {kpis.rio ? (
                     <div className="flex flex-col gap-1">
-                      <Sparkline
-                        valores={kpis.rio.sparkline.map((lectura) => lectura.metros)}
-                        marcas={rio?.estacion.alerta ? [{ valor: rio.estacion.alerta, color: "var(--alerta)" }] : []}
-                      />
-                      <span className="meta">altura del río, últimos 60 días · línea punteada: alerta</span>
+                      <Sparkline valores={kpis.rio.sparkline.map((lectura) => lectura.metros)} />
+                      <span className="meta">
+                        altura del río, últimos 60 días · de {kpis.rio.minimo210.metros.toFixed(2)} a {kpis.rio.maximo210.metros.toFixed(2)} m en 210 días
+                        {rio?.estacion.alerta ? ` · alerta ${rio.estacion.alerta.toFixed(2)} m` : ""}
+                      </span>
                     </div>
                   ) : null}
                 </KpiGrid>
