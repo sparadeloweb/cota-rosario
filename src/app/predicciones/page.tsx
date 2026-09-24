@@ -113,7 +113,7 @@ export default async function PrediccionesPage() {
           </section>
 
           <Docs titulo="Documentación: cómo se calcula y vigencia de los datos">
-            <DocsSection titulo="Los modelos">
+            <DocsSection titulo="Cómo se calculan las tres estimaciones">
               <ModelNotes predicciones={predicciones} />
             </DocsSection>
             <DocsSection titulo="Hasta cuándo llega cada dato">
@@ -146,7 +146,7 @@ export default async function PrediccionesPage() {
                 </div>
               </dl>
             </DocsSection>
-            <DocsSection titulo="Ajuste del modelo de anegamientos · observado / predicho por mes">
+            <DocsSection titulo="Cómo le fue al modelo en el pasado, mes por mes">
               <TrainingTable entrenamiento={entrenamiento} />
             </DocsSection>
             <DocsSection titulo="Fuentes y última consulta">
