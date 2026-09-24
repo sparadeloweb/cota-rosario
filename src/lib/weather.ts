@@ -1,8 +1,8 @@
+import { fetchWithRetry } from "@/lib/rain";
 import { ROSARIO } from "@/lib/sources";
 
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 const TIMEZONE = "America/Argentina/Buenos_Aires";
-const REVALIDATE_SECONDS = 300;
 const PROBABILITY_HOURS = 6;
 
 export type WeatherIcon = "sol" | "nubes" | "nublado" | "niebla" | "llovizna" | "lluvia" | "tormenta" | "granizo";
@@ -64,10 +64,7 @@ export async function fetchWeather(): Promise<WeatherNow> {
     forecast_days: "1",
     timezone: TIMEZONE,
   });
-  const response = await fetch(`${FORECAST_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
-  if (!response.ok) {
-    throw new Error(`Open-Meteo respondió ${response.status}`);
-  }
+  const response = await fetchWithRetry(`${FORECAST_URL}?${params}`, "Open-Meteo");
   const data = (await response.json()) as CurrentResponse;
   const ahora = new Date(data.current.time).getTime();
   const proximas = data.hourly.time

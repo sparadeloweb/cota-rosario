@@ -8,6 +8,25 @@ const OUTLOOK_DAYS = 7;
 const DISCHARGE_FORECAST_DAYS = 7;
 const WINDOW_HOURS = 2;
 const REVALIDATE_SECONDS = 300;
+const RETRY_DELAY_MS = 1500;
+const RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+export async function fetchWithRetry(url: string, etiqueta: string): Promise<Response> {
+  const attempt = () => fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+  const first = await attempt().catch(() => null);
+  if (first && !RETRY_STATUSES.has(first.status)) {
+    if (!first.ok) {
+      throw new Error(`${etiqueta} respondió ${first.status}`);
+    }
+    return first;
+  }
+  await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+  const second = await attempt();
+  if (!second.ok) {
+    throw new Error(`${etiqueta} respondió ${second.status} dos veces seguidas`);
+  }
+  return second;
+}
 
 export interface RainHour {
   hora: string;
@@ -94,10 +113,7 @@ export async function fetchRain(): Promise<RainSnapshot> {
     timezone: TIMEZONE,
   });
 
-  const response = await fetch(`${FORECAST_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
-  if (!response.ok) {
-    throw new Error(`Open-Meteo respondió ${response.status}`);
-  }
+  const response = await fetchWithRetry(`${FORECAST_URL}?${params}`, "Open-Meteo");
 
   const data = (await response.json()) as ForecastResponse;
   const now = Date.now();
@@ -128,10 +144,7 @@ export async function fetchDischarge(pastDays = 0): Promise<DischargeSnapshot> {
     past_days: String(pastDays),
   });
 
-  const response = await fetch(`${FLOOD_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
-  if (!response.ok) {
-    throw new Error(`La API de inundaciones respondió ${response.status}`);
-  }
+  const response = await fetchWithRetry(`${FLOOD_URL}?${params}`, "La API de inundaciones (GloFAS)");
 
   const data = (await response.json()) as FloodResponse;
   const hoy = new Date().toISOString().slice(0, 10);
@@ -157,10 +170,7 @@ export async function fetchRainOutlook(): Promise<RainOutlook> {
     timezone: TIMEZONE,
   });
 
-  const response = await fetch(`${FORECAST_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
-  if (!response.ok) {
-    throw new Error(`Open-Meteo respondió ${response.status}`);
-  }
+  const response = await fetchWithRetry(`${FORECAST_URL}?${params}`, "Open-Meteo");
 
   const data = (await response.json()) as OutlookResponse;
   const horas = data.hourly.precipitation.map((mm) => mm ?? 0);
@@ -240,10 +250,7 @@ export async function fetchRainBalance(): Promise<RainBalance> {
     forecast_days: String(BALANCE_FORECAST_DAYS),
     timezone: TIMEZONE,
   });
-  const response = await fetch(`${FORECAST_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
-  if (!response.ok) {
-    throw new Error(`Open-Meteo respondió ${response.status}`);
-  }
+  const response = await fetchWithRetry(`${FORECAST_URL}?${params}`, "Open-Meteo");
   const data = (await response.json()) as BalanceResponse;
   const ahora = localNowKey();
   const horas = data.hourly.time.map((hora, index) => ({ hora, mm: data.hourly.precipitation[index] ?? 0, prob: data.hourly.precipitation_probability[index] ?? 0 }));
@@ -270,10 +277,7 @@ export async function fetchMonthToDateRain(): Promise<MonthRain> {
   const hoy = localNowKey().slice(0, 10);
   const inicio = `${hoy.slice(0, 7)}-01`;
   const params = new URLSearchParams({ latitude: String(ROSARIO.lat), longitude: String(ROSARIO.lon), start_date: inicio, end_date: hoy, daily: "precipitation_sum", timezone: TIMEZONE });
-  const response = await fetch(`${ARCHIVE_URL}?${params}`, { next: { revalidate: REVALIDATE_SECONDS } });
-  if (!response.ok) {
-    throw new Error(`Open-Meteo archivo respondió ${response.status}`);
-  }
+  const response = await fetchWithRetry(`${ARCHIVE_URL}?${params}`, "El archivo histórico de Open-Meteo");
   const data = (await response.json()) as ArchiveResponse;
   const valores = data.daily.precipitation_sum.filter((value): value is number => value !== null);
   return { mes: hoy.slice(0, 7), acumuladoMm: sum(valores), diasConDato: valores.length, consultadoEn: new Date().toISOString() };
