@@ -7,7 +7,7 @@ import { Provenance } from "@/components/Provenance";
 import { RainStrip } from "@/components/RainStrip";
 import { RiverGauge } from "@/components/RiverGauge";
 import { SourceDown } from "@/components/SourceDown";
-import { WeatherBadge } from "@/components/WeatherBadge";
+import { WeatherBadge, WeatherLine } from "@/components/WeatherBadge";
 import { riskColor } from "@/components/status";
 import { DataStatus } from "@/components/DataStatus";
 import { loadEstado } from "@/lib/estado";
@@ -61,6 +61,7 @@ export default async function VecinosPage() {
       lienzo={<FloodMap zonas={riesgo.zonas} buscador reportes reportar esquina={<WeatherBadge clima={clima} />} />}
       rail={
         <div className="flex flex-col">
+          <WeatherLine clima={clima} />
           <section className="px-5 py-6 sm:px-6">
             <p className="meta">Rosario · ahora{riesgo.incompleto ? " · evaluación parcial" : ""}</p>
             <h1 className="mt-2 flex items-start gap-3 text-2xl font-semibold leading-tight tracking-tight text-ink">

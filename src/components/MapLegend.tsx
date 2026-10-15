@@ -30,7 +30,7 @@ export function MapLegend({ zonasOficiales, overlays, conReportes }: MapLegendPr
         type="button"
         onClick={() => setAbierta((current) => !current)}
         aria-expanded={abierta}
-        className="flex items-center gap-3 px-3 py-2 text-left text-ink-soft transition-colors hover:text-ink"
+        className="flex items-center gap-3 px-3 py-2 text-left text-ink-soft transition-colors hover:text-ink max-lg:min-h-[46px]"
       >
         <span className="flex items-center gap-1">
           {RISK_ORDER.map((nivel) => (
@@ -43,7 +43,7 @@ export function MapLegend({ zonasOficiales, overlays, conReportes }: MapLegendPr
         </span>
       </button>
 
-      <p className="border-t border-rule px-3 py-2 text-xs text-ink-soft">Clima municipal 2024: capa fija. Contornos: señal orientativa de esta consulta. Gris: evaluación incompleta.</p>
+      <p className={`border-t border-rule px-3 py-2 text-xs text-ink-soft ${abierta ? "" : "max-lg:hidden"}`}>Clima municipal 2024: capa fija. Contornos: señal orientativa de esta consulta. Gris: evaluación incompleta.</p>
       {abierta ? (
         <div className="flex flex-col gap-3 border-t border-rule px-3 py-3">
           <div className="flex flex-col gap-1.5">

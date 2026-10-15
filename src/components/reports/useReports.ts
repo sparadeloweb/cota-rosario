@@ -23,7 +23,6 @@ export interface ReportsState {
   disponible: boolean | null;
   confirmados: string[];
   confirmando: string | null;
-  colocarCentro: () => void;
   empezarColocacion: () => void;
   cancelar: () => void;
   actualizarBorrador: (cambios: Partial<ReportDraft>) => void;
@@ -157,11 +156,6 @@ export function useReports(mapRef: RefObject<import("leaflet").Map | null>, mapR
     limpiarBorrador();
   }, [limpiarBorrador]);
 
-  const colocarCentro = useCallback(() => {
-    const map = mapRef.current;
-    if (map) map.fire("click", { latlng: map.getCenter() });
-  }, [mapRef]);
-
   const actualizarBorrador = useCallback((cambios: Partial<ReportDraft>) => {
     setBorrador((current) => (current ? { ...current, ...cambios } : current));
   }, []);
@@ -210,5 +204,5 @@ export function useReports(mapRef: RefObject<import("leaflet").Map | null>, mapR
     }
   }, [confirmados]);
 
-  return { reportes, colocando, borrador, enviando, error, disponible, confirmados, confirmando, colocarCentro, empezarColocacion, cancelar, actualizarBorrador, enviar, confirmar };
+  return { reportes, colocando, borrador, enviando, error, disponible, confirmados, confirmando, empezarColocacion, cancelar, actualizarBorrador, enviar, confirmar };
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { LookupResult } from "@/components/LookupResult";
 import { MapLegend, type LegendOverlay } from "@/components/MapLegend";
+import { MobileReportPanel, ReportFab } from "@/components/reports/MobileReports";
 import { ReportPanel } from "@/components/reports/ReportPanel";
 import { useReports } from "@/components/reports/useReports";
 import { useSimulation } from "@/components/SimulationContext";
@@ -102,7 +103,14 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
   const [buscando, setBuscando] = useState(false);
   const [hallazgo, setHallazgo] = useState<Hallazgo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reportesMovilAbiertos, setReportesMovilAbiertos] = useState(false);
   const estadoReportes = useReports(mapRef, mapReady && reportes);
+  const alternarReportesMovil = () => {
+    if (reportesMovilAbiertos && estadoReportes.colocando) {
+      estadoReportes.cancelar();
+    }
+    setReportesMovilAbiertos(!reportesMovilAbiertos);
+  };
 
   const zonasEfectivas = escenario?.zonas ?? zonas;
   const nivelDeZona = useCallback(
@@ -374,15 +382,21 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
               {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alerta">{error}</p> : null}
             </div>
           ) : reportes ? (
-            <ReportPanel estado={estadoReportes} soloLectura={!reportar} />
+            <div className="hidden w-full max-w-xs lg:block">
+              <ReportPanel estado={estadoReportes} soloLectura={!reportar} />
+            </div>
           ) : (
             <div className="flex-1" />
           )}
-          {esquina ? <div className="flex shrink-0 justify-end sm:ml-auto">{esquina}</div> : null}
+          {esquina ? <div className="hidden shrink-0 justify-end lg:ml-auto lg:flex">{esquina}</div> : null}
         </div>
 
         <div className="flex flex-col items-start gap-2 sm:flex-row">
-          {buscador && reportes ? <ReportPanel estado={estadoReportes} soloLectura={!reportar} /> : null}
+          {buscador && reportes ? (
+            <div className="hidden w-full max-w-xs lg:block">
+              <ReportPanel estado={estadoReportes} soloLectura={!reportar} />
+            </div>
+          ) : null}
           {escenario ? (
             <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-atencion/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur sm:mx-auto">
               <span className="size-2 rounded-full" style={{ background: RISK_FILL[escenario.nivel] }} aria-hidden="true" />
@@ -399,9 +413,16 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
 
       <div
         data-map-legend
-        className="pointer-events-none absolute bottom-[calc(var(--sheet-peek)+0.75rem)] left-0 right-14 z-[500] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
+        className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--sheet-peek)+0.75rem)] z-[600] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
       >
-        <MapLegend zonasOficiales={collection?.features.length ?? 0} overlays={overlays} conReportes={reportes} />
+        {/* Below lg the open report panel takes the legend's slot, left of the button, so neither pushes the other. */}
+        <div className="flex items-end gap-3">
+          <div className={`min-w-0 flex-1 lg:flex-none ${reportesMovilAbiertos ? "max-lg:hidden" : ""}`}>
+            <MapLegend zonasOficiales={collection?.features.length ?? 0} overlays={overlays} conReportes={reportes} />
+          </div>
+          {reportes && reportesMovilAbiertos ? <MobileReportPanel estado={estadoReportes} soloLectura={!reportar} /> : null}
+          {reportes ? <ReportFab estado={estadoReportes} soloLectura={!reportar} abierto={reportesMovilAbiertos} onToggle={alternarReportesMovil} /> : null}
+        </div>
       </div>
     </div>
   );

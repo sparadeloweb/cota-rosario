@@ -1,13 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 
 const SNAP_RATIO = 0.35;
 const FLICK_PX = 18;
+const FLICK_MS = 250;
+const DRAG_START_PX = 8;
 const SNAP_TRANSITION = "translate 320ms cubic-bezier(0.32, 0.72, 0, 1)";
+const DESKTOP_QUERY = "(min-width: 1024px)";
+const INTERACTIVE = "a, button, input, textarea, select, summary, label, [role='button']";
 
 interface BottomSheetProps {
   children: ReactNode;
+}
+
+interface Gesture {
+  y: number;
+  at: number;
+  open: boolean;
+  travel: number;
+  dragging: boolean;
+  fromHandle: boolean;
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -26,11 +39,22 @@ function peekPx(): number {
   return Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sheet-peek")) || 0;
 }
 
+// Decides the resting state after a drag: a quick flick follows its direction, a slow drag needs a third of the travel.
+function settles(start: Gesture, delta: number): boolean {
+  const quick = performance.now() - start.at < FLICK_MS && Math.abs(delta) >= FLICK_PX;
+  if (start.open) {
+    return !(quick ? delta > 0 : delta > start.travel * SNAP_RATIO);
+  }
+  return quick ? delta < 0 : -delta > start.travel * SNAP_RATIO;
+}
+
 export function BottomSheet({ children }: BottomSheetProps) {
   const [open, setOpen] = useState(false);
   const [dragPx, setDragPx] = useState<number | null>(null);
   const sheetRef = useRef<HTMLElement>(null);
-  const dragStart = useRef<{ y: number; open: boolean; travel: number } | null>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const gesture = useRef<Gesture | null>(null);
+  const suppressClick = useRef(false);
   const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -40,36 +64,125 @@ export function BottomSheet({ children }: BottomSheetProps) {
     };
   }, [open]);
 
-  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const height = sheetRef.current?.offsetHeight ?? 0;
-    dragStart.current = { y: event.clientY, open, travel: Math.max(0, height - peekPx()) };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
+  const startGesture = (y: number, fromHandle: boolean): Gesture => ({
+    y,
+    at: performance.now(),
+    open,
+    travel: Math.max(0, (sheetRef.current?.offsetHeight ?? 0) - peekPx()),
+    dragging: false,
+    fromHandle,
+  });
 
-  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const start = dragStart.current;
-    if (!start) {
-      return;
-    }
+  const follow = (start: Gesture, y: number) => {
     const base = start.open ? 0 : start.travel;
-    setDragPx(Math.min(start.travel, Math.max(0, base + event.clientY - start.y)));
+    setDragPx(Math.min(start.travel, Math.max(0, base + y - start.y)));
   };
 
-  const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const start = dragStart.current;
+  const finish = (start: Gesture, y: number) => {
+    setDragPx(null);
+    setOpen(settles(start, y - start.y));
+  };
+
+  // Pointer gestures cover the handle and the whole peek while closed; the open sheet scrolls natively.
+  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (window.matchMedia(DESKTOP_QUERY).matches) {
+      return;
+    }
+    const fromHandle = Boolean((event.target as HTMLElement).closest("[data-sheet-handle]"));
+    if (open && !fromHandle) {
+      return;
+    }
+    gesture.current = startGesture(event.clientY, fromHandle);
+  };
+
+  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const start = gesture.current;
     if (!start) {
       return;
     }
-    const delta = event.clientY - start.y;
-    dragStart.current = null;
-    setDragPx(null);
-    if (Math.abs(delta) < FLICK_PX) {
-      setOpen(!start.open);
+    if (!start.dragging) {
+      if (Math.abs(event.clientY - start.y) < DRAG_START_PX) {
+        return;
+      }
+      gesture.current = { ...start, dragging: true };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    follow(start, event.clientY);
+  };
+
+  const onPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
+    const start = gesture.current;
+    gesture.current = null;
+    if (!start) {
       return;
     }
-    const position = start.open ? delta : start.travel + delta;
-    setOpen(position < start.travel * (1 - SNAP_RATIO));
+    if (start.dragging) {
+      suppressClick.current = true;
+      finish(start, event.clientY);
+      return;
+    }
+    const onControl = Boolean((event.target as HTMLElement).closest(INTERACTIVE));
+    if (start.fromHandle) {
+      setOpen(!start.open);
+    } else if (!start.open && !onControl) {
+      setOpen(true);
+    }
   };
+
+  const onClickCapture = (event: ReactMouseEvent<HTMLElement>) => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
+  // Pulling down from the top of the open content closes the sheet. Needs a non-passive touch listener so the
+  // pull does not also bounce the scroll container.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || !open) {
+      return;
+    }
+    let pull: Gesture | null = null;
+    const onTouchStart = (event: TouchEvent) => {
+      pull = scroller.scrollTop <= 0 ? startGesture(event.touches[0].clientY, false) : null;
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      if (!pull) {
+        return;
+      }
+      const y = event.touches[0].clientY;
+      if (!pull.dragging) {
+        if (y - pull.y < DRAG_START_PX) {
+          if (pull.y - y >= DRAG_START_PX) pull = null;
+          return;
+        }
+        pull = { ...pull, dragging: true };
+      }
+      event.preventDefault();
+      follow(pull, y);
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      if (pull?.dragging) {
+        suppressClick.current = true;
+        finish(pull, event.changedTouches[0].clientY);
+      }
+      pull = null;
+    };
+    scroller.addEventListener("touchstart", onTouchStart, { passive: true });
+    scroller.addEventListener("touchmove", onTouchMove, { passive: false });
+    scroller.addEventListener("touchend", onTouchEnd);
+    scroller.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      scroller.removeEventListener("touchstart", onTouchStart);
+      scroller.removeEventListener("touchmove", onTouchMove);
+      scroller.removeEventListener("touchend", onTouchEnd);
+      scroller.removeEventListener("touchcancel", onTouchEnd);
+    };
+    // startGesture/follow/finish only read refs and stable setters besides `open`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const restingClass = open ? "translate-y-0" : "translate-y-[calc(100%-var(--sheet-peek))]";
   const style: CSSProperties = dragPx !== null ? { translate: `0 ${dragPx}px`, transition: "none" } : { transition: reduced ? "none" : SNAP_TRANSITION };
@@ -78,29 +191,33 @@ export function BottomSheet({ children }: BottomSheetProps) {
     <aside
       ref={sheetRef}
       data-sheet-open={open}
-      className={`glass-sheet lg:glass-rail fixed inset-x-0 bottom-0 z-30 flex h-[86dvh] flex-col rounded-t-2xl border-t border-rule shadow-[0_-18px_48px_-24px_rgb(0_0_0/0.9)] ${restingClass} lg:static lg:z-20 lg:h-auto lg:w-[27rem] lg:shrink-0 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-r lg:shadow-none xl:w-[30rem]`}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onClickCapture={onClickCapture}
+      className={`glass-sheet lg:glass-rail fixed inset-x-0 bottom-0 z-30 flex h-[86dvh] flex-col rounded-t-2xl border-t border-rule shadow-[0_-18px_48px_-24px_rgb(0_0_0/0.9)] ${restingClass} ${open ? "" : "max-lg:touch-none max-lg:select-none"} lg:static lg:z-20 lg:h-auto lg:w-[27rem] lg:shrink-0 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-r lg:shadow-none xl:w-[30rem]`}
       style={style}
     >
       <div
+        data-sheet-handle
         role="button"
         tabIndex={0}
         aria-expanded={open}
         aria-label={open ? "Contraer el panel" : "Expandir el panel"}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             setOpen((current) => !current);
           }
         }}
-        className="flex shrink-0 cursor-grab touch-none select-none items-center justify-center py-3 active:cursor-grabbing lg:hidden"
+        className="flex shrink-0 cursor-grab touch-none select-none items-center justify-center py-4 active:cursor-grabbing lg:hidden"
       >
         <span className="h-1 w-10 rounded-full bg-rule" aria-hidden="true" />
       </div>
-      <div className={`min-h-0 flex-1 lg:overflow-y-auto ${open ? "overflow-y-auto" : "overflow-hidden"}`}>{children}</div>
+      <div ref={scrollerRef} className={`min-h-0 flex-1 overscroll-contain lg:overflow-y-auto ${open ? "overflow-y-auto" : "overflow-hidden"}`}>
+        {children}
+      </div>
     </aside>
   );
 }
