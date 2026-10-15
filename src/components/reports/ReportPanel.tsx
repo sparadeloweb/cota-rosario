@@ -8,14 +8,15 @@ const LIST_LIMIT = 8;
 interface ReportPanelProps {
   estado: ReportsState;
   soloLectura?: boolean;
+  className?: string;
 }
 
-export function ReportPanel({ estado, soloLectura = false }: ReportPanelProps) {
-  const { reportes, colocando, borrador, enviando, error, disponible, confirmados, confirmando, colocarCentro, empezarColocacion, cancelar, actualizarBorrador, enviar, confirmar } = estado;
+export function ReportPanel({ estado, soloLectura = false, className = "max-w-xs" }: ReportPanelProps) {
+  const { reportes, colocando, borrador, enviando, error, disponible, confirmados, confirmando, empezarColocacion, cancelar, actualizarBorrador, enviar, confirmar } = estado;
   const [listaAbierta, setListaAbierta] = useState(false);
 
   return (
-    <div className="pointer-events-auto flex w-full max-w-xs flex-col gap-2">
+    <div className={`pointer-events-auto flex w-full flex-col gap-2 ${className}`}>
       <div className="flex flex-col overflow-hidden rounded-md border border-rule bg-panel/95 shadow-xl backdrop-blur">
         {colocando ? (
           <div className="flex flex-col gap-3 px-3 py-3 text-sm">
@@ -68,8 +69,6 @@ export function ReportPanel({ estado, soloLectura = false }: ReportPanelProps) {
               <>
                 <p className="text-ink">Tocá el mapa donde está el agua.</p>
                 <p className="text-xs text-ink-soft">Podés acercar el mapa antes para apuntar a la cuadra exacta.</p>
-                <button type="button" onClick={colocarCentro} className="rounded-md border border-rule px-3 py-2 text-left text-xs text-ink">Usar el centro visible del mapa</button>
-                <p className="text-xs text-ink-soft">Con teclado, mové el mapa con las flechas y seleccioná su centro.</p>
                 <button type="button" onClick={cancelar} className="self-start text-xs text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
                   Cancelar
                 </button>

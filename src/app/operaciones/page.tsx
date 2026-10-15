@@ -13,7 +13,7 @@ import { SimulationProvider } from "@/components/SimulationContext";
 import { Simulator } from "@/components/Simulator";
 import { SourceDown } from "@/components/SourceDown";
 import { StationTable } from "@/components/StationTable";
-import { WeatherBadge } from "@/components/WeatherBadge";
+import { WeatherBadge, WeatherLine } from "@/components/WeatherBadge";
 import { loadEstado } from "@/lib/estado";
 import { loadKpis, type Kpis } from "@/lib/kpis";
 import { loadPredicciones } from "@/lib/predicciones";
@@ -114,6 +114,7 @@ export default async function OperacionesPage() {
         }
         rail={
           <div className="flex flex-col">
+            <WeatherLine clima={clima} />
             <section className="px-5 py-6 sm:px-6">
               <p className="meta">Seguimiento hídrico{riesgo.incompleto ? " · evaluación parcial" : ""}</p>
               <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">Operaciones</h1>

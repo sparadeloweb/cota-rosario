@@ -150,7 +150,8 @@ body {
     bottom: calc(var(--sheet-peek) + 0.75rem);
   }
 
-  .leaflet-control-attribution {
+  .leaflet-control-attribution,
+  .leaflet-control-zoom {
     display: none;
   }
 
