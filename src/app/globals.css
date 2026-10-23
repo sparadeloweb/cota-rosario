@@ -2,6 +2,8 @@
 
 :root {
   --sheet-peek: 196px;
+  --tabbar-body: 3.5rem;
+  --tabbar-h: 0px;
   --ground: #0b0c0e;
   --panel: #141619;
   --panel-soft: #1b1e22;
@@ -42,6 +44,12 @@
 
 html {
   color-scheme: dark;
+}
+
+@media (max-width: 1023px) {
+  .with-tabbar {
+    --tabbar-h: calc(var(--tabbar-body) + env(safe-area-inset-bottom));
+  }
 }
 
 body {

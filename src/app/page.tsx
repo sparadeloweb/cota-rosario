@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
-import { HELP_HREF } from "@/components/TopBar";
+import { VecinosShell } from "@/components/shell/VecinosShell";
+import { Workspace } from "@/components/shell/Workspace";
+import { HELP_HREF } from "@/lib/navigation";
 import { Docs, DocsSection } from "@/components/Docs";
 import { FloodMap } from "@/components/FloodMap";
 import { Provenance } from "@/components/Provenance";
@@ -54,10 +55,8 @@ export default async function VecinosPage() {
       : `Nivel ${riskLabel(riesgo.nivel).toLowerCase()} en los datos consultados`;
 
   return (
-    <AppShell
-      activo="/"
-      nivel={riesgo.nivel}
-      actualizadoEn={riesgo.evaluadoEn}
+    <VecinosShell nivel={riesgo.nivel} actualizadoEn={riesgo.evaluadoEn}>
+    <Workspace
       lienzo={<FloodMap zonas={riesgo.zonas} buscador reportes reportar esquina={<WeatherBadge clima={clima} />} />}
       rail={
         <div className="flex flex-col">
@@ -157,5 +156,6 @@ export default async function VecinosPage() {
         </div>
       }
     />
+    </VecinosShell>
   );
 }
