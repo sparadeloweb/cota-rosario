@@ -22,7 +22,7 @@ export function PanelShell({ nivel, actualizadoEn, children }: PanelShellProps) 
         nivel={nivel}
         actualizadoEn={actualizadoEn}
       />
-      <SectionNav items={PANEL_SECTIONS} etiqueta="Secciones del panel" variante="row" />
+      <SectionNav items={PANEL_SECTIONS} etiqueta="Secciones del panel" />
       <OfflineBanner actualizadoEn={actualizadoEn} />
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>

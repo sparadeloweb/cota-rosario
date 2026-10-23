@@ -22,8 +22,10 @@ export function VecinosShell({ nivel, actualizadoEn, children }: VecinosShellPro
         espacio="vecinos"
         nivel={nivel}
         actualizadoEn={actualizadoEn}
-        centro={<span className="hidden lg:flex"><SectionNav items={VECINOS_TABS} etiqueta="Secciones" variante="pill" /></span>}
       />
+      <div className="max-lg:hidden">
+        <SectionNav items={VECINOS_TABS} etiqueta="Secciones" />
+      </div>
       <OfflineBanner actualizadoEn={actualizadoEn} />
       <div className="flex min-h-0 flex-1 flex-col max-lg:pb-[var(--tabbar-h)]">{children}</div>
       <TabBar items={VECINOS_TABS} />
