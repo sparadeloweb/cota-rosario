@@ -1,10 +1,22 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_COTA_BUILD ?? "dev";
 
 export function ServiceWorker() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) {
+      return;
+    }
+    navigator.serviceWorker.ready
+      .then((registration) => registration.active?.postMessage({ type: "cota:cache-page", url: window.location.href }))
+      .catch(() => undefined);
+  }, [pathname]);
+
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) {
       return;

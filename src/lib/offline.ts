@@ -33,3 +33,13 @@ export function avisoSinConexion(iso: string | undefined, ahora: number): string
   const hora = Date.parse(iso!) > ahora - DAY_MS ? ` (${horaArgentina(iso!)})` : "";
   return `Sin conexión · mostrando la última lectura, ${edad}${hora}. No es el estado actual.`;
 }
+
+export function avisoDesdeCache(iso: string | undefined, ahora: number, conectado: boolean): string {
+  const causa = conectado ? "No pudimos actualizar con el servidor" : "Sin conexión";
+  const edad = antiguedad(iso, ahora);
+  if (edad === SIN_LECTURA) {
+    return `${causa} · esta pantalla es una copia guardada sin hora de lectura. No es el estado actual.`;
+  }
+  const hora = Date.parse(iso!) > ahora - DAY_MS ? ` (${horaArgentina(iso!)})` : "";
+  return `${causa} · mostrando la copia guardada de esta pantalla, ${edad}${hora}. No es el estado actual.`;
+}
