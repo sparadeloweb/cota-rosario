@@ -3,7 +3,7 @@ import { Motion } from "@/components/motion/Motion";
 import { riskColor } from "@/components/status";
 import type { RiskLevel } from "@/lib/risk";
 
-export type HeroPattern = "resumen" | "rio" | "lluvia" | "pronostico" | "reportes" | "simulador";
+export type HeroPattern = "resumen" | "rio" | "lluvia" | "pronostico" | "reportes" | "simulador" | "zona" | "reportar";
 export type FigureTone = "neutro" | "atencion" | "alerta" | "critico";
 
 export interface HeroFigure {
@@ -38,6 +38,8 @@ const WAVE_GAP = 26;
 const RAIN_STREAKS = 46;
 const SCATTER_DOTS = 60;
 const TIMELINE_TICKS = 28;
+const CONTOUR_RINGS = 9;
+const RIPPLE_RINGS = 5;
 
 function pseudoAleatorio(semilla: number): number {
   const x = Math.sin(semilla * 12.9898) * 43758.5453;
@@ -79,6 +81,28 @@ function Patron({ patron }: { patron: HeroPattern }) {
   }
   if (patron === "simulador") {
     return <div className={`${comun} opacity-[0.35] [background-image:linear-gradient(var(--rule-soft)_1px,transparent_1px),linear-gradient(90deg,var(--rule-soft)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(90deg,transparent,black_35%,black)]`} aria-hidden="true" />;
+  }
+  if (patron === "zona") {
+    return (
+      <svg className={`${comun} text-water opacity-[0.2]`} viewBox="0 0 800 220" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+        {Array.from({ length: CONTOUR_RINGS }, (_, anillo) => (
+          <ellipse key={anillo} cx="640" cy="110" rx={24 + anillo * 34} ry={16 + anillo * 22} transform={`rotate(${-12 + anillo * 2} 640 110)`} fill="none" stroke="currentColor" strokeWidth={anillo === 0 ? 1.6 : 0.8} />
+        ))}
+        <circle cx="640" cy="110" r="4" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (patron === "reportar") {
+    return (
+      <svg className={`${comun} opacity-[0.22]`} viewBox="0 0 800 220" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+        {Array.from({ length: RIPPLE_RINGS }, (_, anillo) => (
+          <circle key={anillo} cx="680" cy="70" r={14 + anillo * 30} fill="none" stroke={anillo === 0 ? "var(--atencion)" : "var(--water)"} strokeWidth="1" opacity={1 - anillo * 0.16} />
+        ))}
+        {Array.from({ length: RIPPLE_RINGS - 1 }, (_, anillo) => (
+          <circle key={`b${anillo}`} cx="560" cy="180" r={8 + anillo * 22} fill="none" stroke="var(--water)" strokeWidth="0.8" opacity={0.7 - anillo * 0.15} />
+        ))}
+      </svg>
+    );
   }
   if (patron === "pronostico") {
     return (

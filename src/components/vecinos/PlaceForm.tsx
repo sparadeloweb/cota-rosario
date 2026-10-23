@@ -1,0 +1,62 @@
+"use client";
+
+import type { FormEvent } from "react";
+import { NAME_MAX_CHARS } from "@/lib/places";
+
+const NAME_SUGGESTIONS = ["Casa", "Trabajo", "Escuela", "Familia"] as const;
+
+interface PlaceFormProps {
+  direccion: string;
+  nombre: string;
+  ocupado: boolean;
+  lleno: boolean;
+  mensaje: string | null;
+  avisoLleno: string;
+  onDireccion: (valor: string) => void;
+  onNombre: (valor: string) => void;
+  onBuscar: (event: FormEvent) => void;
+  onUbicacion: () => void;
+}
+
+export function PlaceForm({ direccion, nombre, ocupado, lleno, mensaje, avisoLleno, onDireccion, onNombre, onBuscar, onUbicacion }: PlaceFormProps) {
+  const bloqueado = lleno || ocupado;
+  return (
+    <form onSubmit={onBuscar} className="flex flex-col gap-3 rounded-xl border border-rule bg-panel/70 p-4">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Nombre del lugar">
+        {NAME_SUGGESTIONS.map((sugerencia) => (
+          <button
+            key={sugerencia}
+            type="button"
+            onClick={() => onNombre(nombre === sugerencia ? "" : sugerencia)}
+            disabled={bloqueado}
+            aria-pressed={nombre === sugerencia}
+            className={`rounded-full border px-3 py-1 text-xs transition-colors disabled:opacity-40 ${nombre === sugerencia ? "border-water bg-water/15 text-ink" : "border-rule text-ink-soft hover:text-ink"}`}
+          >
+            {sugerencia}
+          </button>
+        ))}
+        <input value={NAME_SUGGESTIONS.some((sugerencia) => sugerencia === nombre) ? "" : nombre} onChange={(event) => onNombre(event.target.value)} maxLength={NAME_MAX_CHARS} placeholder="otro nombre" aria-label="Otro nombre" disabled={bloqueado} className="min-w-28 flex-1 rounded-full border border-dashed border-rule bg-transparent px-3 py-1 text-xs text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none disabled:opacity-40" />
+      </div>
+      <label className="relative block">
+        <span className="sr-only">Dirección</span>
+        <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-faint" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+          <path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z M20 20l-4-4" />
+        </svg>
+        <input value={direccion} onChange={(event) => onDireccion(event.target.value)} placeholder="Calle y número, ej.: Córdoba 1500" disabled={bloqueado} className="w-full rounded-lg border border-rule bg-ground py-3 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none disabled:opacity-50" />
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <button type="submit" disabled={bloqueado || !direccion.trim()} className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-ground transition-opacity hover:opacity-90 disabled:opacity-30">
+          {ocupado ? "Buscando…" : "Guardar dirección"}
+        </button>
+        <button type="button" onClick={onUbicacion} disabled={bloqueado} className="flex items-center justify-center gap-2 rounded-lg border border-rule px-4 py-2.5 text-sm text-ink-soft transition-colors hover:border-ink-soft hover:text-ink disabled:opacity-40">
+          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z M12 2v3 M12 19v3 M2 12h3 M19 12h3" />
+          </svg>
+          Estoy acá
+        </button>
+      </div>
+      {mensaje ? <p role="alert" className="text-xs text-atencion">{mensaje}</p> : null}
+      {lleno ? <p className="text-xs text-ink-faint">{avisoLleno}</p> : null}
+    </form>
+  );
+}

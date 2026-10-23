@@ -47,3 +47,16 @@ export function cuerpoDelEnvio(borrador: ReportDraftFlow): { lat: number; lon: n
   }
   return { lat: borrador.lat, lon: borrador.lon, tipo: borrador.tipo, descripcion: borrador.descripcion.trim(), web: "" };
 }
+
+export const FRASES_RAPIDAS = ["llega al cordón", "cubre la vereda", "no pasan autos", "entra a las casas", "sigue subiendo"] as const;
+
+const PHRASE_SEPARATOR = ", ";
+
+export function agregarFrase(descripcion: string, frase: string): string {
+  const actual = descripcion.trim();
+  if (actual.toLowerCase().includes(frase.toLowerCase())) {
+    return descripcion;
+  }
+  const nueva = actual ? `${actual}${PHRASE_SEPARATOR}${frase}` : frase;
+  return nueva.length > DESCRIPTION_MAX_CHARS ? descripcion : nueva;
+}

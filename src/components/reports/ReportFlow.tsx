@@ -2,14 +2,20 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { SectionHero } from "@/components/panel/SectionHero";
+import { ReportGlyph } from "@/components/reports/ReportGlyph";
+import { ReportSent } from "@/components/reports/ReportSent";
+import { ReportStepper } from "@/components/reports/ReportStepper";
+import { ReportTypePicker } from "@/components/reports/ReportTypePicker";
 import { geocodificar } from "@/lib/placeReader";
-import { EMPTY_DRAFT, REPORT_STEPS, cuerpoDelEnvio, pasoAnterior, puedeAvanzar, siguientePaso, type ReportDraftFlow, type ReportStep } from "@/lib/reportFlow";
-import { DESCRIPTION_MAX_CHARS, REPORT_TTL_HOURS, REPORT_TYPES, type ReportType } from "@/lib/reportTypes";
+import { EMPTY_DRAFT, FRASES_RAPIDAS, REPORT_STEPS, agregarFrase, cuerpoDelEnvio, pasoAnterior, puedeAvanzar, siguientePaso, type ReportDraftFlow, type ReportStep } from "@/lib/reportFlow";
+import { DESCRIPTION_MAX_CHARS, REPORT_TTL_HOURS, REPORT_TYPES } from "@/lib/reportTypes";
 import { EMERGENCY_PHONE, VECINOS_HOME } from "@/lib/navigation";
 
 const API = "/api/reportes";
 const GEOLOCATION_TIMEOUT_MS = 10_000;
 const COORD_DECIMALS = 4;
+const PERCENT = 100;
 
 const TITULOS: Record<ReportStep, string> = {
   tipo: "¿Qué estás viendo?",
@@ -95,63 +101,56 @@ export function ReportFlow() {
   };
 
   if (envio.estado === "enviado") {
-    return (
-      <section className="px-5 py-8 sm:px-6">
-        <p className="meta">Reporte enviado</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Gracias por avisar</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">Tu reporte aparece en el mapa durante {REPORT_TTL_HOURS} horas y otros vecinos pueden confirmarlo. No reemplaza un aviso a Defensa Civil.</p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Link href={VECINOS_HOME} className="rounded-md border border-ink-soft px-4 py-2 text-sm text-ink hover:border-ink">Ver en el mapa</Link>
-          <button type="button" onClick={reiniciar} className="rounded-md border border-rule px-4 py-2 text-sm text-ink-soft hover:text-ink">Reportar otra cosa</button>
-        </div>
-      </section>
-    );
+    return <ReportSent onOtro={reiniciar} />;
   }
 
-  return (
-    <div className="flex flex-col">
-      <section className="px-5 pt-6 sm:px-6">
-        <p className="meta">Reportar · paso {numero} de {REPORT_STEPS.length}</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">{TITULOS[paso]}</h1>
-        <ol className="mt-4 flex gap-1.5" aria-hidden="true">
-          {REPORT_STEPS.map((etapa, indice) => (
-            <li key={etapa} className={`h-1 flex-1 rounded-full ${indice < numero ? "bg-ink-soft" : "bg-rule"}`} />
-          ))}
-        </ol>
-      </section>
+  const tipoElegido = borrador.tipo ? REPORT_TYPES[borrador.tipo] : null;
+  const tieneLugar = borrador.lat !== null && borrador.lon !== null;
+  const lugarValido = puedeAvanzar("lugar", borrador);
 
-      <section className="px-5 py-6 sm:px-6">
-        {paso === "tipo" ? (
-          <fieldset className="flex flex-col gap-2">
-            <legend className="sr-only">Tipo de reporte</legend>
-            {(Object.entries(REPORT_TYPES) as [ReportType, (typeof REPORT_TYPES)[ReportType]][]).map(([clave, tipo]) => (
-              <label key={clave} className={`flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-sm transition-colors ${borrador.tipo === clave ? "border-ink-soft bg-panel-soft text-ink" : "border-rule text-ink-soft hover:text-ink"}`}>
-                <input type="radio" name="tipo" value={clave} checked={borrador.tipo === clave} onChange={() => actualizar({ tipo: clave })} className="sr-only" />
-                <span className="size-2.5 rounded-full" style={{ background: tipo.color }} aria-hidden="true" />
-                {tipo.etiqueta}
-              </label>
-            ))}
-          </fieldset>
-        ) : null}
+  return (
+    <div className="flex min-h-full flex-col">
+      <SectionHero patron="reportar" meta={`Reportar · paso ${numero} de ${REPORT_STEPS.length}`} titulo={TITULOS[paso]}>
+        {paso === "tipo" ? "Tu aviso aparece en el mapa para que otros vecinos y el panel de operaciones lo vean." : null}
+      </SectionHero>
+      <div className="px-5 sm:px-6">
+        <ReportStepper paso={paso} />
+      </div>
+
+      <section className="flex-1 px-5 py-6 sm:px-6">
+        {paso === "tipo" ? <ReportTypePicker elegido={borrador.tipo} onElegir={(tipo) => actualizar({ tipo })} /> : null}
 
         {paso === "lugar" ? (
           <div className="flex flex-col gap-4">
-            <button type="button" onClick={usarUbicacion} disabled={buscando} className="rounded-md border border-ink-soft px-4 py-3 text-left text-sm text-ink hover:border-ink disabled:opacity-50">
-              Usar mi ubicación actual
+            <button type="button" onClick={usarUbicacion} disabled={buscando} className="flex items-center gap-4 rounded-xl border border-rule bg-panel/70 p-4 text-left transition-colors hover:border-ink-soft disabled:opacity-50">
+              <span className="relative flex size-11 shrink-0 items-center justify-center rounded-full border border-water/50 bg-water/10 text-water">
+                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+                  <path d="M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M12 2v3 M12 19v3 M2 12h3 M19 12h3" />
+                </svg>
+              </span>
+              <span>
+                <span className="block text-sm font-medium text-ink">{buscando ? "Buscando tu ubicación…" : "Usar mi ubicación actual"}</span>
+                <span className="mt-0.5 block text-xs text-ink-faint">Lo más preciso si estás en el lugar</span>
+              </span>
             </button>
-            <form onSubmit={buscarDireccion} className="flex flex-col gap-2">
-              <label className="meta" htmlFor="direccion-reporte">O escribí la dirección</label>
-              <div className="flex gap-2">
-                <input id="direccion-reporte" value={direccion} onChange={(event) => setDireccion(event.target.value)} placeholder="Ej.: Pellegrini y Oroño" className="min-w-0 flex-1 rounded-md border border-rule bg-panel px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none" />
-                <button type="submit" disabled={buscando || !direccion.trim()} className="rounded-md border border-rule px-3 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-40">{buscando ? "…" : "Buscar"}</button>
-              </div>
+            <div className="flex items-center gap-3 text-[11px] text-ink-faint" aria-hidden="true">
+              <span className="h-px flex-1 bg-rule-soft" />o escribí la dirección<span className="h-px flex-1 bg-rule-soft" />
+            </div>
+            <form onSubmit={buscarDireccion} className="flex gap-2">
+              <label htmlFor="direccion-reporte" className="sr-only">Dirección</label>
+              <input id="direccion-reporte" value={direccion} onChange={(event) => setDireccion(event.target.value)} placeholder="Ej.: Pellegrini y Oroño" className="min-w-0 flex-1 rounded-lg border border-rule bg-ground px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none" />
+              <button type="submit" disabled={buscando || !direccion.trim()} className="rounded-lg border border-rule px-4 py-2.5 text-sm text-ink-soft hover:text-ink disabled:opacity-40">{buscando ? "…" : "Buscar"}</button>
             </form>
-            {borrador.lat !== null && borrador.lon !== null ? (
-              <p className="text-sm text-ink">
-                {borrador.etiquetaLugar} <span className="readout text-xs text-ink-faint">({borrador.lat.toFixed(COORD_DECIMALS)}, {borrador.lon.toFixed(COORD_DECIMALS)})</span>
-              </p>
+            {tieneLugar ? (
+              <div className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${lugarValido ? "border-normal/50 bg-normal/10" : "border-atencion/50 bg-atencion/10"}`}>
+                <span className={`mt-0.5 text-sm ${lugarValido ? "text-normal" : "text-atencion"}`} aria-hidden="true">{lugarValido ? "✓" : "!"}</span>
+                <span className="min-w-0">
+                  <span className="block text-sm text-ink">{borrador.etiquetaLugar}</span>
+                  <span className="readout block text-[11px] text-ink-faint">{borrador.lat!.toFixed(COORD_DECIMALS)}, {borrador.lon!.toFixed(COORD_DECIMALS)}</span>
+                  {!lugarValido ? <span className="mt-1 block text-xs text-atencion">Ese punto queda fuera de Rosario.</span> : null}
+                </span>
+              </div>
             ) : null}
-            {borrador.lat !== null && !puedeAvanzar("lugar", borrador) ? <p className="text-xs text-atencion">Ese punto queda fuera de Rosario.</p> : null}
             {avisoLugar ? <p role="alert" className="text-xs text-atencion">{avisoLugar}</p> : null}
             <p className="text-xs leading-relaxed text-ink-faint">
               También podés marcar el punto exacto desde el <Link href={VECINOS_HOME} className="underline decoration-rule underline-offset-4 hover:text-ink">mapa</Link>.
@@ -160,35 +159,71 @@ export function ReportFlow() {
         ) : null}
 
         {paso === "detalle" ? (
-          <label className="flex flex-col gap-2">
-            <span className="meta">Descripción (opcional)</span>
-            <textarea value={borrador.descripcion} onChange={(event) => actualizar({ descripcion: event.target.value })} maxLength={DESCRIPTION_MAX_CHARS} rows={4} placeholder="Ej.: el agua llega al cordón, no pasan autos" className="rounded-md border border-rule bg-panel px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none" />
-            <span className="readout self-end text-xs text-ink-faint">{borrador.descripcion.length}/{DESCRIPTION_MAX_CHARS}</span>
-          </label>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Frases rápidas">
+              {FRASES_RAPIDAS.map((frase) => {
+                const usada = borrador.descripcion.toLowerCase().includes(frase);
+                return (
+                  <button key={frase} type="button" onClick={() => actualizar({ descripcion: agregarFrase(borrador.descripcion, frase) })} disabled={usada} className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${usada ? "border-water/50 bg-water/10 text-ink-soft" : "border-rule text-ink-soft hover:border-ink-soft hover:text-ink"}`}>
+                    {usada ? "✓ " : "+ "}
+                    {frase}
+                  </button>
+                );
+              })}
+            </div>
+            <label className="flex flex-col gap-2">
+              <span className="sr-only">Descripción (opcional)</span>
+              <textarea value={borrador.descripcion} onChange={(event) => actualizar({ descripcion: event.target.value })} maxLength={DESCRIPTION_MAX_CHARS} rows={4} placeholder="Contá con tus palabras (opcional)" className="rounded-xl border border-rule bg-ground px-4 py-3 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none" />
+              <span className="flex items-center gap-2 self-end">
+                <span className="h-1 w-16 overflow-hidden rounded-full bg-rule-soft">
+                  <span className="block h-full rounded-full bg-ink-soft" style={{ width: `${(borrador.descripcion.length / DESCRIPTION_MAX_CHARS) * PERCENT}%` }} />
+                </span>
+                <span className="readout text-[11px] text-ink-faint">{borrador.descripcion.length}/{DESCRIPTION_MAX_CHARS}</span>
+              </span>
+            </label>
+          </div>
         ) : null}
 
         {paso === "revisar" ? (
-          <dl className="flex flex-col gap-3 text-sm">
-            <div><dt className="meta">Qué</dt><dd className="mt-1 text-ink">{borrador.tipo ? REPORT_TYPES[borrador.tipo].etiqueta : "—"}</dd></div>
-            <div><dt className="meta">Dónde</dt><dd className="mt-1 text-ink">{borrador.etiquetaLugar || "—"}</dd></div>
-            <div><dt className="meta">Detalle</dt><dd className="mt-1 text-ink-soft">{borrador.descripcion.trim() || "Sin descripción"}</dd></div>
-            <p className="text-xs leading-relaxed text-ink-faint">Se publica sin tu nombre durante {REPORT_TTL_HOURS} horas. Si hay riesgo para personas, llamá a Defensa Civil al {EMERGENCY_PHONE}.</p>
-            {envio.estado === "error" ? <p role="alert" className="text-xs text-atencion">{envio.mensaje}</p> : null}
-          </dl>
+          <div className="flex flex-col gap-4">
+            <article className="overflow-hidden rounded-xl border border-rule bg-panel/70">
+              {tipoElegido && borrador.tipo ? (
+                <header className="flex items-center gap-3 border-b border-rule-soft px-4 py-3.5">
+                  <span className="flex size-10 items-center justify-center rounded-lg border border-rule bg-ground" style={{ color: tipoElegido.color }}>
+                    <ReportGlyph tipo={borrador.tipo} />
+                  </span>
+                  <span className="text-base font-medium text-ink">{tipoElegido.etiqueta}</span>
+                  <button type="button" onClick={() => setPaso("tipo")} className="ml-auto text-xs text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink">Cambiar</button>
+                </header>
+              ) : null}
+              <dl className="flex flex-col gap-3 px-4 py-3.5 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div><dt className="meta">Dónde</dt><dd className="mt-1 text-ink">{borrador.etiquetaLugar || "—"}</dd></div>
+                  <button type="button" onClick={() => setPaso("lugar")} className="shrink-0 text-xs text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink">Cambiar</button>
+                </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div><dt className="meta">Detalle</dt><dd className="mt-1 text-ink-soft">{borrador.descripcion.trim() || "Sin descripción"}</dd></div>
+                  <button type="button" onClick={() => setPaso("detalle")} className="shrink-0 text-xs text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink">Cambiar</button>
+                </div>
+              </dl>
+            </article>
+            <p className="text-xs leading-relaxed text-ink-faint">Se publica sin tu nombre durante {REPORT_TTL_HOURS} horas. Si hay riesgo para personas, llamá a Defensa Civil al <a href={`tel:${EMERGENCY_PHONE}`} className="text-ink underline decoration-rule underline-offset-4">{EMERGENCY_PHONE}</a>.</p>
+            {envio.estado === "error" ? <p role="alert" className="rounded-lg border border-atencion/50 bg-atencion/10 px-3 py-2 text-xs text-atencion">{envio.mensaje}</p> : null}
+          </div>
         ) : null}
       </section>
 
-      <div className="hairline flex items-center justify-between gap-3 px-5 py-4 sm:px-6">
-        <button type="button" onClick={() => setPaso(pasoAnterior(paso))} disabled={paso === "tipo"} className="rounded-md px-3 py-2 text-sm text-ink-soft hover:text-ink disabled:invisible">
+      <div className="sticky bottom-0 flex items-center gap-3 border-t border-rule-soft bg-ground/95 px-5 py-3 backdrop-blur sm:px-6">
+        <button type="button" onClick={() => setPaso(pasoAnterior(paso))} disabled={paso === "tipo"} className="rounded-lg px-3 py-2.5 text-sm text-ink-soft hover:text-ink disabled:invisible">
           Atrás
         </button>
         {paso === "revisar" ? (
-          <button type="button" onClick={enviar} disabled={!puedeAvanzar("revisar", borrador) || envio.estado === "enviando"} className="rounded-md border border-ink-soft px-5 py-2 text-sm text-ink hover:border-ink disabled:opacity-40">
+          <button type="button" onClick={enviar} disabled={!puedeAvanzar("revisar", borrador) || envio.estado === "enviando"} className="ml-auto flex-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-ground hover:opacity-90 disabled:opacity-30 sm:flex-none">
             {envio.estado === "enviando" ? "Enviando…" : "Enviar reporte"}
           </button>
         ) : (
-          <button type="button" onClick={() => setPaso(siguientePaso(paso))} disabled={!puedeAvanzar(paso, borrador)} className="rounded-md border border-ink-soft px-5 py-2 text-sm text-ink hover:border-ink disabled:opacity-40">
-            Siguiente
+          <button type="button" onClick={() => setPaso(siguientePaso(paso))} disabled={!puedeAvanzar(paso, borrador)} className="ml-auto flex-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-ground hover:opacity-90 disabled:opacity-30 sm:flex-none">
+            {paso === "detalle" && !borrador.descripcion.trim() ? "Seguir sin detalle" : "Siguiente"}
           </button>
         )}
       </div>

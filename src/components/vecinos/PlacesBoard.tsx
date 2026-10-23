@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { LookupResult } from "@/components/LookupResult";
-import { riskColor } from "@/components/status";
+import { Motion } from "@/components/motion/Motion";
+import { SectionHero } from "@/components/panel/SectionHero";
+import { EmptyPlaces } from "@/components/vecinos/EmptyPlaces";
+import { PlaceCard } from "@/components/vecinos/PlaceCard";
+import { PlaceForm } from "@/components/vecinos/PlaceForm";
 import { usePlaces } from "@/components/vecinos/usePlaces";
-import type { Hallazgo, TerrainMeta } from "@/lib/lookup";
+import type { TerrainMeta } from "@/lib/lookup";
 import { createPlaceReader, geocodificar, type PlaceReader } from "@/lib/placeReader";
-import { ERROR_ALTA, MAX_LUGARES, NAME_MAX_CHARS, agregarLugar, quitarLugar, type Lugar } from "@/lib/places";
-import { riskLabel, type RiskLevel } from "@/lib/risk";
+import { ERROR_ALTA, MAX_LUGARES, agregarLugar, quitarLugar, type Lugar } from "@/lib/places";
+import type { RiskLevel } from "@/lib/risk";
 
 interface PlacesBoardProps {
   zonas: { zona: string; nivel: RiskLevel | null }[];
@@ -18,39 +21,6 @@ const NAME_FROM_ADDRESS_PARTS = 2;
 
 function nuevoId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function PlaceCard({ lugar, lector, terreno, nivelDeZona, onQuitar }: { lugar: Lugar; lector: PlaceReader; terreno: TerrainMeta | null; nivelDeZona: (zona: string) => RiskLevel | null; onQuitar: () => void }) {
-  const [hallazgo, setHallazgo] = useState<Hallazgo | null>(null);
-  const [fallo, setFallo] = useState(false);
-
-  useEffect(() => {
-    let vigente = true;
-    lector
-      .leer(lugar.lat, lugar.lon)
-      .then((lectura) => vigente && setHallazgo({ ...lectura, etiqueta: lugar.nombre, nivel: lectura.zona ? nivelDeZona(lectura.zona) : undefined }))
-      .catch(() => vigente && setFallo(true));
-    return () => {
-      vigente = false;
-    };
-  }, [lector, lugar, nivelDeZona]);
-
-  const nivel = hallazgo?.dentro ? (hallazgo.nivel ?? null) : null;
-  return (
-    <li className="hairline first:border-t-0">
-      <div className="flex items-center justify-between gap-3 px-4 pt-4">
-        <h2 className="flex min-w-0 items-center gap-2.5 text-base text-ink">
-          <span className="size-2 shrink-0 rounded-full" style={{ background: hallazgo?.dentro ? riskColor(nivel) : "var(--ink-faint)" }} aria-hidden="true" />
-          <span className="truncate">{lugar.nombre}</span>
-        </h2>
-        <button type="button" onClick={onQuitar} className="shrink-0 text-xs text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink" aria-label={`Quitar ${lugar.nombre}`}>
-          Quitar
-        </button>
-      </div>
-      {hallazgo?.dentro ? <p className="px-4 pt-1 text-xs text-ink-soft">Zona oficial {hallazgo.zona} · hoy {riskLabel(nivel).toLowerCase()}</p> : null}
-      {hallazgo ? <LookupResult hallazgo={hallazgo} terrain={terreno} /> : <p className="px-4 py-3 text-sm text-ink-soft">{fallo ? "No pudimos leer las capas de este lugar. Probá recargar." : "Leyendo las capas…"}</p>}
-    </li>
-  );
 }
 
 export function PlacesBoard({ zonas }: PlacesBoardProps) {
@@ -124,49 +94,32 @@ export function PlacesBoard({ zonas }: PlacesBoardProps) {
   const lleno = lugares.length >= MAX_LUGARES;
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col">
-      <section className="px-5 py-6 sm:px-6">
-        <p className="meta">Mis lugares · hasta {MAX_LUGARES}</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Mi zona</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">Guardá tu casa, el trabajo o la escuela para ver de un vistazo qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.</p>
-      </section>
+    <div className="mx-auto flex w-full max-w-xl flex-col pb-8">
+      <SectionHero patron="zona" meta={`Mis lugares · ${listo ? lugares.length : 0} de ${MAX_LUGARES}`} titulo="Mi zona">
+        Guardá tu casa, el trabajo o la escuela y mirá qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.
+      </SectionHero>
 
-      {!disponible ? (
-        <p className="hairline px-5 py-4 text-sm text-ink-soft sm:px-6">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
-      ) : (
-        <form onSubmit={agregarDireccion} className="hairline flex flex-col gap-3 px-5 py-5 sm:px-6">
-          <label className="flex flex-col gap-1.5">
-            <span className="meta">Dirección</span>
-            <input value={direccion} onChange={(event) => setDireccion(event.target.value)} placeholder="Ej.: Córdoba 1500" disabled={lleno || ocupado} className="rounded-md border border-rule bg-panel px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none disabled:opacity-50" />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="meta">Nombre (opcional)</span>
-            <input value={nombre} onChange={(event) => setNombre(event.target.value)} maxLength={NAME_MAX_CHARS} placeholder="Casa, trabajo, escuela…" disabled={lleno || ocupado} className="rounded-md border border-rule bg-panel px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none disabled:opacity-50" />
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button type="submit" disabled={lleno || ocupado || !direccion.trim()} className="rounded-md border border-ink-soft px-4 py-2 text-sm text-ink hover:border-ink disabled:opacity-40">
-              {ocupado ? "Buscando…" : "Agregar dirección"}
-            </button>
-            <button type="button" onClick={agregarUbicacion} disabled={lleno || ocupado} className="rounded-md border border-rule px-4 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-40">
-              Usar mi ubicación
-            </button>
-          </div>
-          {mensaje ? <p role="alert" className="text-xs text-atencion">{mensaje}</p> : null}
-          {lleno ? <p className="text-xs text-ink-faint">{ERROR_ALTA.lleno}</p> : null}
-        </form>
-      )}
-
-      {listo ? (
-        lugares.length ? (
-          <ul className="hairline flex flex-col">
-            {lugares.map((lugar) => (
-              <PlaceCard key={lugar.id} lugar={lugar} lector={lector} terreno={terreno} nivelDeZona={nivelDeZona} onQuitar={() => guardar(quitarLugar(lugares, lugar.id))} />
-            ))}
-          </ul>
+      <div className="flex flex-col gap-4 px-4 pt-5 sm:px-6">
+        {!disponible ? (
+          <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (
-          <p className="hairline px-5 py-6 text-sm text-ink-faint sm:px-6">Todavía no guardaste lugares.</p>
-        )
-      ) : null}
+          <PlaceForm direccion={direccion} nombre={nombre} ocupado={ocupado} lleno={lleno} mensaje={mensaje} avisoLleno={ERROR_ALTA.lleno} onDireccion={setDireccion} onNombre={setNombre} onBuscar={agregarDireccion} onUbicacion={agregarUbicacion} />
+        )}
+
+        {listo ? (
+          lugares.length ? (
+            <Motion>
+              <ul className="flex flex-col gap-3">
+                {lugares.map((lugar) => (
+                  <PlaceCard key={lugar.id} lugar={lugar} lector={lector} terreno={terreno} nivelDeZona={nivelDeZona} onQuitar={() => guardar(quitarLugar(lugares, lugar.id))} />
+                ))}
+              </ul>
+            </Motion>
+          ) : (
+            <EmptyPlaces />
+          )
+        ) : null}
+      </div>
     </div>
   );
 }
