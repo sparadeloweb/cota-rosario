@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import manifest from "../src/app/manifest";
-import { SIN_LECTURA, antiguedad, avisoSinConexion } from "../src/lib/offline";
+import { SIN_LECTURA, antiguedad, avisoDesdeCache, avisoSinConexion } from "../src/lib/offline";
 
 const require = createRequire(import.meta.url);
 const { strategyFor } = require("../public/sw-strategy.js") as { strategyFor: (request: { method: string; mode: string; pathname: string; sameOrigin: boolean }) => string };
@@ -45,4 +45,10 @@ test("el service worker nunca cachea envíos y prioriza la red para datos y pág
   assert.equal(strategyFor(get("/_next/static/chunks/app.js")), "cache-first");
   assert.equal(strategyFor(get("/data/terreno.png")), "stale-while-revalidate");
   assert.equal(strategyFor({ ...get("/tiles/1/2/3.png"), sameOrigin: false }), "network-only");
+});
+
+test("una copia guardada siempre se anuncia como copia, con o sin red", () => {
+  assert.match(avisoDesdeCache("2026-10-23T12:00:00Z", AHORA, true), /^No pudimos actualizar con el servidor · mostrando la copia guardada de esta pantalla, hace 3 h \(09:00\)\. No es el estado actual\.$/);
+  assert.match(avisoDesdeCache("2026-10-23T12:00:00Z", AHORA, false), /^Sin conexión · /);
+  assert.match(avisoDesdeCache(undefined, AHORA, true), /sin hora de lectura/);
 });
