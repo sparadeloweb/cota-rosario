@@ -46,14 +46,14 @@ export function HourlyRain({ hours, peak }: HourlyRainProps) {
           );
         })}
       </div>
-      <div className="readout mt-1.5 flex text-[10px] text-ink-faint">
+      <div className="readout mt-1.5 flex text-[0.625rem] text-ink-faint">
         {visible.map((hour, i) => (
           <span key={hour.hour} className="min-w-0 flex-1 overflow-visible whitespace-nowrap">
             {i % LABEL_EVERY_HOURS === 0 ? argentinaTime(hour.hour) : ""}
           </span>
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-4 text-[11px] text-ink-soft">
+      <div className="mt-3 flex flex-wrap gap-4 text-[0.6875rem] text-ink-soft">
         <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-water" aria-hidden="true" />milímetros por hora</span>
         <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-water/15" aria-hidden="true" />probabilidad (alto = 100 %)</span>
         {peak ? <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-watch/25" aria-hidden="true" />ventana del pico</span> : null}
@@ -73,12 +73,12 @@ export function WeekRain({ days }: { days: RainOutlookDay[] }) {
       <ol className="grid grid-cols-7 gap-1.5 sm:gap-3">
         {days.map((day, i) => (
           <li key={day.date} className={`flex flex-col items-center gap-2 rounded-lg border px-1 py-3 ${i === 0 ? "border-ink-faint bg-panel-soft" : "border-rule-soft"}`} data-reveal>
-            <span className={`meta text-[10px] ${i === 0 ? "text-ink" : ""}`}>{i === 0 ? "hoy" : weekday(day.date)}</span>
+            <span className={`meta text-[0.625rem] ${i === 0 ? "text-ink" : ""}`}>{i === 0 ? "hoy" : weekday(day.date)}</span>
             <span className="relative flex h-20 w-3 items-end overflow-hidden rounded-full bg-rule-soft">
               <span className="w-full rounded-full bg-water" style={{ height: `${(day.millimeters / max) * PERCENT}%` }} data-grow-y />
             </span>
             <span className="readout text-sm text-ink">{day.millimeters.toFixed(day.millimeters < 10 ? 1 : 0)}</span>
-            <span className="readout text-[10px] text-ink-faint">{day.probability === null ? "—" : `${day.probability} %`}</span>
+            <span className="readout text-[0.625rem] text-ink-faint">{day.probability === null ? "—" : `${day.probability} %`}</span>
           </li>
         ))}
       </ol>
@@ -114,7 +114,7 @@ export function MonthProgress({ month, normalMm }: { month: MonthRain; normalMm:
         <div className="absolute -inset-y-2 w-px bg-ink" style={{ left: position(normalMm) }} aria-hidden="true" />
         <div className="absolute -inset-y-1 w-px border-l border-dashed border-ink-faint" style={{ left: position(proRata) }} aria-hidden="true" />
       </div>
-      <div className="relative mt-2 h-10 text-[10px]">
+      <div className="relative mt-2 h-10 text-[0.625rem]">
         <span className="readout absolute -translate-x-full whitespace-nowrap pr-1 text-ink" style={{ left: position(normalMm) }}>
           referencia del mes {normalMm.toFixed(0)} mm
         </span>

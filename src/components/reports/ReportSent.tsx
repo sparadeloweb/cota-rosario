@@ -4,7 +4,7 @@ import { REPORT_TTL_HOURS } from "@/lib/reportTypes";
 
 export function ReportSent({ onAnother }: { onAnother: () => void }) {
   return (
-    <section className="flex flex-col items-center px-5 py-10 text-center sm:px-6">
+    <section className="flex flex-col items-center px-5 py-10 text-center sm:px-5">
       <span className="relative flex size-20 items-center justify-center">
         <span className="absolute inset-0 animate-ping rounded-full bg-normal/20 [animation-iteration-count:2] motion-reduce:hidden" aria-hidden="true" />
         <span className="relative flex size-16 items-center justify-center rounded-full border border-normal/60 bg-normal/15 text-normal">

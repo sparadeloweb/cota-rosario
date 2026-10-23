@@ -32,7 +32,7 @@ export function KpiGrid({ tiles, columns = 3, children }: KpiGridProps) {
               <span className={`readout text-xl ${TONE_CLASS[tile.tone ?? "neutral"]}`}>{tile.value}</span>
               {tile.unit ? <span className="text-xs text-ink-soft">{tile.unit}</span> : null}
             </dd>
-            {tile.detail ? <dd className="text-[11px] leading-snug text-ink-faint">{tile.detail}</dd> : null}
+            {tile.detail ? <dd className="text-[0.6875rem] leading-snug text-ink-faint">{tile.detail}</dd> : null}
           </div>
         ))}
       </dl>

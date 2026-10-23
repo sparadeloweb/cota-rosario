@@ -24,6 +24,7 @@ interface SectionHeroProps {
   figures?: HeroFigure[];
   level?: RiskLevel | null;
   status?: string;
+  inColumn?: boolean;
 }
 
 const TONE_TEXT: Record<FigureTone, string> = {
@@ -117,11 +118,11 @@ function Pattern({ pattern }: { pattern: HeroPattern }) {
   return <div className={`${common} opacity-[0.4] [background-image:radial-gradient(var(--rule)_1px,transparent_1.2px)] [background-size:16px_16px] [mask-image:linear-gradient(90deg,transparent,black_45%,black)]`} aria-hidden="true" />;
 }
 
-export function SectionHero({ pattern, meta, title, children, figures = [], level, status }: SectionHeroProps) {
+export function SectionHero({ pattern, meta, title, children, figures = [], level, status, inColumn = false }: SectionHeroProps) {
   return (
     <Motion className="relative overflow-hidden border-b border-rule-soft">
       <Pattern pattern={pattern} />
-      <div className="relative px-5 pb-6 pt-7 sm:px-6">
+      <div className={`relative px-5 pb-6 pt-7 ${inColumn ? "lg:px-0" : ""}`}>
         <p className="meta" data-reveal>
           {meta}
         </p>

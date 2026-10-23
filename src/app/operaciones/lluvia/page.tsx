@@ -40,45 +40,44 @@ export default async function RainPage() {
     : [];
 
   return (
+    <PanelPage>
+      <SectionHero pattern="rain" meta="Open-Meteo · modelo, no pluviómetro" title="Lluvia" figures={figures}>
+        Lo que cayó, lo que viene hora por hora y en la semana, y cómo viene el mes contra su referencia histórica.
+      </SectionHero>
 
-      <PanelPage>
-        <SectionHero pattern="rain" meta="Open-Meteo · modelo, no pluviómetro" title="Lluvia" figures={figures}>
-          Lo que cayó, lo que viene hora por hora y en la semana, y cómo viene el mes contra su referencia histórica.
-        </SectionHero>
+      <PanelSection title="Próximas 48 horas" note="El pico de 2 horas es lo que más pesa para los anegamientos urbanos: una lluvia concentrada satura los desagües antes que una larga y suave.">
+        {rain ? <HourlyRain hours={rain.hours} peak={rain.peakWindow} /> : <SourceDown failure={failureOf("openMeteo")} />}
+      </PanelSection>
 
-        <PanelSection title="Próximas 48 horas" note="El pico de 2 horas es lo que más pesa para los anegamientos urbanos: una lluvia concentrada satura los desagües antes que una larga y suave.">
-          {rain ? <HourlyRain hours={rain.hours} peak={rain.peakWindow} /> : <SourceDown failure={failureOf("openMeteo")} />}
+      <div className="grid lg:grid-cols-2">
+        <PanelSection title="Caída y prevista · seis días alrededor de hoy">
+          {balance ? (
+            <Columns
+              columns={balance.byDay.map((day) => ({ id: day.date, label: dayLabel(day.date, today), value: day.fallenMm, secondary: day.expectedMm, highlight: day.date === today }))}
+              unit="mm"
+              decimals={1}
+              primaryLabel="caída (horas pasadas del modelo)"
+              secondaryLabel="prevista"
+            />
+          ) : (
+            <SourceDown failure={failureOf("openMeteo")} />
+          )}
         </PanelSection>
+        <PanelSection title="El mes contra su referencia" className="lg:border-l lg:border-rule-soft">
+          {month && normal ? <MonthProgress month={month} normalMm={normal} /> : <SourceDown failure={failureOf("openMeteo")} />}
+        </PanelSection>
+      </div>
 
-        <div className="grid lg:grid-cols-2">
-          <PanelSection title="Caída y prevista · seis días alrededor de hoy">
-            {balance ? (
-              <Columns
-                columns={balance.byDay.map((day) => ({ id: day.date, label: dayLabel(day.date, today), value: day.fallenMm, secondary: day.expectedMm, highlight: day.date === today }))}
-                unit="mm"
-                decimals={1}
-                primaryLabel="caída (horas pasadas del modelo)"
-                secondaryLabel="prevista"
-              />
-            ) : (
-              <SourceDown failure={failureOf("openMeteo")} />
-            )}
-          </PanelSection>
-          <PanelSection title="El mes contra su referencia" className="lg:border-l lg:border-rule-soft">
-            {month && normal ? <MonthProgress month={month} normalMm={normal} /> : <SourceDown failure={failureOf("openMeteo")} />}
-          </PanelSection>
-        </div>
+      <PanelSection title="La semana">{predictions.rain ? <WeekRain days={predictions.rain.days} /> : <SourceDown failure={failureOf("openMeteo")} />}</PanelSection>
 
-        <PanelSection title="La semana">{predictions.rain ? <WeekRain days={predictions.rain.days} /> : <SourceDown failure={failureOf("openMeteo")} />}</PanelSection>
-
-        <Docs>
-          <DocsSection title="De dónde sale la lluvia">
-            <p className="text-xs leading-relaxed text-ink-soft">
-              Pronóstico y horas pasadas del modelo de Open-Meteo para Rosario; el mes en curso, del archivo de Open-Meteo con su fecha de cobertura; la referencia mensual, de la climatología del mismo archivo. No son lecturas de un pluviómetro de la ciudad.
-            </p>
-            <Provenance stamps={[{ id: "openMeteo", fetchedAt: rain?.fetchedAt, failure: failureOf("openMeteo") }]} />
-          </DocsSection>
-        </Docs>
-      </PanelPage>
+      <Docs>
+        <DocsSection title="De dónde sale la lluvia">
+          <p className="text-xs leading-relaxed text-ink-soft">
+            Pronóstico y horas pasadas del modelo de Open-Meteo para Rosario; el mes en curso, del archivo de Open-Meteo con su fecha de cobertura; la referencia mensual, de la climatología del mismo archivo. No son lecturas de un pluviómetro de la ciudad.
+          </p>
+          <Provenance stamps={[{ id: "openMeteo", fetchedAt: rain?.fetchedAt, failure: failureOf("openMeteo") }]} />
+        </DocsSection>
+      </Docs>
+    </PanelPage>
   );
 }

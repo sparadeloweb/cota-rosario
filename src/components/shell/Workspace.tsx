@@ -18,7 +18,7 @@ export function Workspace({ rail, canvas, lowerCanvas }: WorkspaceProps) {
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="relative min-h-0 flex-1">{canvas}</div>
         {lowerCanvas ? (
-          <div className="glass-rail hidden max-h-[45%] shrink-0 overflow-y-auto border-t border-rule px-5 py-5 sm:px-6 lg:block">{lowerCanvas}</div>
+          <div className="glass-rail hidden max-h-[45%] shrink-0 overflow-y-auto border-t border-rule px-5 py-5 sm:px-5 lg:block">{lowerCanvas}</div>
         ) : null}
       </div>
     </div>

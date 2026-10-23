@@ -51,7 +51,7 @@ export function RainStrip({ rain }: RainStripProps) {
         {hours
           .filter((_, index) => index % TICK_EVERY === 0)
           .map((hour) => (
-            <span key={hour.hour} className="readout text-[10px] text-ink-faint">
+            <span key={hour.hour} className="readout text-[0.625rem] text-ink-faint">
               {hour.hour.slice(11, 16)}
             </span>
           ))}

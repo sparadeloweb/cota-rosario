@@ -28,12 +28,12 @@ export function RainOutlook({ rain }: RainOutlookProps) {
       <ul className="flex items-end gap-1.5" aria-label="Lluvia diaria pronosticada">
         {rain.days.map((day) => (
           <li key={day.date} className="flex flex-1 flex-col items-center gap-1">
-            <span className="readout text-[10px] text-ink-soft">{day.millimeters > 0 ? day.millimeters.toFixed(0) : ""}</span>
+            <span className="readout text-[0.625rem] text-ink-soft">{day.millimeters > 0 ? day.millimeters.toFixed(0) : ""}</span>
             <span className="flex h-16 w-full items-end overflow-hidden rounded-sm bg-rule-soft">
               <span className="block w-full rounded-sm bg-water/70" style={{ height: `${(day.millimeters / max) * PERCENT}%` }} />
             </span>
-            <span className="readout text-[10px] text-ink-faint">{formatDay(day.date)}</span>
-            <span className="readout text-[10px] text-ink-faint">{day.probability === null ? "—" : `${day.probability} %`}</span>
+            <span className="readout text-[0.625rem] text-ink-faint">{formatDay(day.date)}</span>
+            <span className="readout text-[0.625rem] text-ink-faint">{day.probability === null ? "—" : `${day.probability} %`}</span>
           </li>
         ))}
       </ul>

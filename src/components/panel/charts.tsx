@@ -83,7 +83,7 @@ export function LineArea({ points, thresholds = [], unit, decimals = 2, futureFr
 
         {visibleThresholds.map((threshold) => (
           <div key={threshold.label} className="pointer-events-none absolute inset-x-0 border-t border-dashed" style={{ bottom: `${heightPercent(threshold.value)}%`, borderColor: threshold.color }} data-reveal>
-            <span className="readout absolute -top-4 right-0 text-[10px]" style={{ color: threshold.color }}>
+            <span className="readout absolute -top-4 right-0 text-[0.625rem]" style={{ color: threshold.color }}>
               {threshold.label} {threshold.value.toFixed(decimals)}
             </span>
           </div>
@@ -91,7 +91,7 @@ export function LineArea({ points, thresholds = [], unit, decimals = 2, futureFr
 
         {closure !== null ? (
           <div className="pointer-events-none absolute inset-y-0 border-l border-rule" style={{ left: `${lastX}%` }} data-reveal>
-            <span className="meta absolute -top-1 left-2 whitespace-nowrap text-[10px]">hoy · {futureLabel} →</span>
+            <span className="meta absolute -top-1 left-2 whitespace-nowrap text-[0.625rem]">hoy · {futureLabel} →</span>
           </div>
         ) : null}
 
@@ -102,7 +102,7 @@ export function LineArea({ points, thresholds = [], unit, decimals = 2, futureFr
           </span>
         </div>
       </div>
-      <div className="readout mt-2 flex justify-between text-[10px] text-ink-faint">
+      <div className="readout mt-2 flex justify-between text-[0.625rem] text-ink-faint">
         {xLabels.map((point, i) => (
           <span key={`${point.date}-${i}`}>{shortDate(point.date)}</span>
         ))}
@@ -127,7 +127,7 @@ export function Columns({ columns, unit, decimals = 0, height = 160, primaryLabe
       <div className="flex items-end gap-1.5 sm:gap-2" style={{ height: height }}>
         {columns.map((column) => (
           <div key={column.id} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-1">
-            <span className={`readout text-center text-[10px] ${column.highlight ? "text-ink" : "text-ink-faint"}`} data-reveal>
+            <span className={`readout text-center text-[0.625rem] ${column.highlight ? "text-ink" : "text-ink-faint"}`} data-reveal>
               {column.value > 0 || (column.secondary ?? 0) > 0 ? Math.max(column.value, column.secondary ?? 0).toFixed(decimals) : ""}
             </span>
             <div className="relative flex flex-1 items-end justify-center gap-0.5">
@@ -136,12 +136,12 @@ export function Columns({ columns, unit, decimals = 0, height = 160, primaryLabe
                 <div className="w-full rounded-t-sm border border-water/70 bg-water/10" style={{ height: `${(column.secondary / max) * PERCENT}%`, minHeight: column.secondary > 0 ? 2 : 0 }} title={`${column.label}: ${column.secondary.toFixed(decimals)} ${unit}`} data-grow-y />
               ) : null}
             </div>
-            <span className={`readout truncate text-center text-[10px] ${column.highlight ? "text-ink" : "text-ink-faint"}`}>{column.label}</span>
+            <span className={`readout truncate text-center text-[0.625rem] ${column.highlight ? "text-ink" : "text-ink-faint"}`}>{column.label}</span>
           </div>
         ))}
       </div>
       {primaryLabel || secondaryLabel ? (
-        <div className="mt-3 flex flex-wrap gap-4 text-[11px] text-ink-soft">
+        <div className="mt-3 flex flex-wrap gap-4 text-[0.6875rem] text-ink-soft">
           {primaryLabel ? (
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm bg-water" aria-hidden="true" />
@@ -172,7 +172,7 @@ export function Meter({ value, reference, marks = [], unit, decimals = 0 }: { va
           <div key={mark.label} className="absolute -inset-y-1 w-px border-l border-dashed border-watch" style={{ left: position(mark.value) }} aria-hidden="true" />
         ))}
       </div>
-      <div className="relative mt-2 h-8 text-[10px]">
+      <div className="relative mt-2 h-8 text-[0.625rem]">
         <span className="readout absolute -translate-x-1/2 text-ink-soft" style={{ left: position(reference) }}>
           referencia {reference.toFixed(decimals)} {unit}
         </span>

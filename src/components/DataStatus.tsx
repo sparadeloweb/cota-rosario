@@ -10,7 +10,7 @@ export function DataStatus({ status }: { status: Status }) {
     { name: "Clima · Open-Meteo", kind: "Condiciones modeladas", at: status.weather?.measuredAt },
   ];
   return (
-    <details className="border-t border-rule px-5 py-4 sm:px-6">
+    <details className="border-t border-rule px-5 py-4 sm:px-5">
       <summary className="cursor-pointer text-sm text-ink">Datos de esta consulta · {rows.filter((row) => row.at).length}/{rows.length} disponibles</summary>
       <div className="mt-3 sm:hidden"><RefreshButton /></div>
       <ul className="mt-3 flex flex-col gap-3 text-xs">

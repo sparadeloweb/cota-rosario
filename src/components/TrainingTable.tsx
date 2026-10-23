@@ -22,7 +22,7 @@ export function TrainingTable({ training }: TrainingTableProps) {
         Ajuste sobre los {training.length} meses usados para entrenar: intervenciones registradas y resultado del modelo con la lluvia de ese mes.
         En {hits} meses la diferencia queda dentro de un margen gráfico ilustrativo de 15 casos o 35 %. Esta comparación dentro de la muestra no mide precisión futura.
       </p>
-      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-ink-soft">
+      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[0.6875rem] text-ink-soft">
         <span className="flex items-center gap-2">
           <span className="h-1 w-4 rounded-full bg-ink-faint" aria-hidden="true" />
           atendidos por Defensa Civil
@@ -45,7 +45,7 @@ export function TrainingTable({ training }: TrainingTableProps) {
               <span className="absolute inset-y-0 left-0 rounded-full bg-ink-faint" style={{ width: `${(row.cases / max) * 100}%` }} />
               <span className="absolute inset-y-0 left-0 rounded-full bg-alert/70" style={{ width: `${(row.predicted / max) * 100}%` }} />
             </span>
-            <span className="text-[11px] text-ink-faint">
+            <span className="text-[0.6875rem] text-ink-faint">
               llovió {row.total.toFixed(0)} mm en el mes, con un pico de {row.max2h.toFixed(0)} mm en 2 h
             </span>
           </li>

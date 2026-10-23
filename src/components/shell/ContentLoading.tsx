@@ -21,7 +21,7 @@ export function ContentLoading() {
   const pathname = usePathname();
   return (
     <div role="status" aria-live="polite" className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-8 sm:px-6">
+      <div className="flex w-full flex-col gap-6 px-5 py-8 sm:px-5">
         <p className="meta">Cargando {SUBJECTS[pathname] ?? "la vista"}…</p>
         <div className="h-8 w-48 animate-pulse rounded-md bg-rule-soft" />
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">

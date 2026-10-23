@@ -38,25 +38,24 @@ export default async function ReportsPage() {
     : [];
 
   return (
-
-      <Workspace
-        canvas={<FloodMap zones={risk.zones} reports />}
-        rail={
-          <div className="flex flex-col">
-            <SectionHero pattern="reports" meta={`Vecinos · últimas ${REPORT_TTL_HOURS} h`} title="Reportes" figures={figures}>
-              Lo que cargaron los vecinos, por tipo y por distrito. Son señales para verificar: su ausencia no descarta agua en una zona.
-            </SectionHero>
-            <PanelSection title="Qué y dónde">
-              {reports ? reports.active ? <ReportMix reports={reports} /> : <ReportsSummary reports={reports} /> : <SourceDown failure={kpis.failures.find((failure) => failure.source === "reports")} />}
+    <Workspace
+      canvas={<FloodMap zones={risk.zones} reports />}
+      rail={
+        <div className="flex flex-col">
+          <SectionHero pattern="reports" meta={`Vecinos · últimas ${REPORT_TTL_HOURS} h`} title="Reportes" figures={figures}>
+            Lo que cargaron los vecinos, por tipo y por distrito. Son señales para verificar: su ausencia no descarta agua en una zona.
+          </SectionHero>
+          <PanelSection title="Qué y dónde">
+            {reports ? reports.active ? <ReportMix reports={reports} /> : <ReportsSummary reports={reports} /> : <SourceDown failure={kpis.failures.find((failure) => failure.source === "reports")} />}
+          </PanelSection>
+          {list?.length ? (
+            <PanelSection title="Los últimos">
+              <LatestReports reports={list} />
             </PanelSection>
-            {list?.length ? (
-              <PanelSection title="Los últimos">
-                <LatestReports reports={list} />
-              </PanelSection>
-            ) : null}
-            <p className="hairline px-5 py-5 text-xs leading-relaxed text-ink-faint sm:px-6">Desde el panel los reportes son de sólo lectura. Los vecinos los cargan desde la pestaña Reportar o el mapa. Datos en <span className="readout">/api/reports</span>.</p>
-          </div>
-        }
-      />
+          ) : null}
+          <p className="hairline px-5 py-5 text-xs leading-relaxed text-ink-faint sm:px-5">Desde el panel los reportes son de sólo lectura. Los vecinos los cargan desde la pestaña Reportar o el mapa. Datos en <span className="readout">/api/reports</span>.</p>
+        </div>
+      }
+    />
   );
 }

@@ -55,7 +55,7 @@ export function LevelRuler({ station, range }: LevelRulerProps) {
             <g key={value}>
               <line x1={largest ? 30 : 36} x2="44" y1={y(value)} y2={y(value)} stroke="var(--ink-faint)" strokeWidth={largest ? 1.2 : 0.8} />
               {largest ? (
-                <text x="24" y={y(value) + 3.5} textAnchor="end" className="fill-ink-faint font-mono text-[10px]">
+                <text x="24" y={y(value) + 3.5} textAnchor="end" className="fill-ink-faint font-mono text-[0.625rem]">
                   {value}
                 </text>
               ) : null}
@@ -74,7 +74,7 @@ export function LevelRuler({ station, range }: LevelRulerProps) {
         {lines.map((line) => (
           <g key={line.label} data-reveal>
             <line x1="40" x2="124" y1={y(line.value)} y2={y(line.value)} stroke={line.color} strokeWidth="1.4" strokeDasharray="4 3" />
-            <text x="130" y={y(line.value) + 3.5} className="font-mono text-[10px]" fill={line.color}>
+            <text x="130" y={y(line.value) + 3.5} className="font-mono text-[0.625rem]" fill={line.color}>
               {line.label} {line.value.toFixed(2)}
             </text>
           </g>
@@ -82,10 +82,10 @@ export function LevelRuler({ station, range }: LevelRulerProps) {
 
         <g data-reveal>
           <path d={`M104 ${surface} l10 -6 v12 Z`} fill="var(--watch)" />
-          <text x="130" y={surface - 4} className="fill-ink font-mono text-[15px] font-medium">
+          <text x="130" y={surface - 4} className="fill-ink font-mono text-[0.9375rem] font-medium">
             {station.meters.toFixed(2)} m
           </text>
-          <text x="130" y={surface + 11} className="fill-ink-soft font-mono text-[10px]">
+          <text x="130" y={surface + 11} className="fill-ink-soft font-mono text-[0.625rem]">
             {station.trend || "sin tendencia"}
           </text>
         </g>
@@ -130,7 +130,7 @@ export function UpstreamChain({ stations }: { stations: UpstreamStation[] }) {
                   <span className="h-1 w-full max-w-48 overflow-hidden rounded-full bg-rule-soft">
                     <span className="block h-full rounded-full" style={{ width: `${width}%`, background: tone }} data-grow-x />
                   </span>
-                  <span className="readout shrink-0 text-[11px]" style={{ color: tone }}>
+                  <span className="readout shrink-0 text-[0.6875rem]" style={{ color: tone }}>
                     {margin === null ? "sin umbral" : margin <= 0 ? `${Math.abs(margin).toFixed(2)} m sobre alerta` : `${margin.toFixed(2)} m a alerta`}
                   </span>
                 </div>
@@ -139,7 +139,7 @@ export function UpstreamChain({ stations }: { stations: UpstreamStation[] }) {
                 <p className="readout text-sm text-ink">
                   {station.meters.toFixed(2)} <span className="text-ink-faint">{arrow(station.trend)}</span>
                 </p>
-                <p className="readout text-[10px] text-ink-faint">{argentinaDateTime(station.date)}</p>
+                <p className="readout text-[0.625rem] text-ink-faint">{argentinaDateTime(station.date)}</p>
               </div>
             </li>
           );

@@ -20,7 +20,7 @@ export function CopyButton({ text }: CopyButtonProps) {
     }
   };
   return (
-    <button type="button" onClick={copy} className="rounded-md border border-rule px-2.5 py-1 text-[11px] text-ink-soft transition-colors hover:border-ink-soft hover:text-ink">
+    <button type="button" onClick={copy} className="rounded-md border border-rule px-2.5 py-1 text-[0.6875rem] text-ink-soft transition-colors hover:border-ink-soft hover:text-ink">
       {copied ? "Copiado" : "Copiar"}
     </button>
   );

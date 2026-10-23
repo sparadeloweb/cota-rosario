@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { AddressSearch } from "@/components/AddressSearch";
 import { SectionHero } from "@/components/panel/SectionHero";
 import { ReportGlyph } from "@/components/reports/ReportGlyph";
+import { ReportGuide } from "@/components/reports/ReportGuide";
 import { ReportSent } from "@/components/reports/ReportSent";
 import { ReportStepper } from "@/components/reports/ReportStepper";
 import { ReportTypePicker } from "@/components/reports/ReportTypePicker";
@@ -109,15 +111,19 @@ export function ReportFlow() {
   const isPlaceValid = canAdvance("place", draft);
 
   return (
-    <div className="flex min-h-full flex-col">
-      <SectionHero pattern="report" meta={`Reportar · paso ${number} de ${REPORT_STEPS.length}`} title={TITLES[step]}>
-        {step === "type" ? "Tu aviso aparece en el mapa para que otros vecinos y el panel de operaciones lo vean." : null}
-      </SectionHero>
-      <div className="px-5 sm:px-6">
-        <ReportStepper step={step} />
+    <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] lg:gap-x-10 lg:px-5">
+      <div className="lg:sticky lg:top-0 lg:self-start lg:pb-8">
+        <SectionHero inColumn pattern="report" meta={`Reportar · paso ${number} de ${REPORT_STEPS.length}`} title={TITLES[step]}>
+          {step === "type" ? "Tu aviso aparece en el mapa para que otros vecinos y el panel de operaciones lo vean." : null}
+        </SectionHero>
+        <div className="px-5 sm:px-5 lg:px-0">
+          <ReportStepper step={step} />
+        </div>
+        <ReportGuide />
       </div>
 
-      <section className="flex-1 px-5 py-6 sm:px-6">
+      <div className="flex flex-1 flex-col lg:pt-6">
+      <section className="flex-1 px-5 py-6 sm:px-5 lg:flex lg:flex-col lg:px-0">
         {step === "type" ? <ReportTypePicker selected={draft.type} onSelect={(type) => update({ type })} /> : null}
 
         {step === "place" ? (
@@ -133,12 +139,25 @@ export function ReportFlow() {
                 <span className="mt-0.5 block text-xs text-ink-faint">Lo más preciso si estás en el lugar</span>
               </span>
             </button>
-            <div className="flex items-center gap-3 text-[11px] text-ink-faint" aria-hidden="true">
+            <div className="flex items-center gap-3 text-[0.6875rem] text-ink-faint" aria-hidden="true">
               <span className="h-px flex-1 bg-rule-soft" />o escribí la dirección<span className="h-px flex-1 bg-rule-soft" />
             </div>
             <form onSubmit={searchAddress} className="flex gap-2">
-              <label htmlFor="direccion-reporte" className="sr-only">Dirección</label>
-              <input id="direccion-reporte" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Ej.: Pellegrini y Oroño" className="min-w-0 flex-1 rounded-lg border border-rule bg-ground px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none" />
+              <div className="min-w-0 flex-1">
+                <AddressSearch
+                  id="report-address"
+                  value={address}
+                  onValueChange={setAddress}
+                  onPick={(suggestion) => {
+                    setPlaceNotice(null);
+                    setAddress(suggestion.label);
+                    update({ lat: suggestion.lat, lon: suggestion.lon, placeLabel: `${suggestion.label}, ${suggestion.detail}` });
+                  }}
+                  label="Dirección"
+                  placeholder="Ej.: Pellegrini y Oroño"
+                  inputClassName="w-full rounded-lg border border-rule bg-ground px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none"
+                />
+              </div>
               <button type="submit" disabled={searching || !address.trim()} className="rounded-lg border border-rule px-4 py-2.5 text-sm text-ink-soft hover:text-ink disabled:opacity-40">{searching ? "…" : "Buscar"}</button>
             </form>
             {hasPlace ? (
@@ -146,7 +165,7 @@ export function ReportFlow() {
                 <span className={`mt-0.5 text-sm ${isPlaceValid ? "text-normal" : "text-watch"}`} aria-hidden="true">{isPlaceValid ? "✓" : "!"}</span>
                 <span className="min-w-0">
                   <span className="block text-sm text-ink">{draft.placeLabel}</span>
-                  <span className="readout block text-[11px] text-ink-faint">{draft.lat!.toFixed(COORD_DECIMALS)}, {draft.lon!.toFixed(COORD_DECIMALS)}</span>
+                  <span className="readout block text-[0.6875rem] text-ink-faint">{draft.lat!.toFixed(COORD_DECIMALS)}, {draft.lon!.toFixed(COORD_DECIMALS)}</span>
                   {!isPlaceValid ? <span className="mt-1 block text-xs text-watch">Ese punto queda fuera de Rosario.</span> : null}
                 </span>
               </div>
@@ -178,7 +197,7 @@ export function ReportFlow() {
                 <span className="h-1 w-16 overflow-hidden rounded-full bg-rule-soft">
                   <span className="block h-full rounded-full bg-ink-soft" style={{ width: `${(draft.description.length / DESCRIPTION_MAX_CHARS) * PERCENT}%` }} />
                 </span>
-                <span className="readout text-[11px] text-ink-faint">{draft.description.length}/{DESCRIPTION_MAX_CHARS}</span>
+                <span className="readout text-[0.6875rem] text-ink-faint">{draft.description.length}/{DESCRIPTION_MAX_CHARS}</span>
               </span>
             </label>
           </div>
@@ -213,7 +232,7 @@ export function ReportFlow() {
         ) : null}
       </section>
 
-      <div className="sticky bottom-0 flex items-center gap-3 border-t border-rule-soft bg-ground/95 px-5 py-3 backdrop-blur sm:px-6">
+      <div className="sticky bottom-0 flex items-center gap-3 border-t border-rule-soft bg-ground/95 px-5 py-3 backdrop-blur sm:px-5 lg:px-0">
         <button type="button" onClick={() => setStep(previousStep(step))} disabled={step === "type"} className="rounded-lg px-3 py-2.5 text-sm text-ink-soft hover:text-ink disabled:invisible">
           Atrás
         </button>
@@ -226,6 +245,7 @@ export function ReportFlow() {
             {step === "detail" && !draft.description.trim() ? "Seguir sin detalle" : "Siguiente"}
           </button>
         )}
+      </div>
       </div>
     </div>
   );

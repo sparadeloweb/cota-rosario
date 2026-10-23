@@ -62,7 +62,7 @@ export function PlaceCard({ place, reader, terrain, zoneLevel, onRemove }: Place
         </div>
         <div className="flex shrink-0 items-center gap-3">
           {finding?.inside ? (
-            <span className="flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-[11px] text-ink-soft">
+            <span className="flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-[0.6875rem] text-ink-soft">
               <span className="size-1.5 rounded-full" style={{ background: riskColor(level) }} aria-hidden="true" />
               hoy {riskLabel(level).toLowerCase()}
             </span>
@@ -76,7 +76,7 @@ export function PlaceCard({ place, reader, terrain, zoneLevel, onRemove }: Place
         <dl className="grid grid-cols-2 border-t border-rule-soft">
           {placeFacts(finding, terrain).map((fact) => (
             <div key={fact.id} className="flex flex-col gap-1 border-rule-soft px-4 py-3 odd:border-r [&:nth-child(n+3)]:border-t">
-              <dt className="flex items-center gap-1.5 text-[11px] text-ink-faint">
+              <dt className="flex items-center gap-1.5 text-[0.6875rem] text-ink-faint">
                 <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d={FACT_GLYPH[fact.id]} />
                 </svg>
@@ -86,7 +86,7 @@ export function PlaceCard({ place, reader, terrain, zoneLevel, onRemove }: Place
                 <span className="size-1.5 rounded-full" style={{ background: TONE_DOT[fact.tone] }} aria-hidden="true" />
                 {fact.verdict}
               </dd>
-              <dd className="text-[11px] leading-snug text-ink-faint">{fact.detail}</dd>
+              <dd className="text-[0.6875rem] leading-snug text-ink-faint">{fact.detail}</dd>
             </div>
           ))}
         </dl>

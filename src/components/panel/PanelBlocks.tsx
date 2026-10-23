@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import type { Kpis } from "@/lib/kpis";
 
-
 export function PanelSection({ title, note, children, className = "" }: { title: string; note?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`hairline px-5 py-6 sm:px-6 ${className}`}>
+    <section className={`hairline px-5 py-6 sm:px-5 ${className}`}>
       <h2 className="meta">{title}</h2>
       {note ? <p className="mt-2 text-xs leading-relaxed text-ink-soft">{note}</p> : null}
       <div className="mt-4">{children}</div>
@@ -15,7 +14,7 @@ export function PanelSection({ title, note, children, className = "" }: { title:
 export function PanelPage({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-6xl pb-10">{children}</div>
+      <div className="w-full pb-10">{children}</div>
     </div>
   );
 }

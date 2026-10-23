@@ -33,7 +33,7 @@ export function ReportFab({ status, readOnly, open, onToggle }: ReportFabProps) 
         </svg>
       )}
       {!open && total !== null && total > 0 ? (
-        <span className="readout absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-water px-1 text-[11px] leading-5 text-ground">
+        <span className="readout absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-water px-1 text-[0.6875rem] leading-5 text-ground">
           {total}
         </span>
       ) : null}

@@ -98,7 +98,7 @@ export function ForecastMap({ districts, windowDays, corner }: ForecastMapProps)
       {corner ? <div className="pointer-events-none absolute right-0 top-0 z-[500] flex justify-end p-3 sm:p-4">{corner}</div> : null}
       <div data-map-legend className="pointer-events-none absolute bottom-[calc(var(--sheet-peek)+0.75rem)] left-0 right-14 z-[500] p-3 sm:p-4 lg:bottom-0 lg:right-auto">
         <div className="pointer-events-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-rule bg-panel/95 px-3 py-2 backdrop-blur">
-          <span className="flex items-center gap-1.5 text-[11px] text-ink-soft">
+          <span className="flex items-center gap-1.5 text-[0.6875rem] text-ink-soft">
             <span className="size-2.5 rounded-sm" style={{ background: FILL_COLOR }} aria-hidden="true" />
             {districts.length ? `Distribución por distrito · ${windowDays} días` : "Escenario no disponible"}
           </span>
