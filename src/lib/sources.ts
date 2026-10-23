@@ -77,7 +77,7 @@ export const SOURCES: Record<string, SourceRef> = {
     organismo: "Modelos estadísticos de este panel",
     descripcion: "Escenarios estadísticos basados en registros mensuales, lluvia histórica y caudal. Distribución semanal orientativa y tendencias del Paraná",
     endpoint: "/data/modelos.json",
-    portal: "/predicciones",
+    portal: "/operaciones/pronostico",
     licencia: "Calculado en este panel sobre datos públicos · no es pronóstico oficial",
     modelo: true,
   },

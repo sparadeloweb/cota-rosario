@@ -196,7 +196,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onClickCapture={onClickCapture}
-      className={`glass-sheet lg:glass-rail fixed inset-x-0 bottom-0 z-30 flex h-[86dvh] flex-col rounded-t-2xl border-t border-rule shadow-[0_-18px_48px_-24px_rgb(0_0_0/0.9)] ${restingClass} ${open ? "" : "max-lg:touch-none max-lg:select-none"} lg:static lg:z-20 lg:h-auto lg:w-[27rem] lg:shrink-0 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-r lg:shadow-none xl:w-[30rem]`}
+      className={`glass-sheet lg:glass-rail fixed inset-x-0 bottom-[var(--tabbar-h)] z-30 flex h-[calc(86dvh-var(--tabbar-h))] flex-col rounded-t-2xl border-t border-rule shadow-[0_-18px_48px_-24px_rgb(0_0_0/0.9)] ${restingClass} ${open ? "" : "max-lg:touch-none max-lg:select-none"} lg:static lg:z-20 lg:h-auto lg:w-[27rem] lg:shrink-0 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-r lg:shadow-none xl:w-[30rem]`}
       style={style}
     >
       <div

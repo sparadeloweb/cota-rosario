@@ -1,6 +1,7 @@
-import modelos from "../../../public/data/modelos.json";
+import modelos from "../../../../public/data/modelos.json";
 import { DataStatus } from "@/components/DataStatus";
-import { AppShell } from "@/components/AppShell";
+import { PanelShell } from "@/components/shell/PanelShell";
+import { Workspace } from "@/components/shell/Workspace";
 import { DailyOutlook } from "@/components/DailyOutlook";
 import { Docs, DocsSection } from "@/components/Docs";
 import { FloodingOutlook } from "@/components/FloodingOutlook";
@@ -37,10 +38,8 @@ export default async function PrediccionesPage() {
   const curvaDebil = rio?.curva ? rio.curva.r2 < WEAK_FIT_R2 : false;
 
   return (
-    <AppShell
-      activo="/predicciones"
-      nivel={estado.riesgo.nivel}
-      actualizadoEn={predicciones.generadoEn}
+    <PanelShell nivel={estado.riesgo.nivel} actualizadoEn={predicciones.generadoEn}>
+    <Workspace
       lienzo={<ForecastMap distritos={anegamientos?.porDistrito ?? []} ventanaDias={ventanaDias} esquina={<WeatherBadge clima={estado.clima} />} />}
       lienzoInferior={
         porDia.length ? (
@@ -173,5 +172,6 @@ export default async function PrediccionesPage() {
         </div>
       }
     />
+    </PanelShell>
   );
 }

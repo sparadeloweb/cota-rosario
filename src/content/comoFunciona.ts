@@ -25,7 +25,7 @@ export const HERRAMIENTAS: Herramienta[] = [
     "Red devuelta por el INA, con fechas, búsqueda y filtros. La cantidad de estaciones puede variar.",
     "Estaciones de la cadena del Paraná y su margen a alerta en metros; los indicadores de red excluyen lecturas de más de 48 horas.",
   ]},
-  { vista: "Predicciones", href: "/predicciones", para: "Consultá la lluvia prevista y las tendencias de la próxima semana.", ofrece: [
+  { vista: "Predicciones", href: "/operaciones/pronostico", para: "Consultá la lluvia prevista y las tendencias de la próxima semana.", ofrece: [
     "Escenarios de anegamientos por día y distrito, construidos a partir de un modelo mensual y la participación histórica de cada zona.",
     "Lluvia pronosticada y referencia de extremos históricos. Los períodos de retorno dependen del ajuste y del archivo usado.",
     "Extrapolación del río si continúa el ritmo, y ajuste altura–caudal con GloFAS. Las bandas no son intervalos predictivos calibrados.",

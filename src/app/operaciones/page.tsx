@@ -1,5 +1,6 @@
 import { DataStatus } from "@/components/DataStatus";
-import { AppShell } from "@/components/AppShell";
+import { PanelShell } from "@/components/shell/PanelShell";
+import { Workspace } from "@/components/shell/Workspace";
 import { Docs, DocsSection } from "@/components/Docs";
 import { KpiGrid, type KpiTile } from "@/components/kpis/KpiGrid";
 import { RainBalanceBars } from "@/components/kpis/RainBalanceBars";
@@ -101,10 +102,8 @@ export default async function OperacionesPage() {
 
   return (
     <SimulationProvider>
-      <AppShell
-        activo="/operaciones"
-        nivel={riesgo.nivel}
-        actualizadoEn={riesgo.evaluadoEn}
+      <PanelShell nivel={riesgo.nivel} actualizadoEn={riesgo.evaluadoEn}>
+      <Workspace
         lienzo={<FloodMap zonas={riesgo.zonas} reportes esquina={<WeatherBadge clima={clima} />} />}
         lienzoInferior={
           <>
@@ -313,6 +312,7 @@ export default async function OperacionesPage() {
           </div>
         }
       />
+      </PanelShell>
     </SimulationProvider>
   );
 }
