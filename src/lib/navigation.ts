@@ -13,6 +13,8 @@ export const EMERGENCY_PHONE = "103";
 
 export const VECINOS_TABS: readonly NavItem[] = [
   { href: VECINOS_HOME, etiqueta: "Mapa", icono: "mapa" },
+  { href: "/zona", etiqueta: "Mi zona", icono: "zona" },
+  { href: "/reportar", etiqueta: "Reportar", icono: "reportar" },
   { href: "/mas", etiqueta: "Más", icono: "mas" },
 ];
 

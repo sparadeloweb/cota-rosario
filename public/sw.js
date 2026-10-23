@@ -3,7 +3,7 @@ importScripts("/sw-strategy.js");
 var VERSION = new URL(self.location.href).searchParams.get("v") || "dev";
 var CACHE = "cota-" + VERSION;
 var CACHE_MARK = "<script>window.__cotaDesdeCache=location.href</script>";
-var SHELL = ["/", "/mas", "/operaciones", "/manifest.webmanifest", "/icons/icon-192.png"];
+var SHELL = ["/", "/zona", "/reportar", "/mas", "/operaciones", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", function (event) {
   event.waitUntil(
