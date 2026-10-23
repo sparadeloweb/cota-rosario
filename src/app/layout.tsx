@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
+import { ServiceWorker } from "@/components/ServiceWorker";
+import { GROUND_COLOR } from "@/lib/theme";
 
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
@@ -19,12 +21,27 @@ export const metadata: Metadata = {
   title: "Cota · riesgo hídrico de Rosario",
   description:
     "Altura del Paraná contra los niveles oficiales del INA, lluvia pronosticada y áreas inundables de la Municipalidad de Rosario, cruzadas en un solo panel.",
+  applicationName: "Cota",
+  appleWebApp: { capable: true, title: "Cota", statusBarStyle: "black-translucent" },
+  icons: { apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }] },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: GROUND_COLOR,
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${plexSans.variable} ${plexMono.variable} h-dvh antialiased`}>
-      <body className="flex h-dvh flex-col overflow-hidden font-sans">{children}</body>
+      <body className="flex h-dvh flex-col overflow-hidden font-sans">
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }
