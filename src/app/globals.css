@@ -24,7 +24,6 @@
 }
 
 @theme inline {
-  --container-page: 96rem;
   --color-ground: var(--ground);
   --color-panel: var(--panel);
   --color-panel-soft: var(--panel-soft);

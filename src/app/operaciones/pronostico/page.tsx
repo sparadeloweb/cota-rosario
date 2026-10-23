@@ -68,17 +68,17 @@ export default async function ForecastPage() {
 
           <DataStatus status={status} />
 
-          <section className="hairline px-5 py-6 sm:px-6">
+          <section className="hairline px-5 py-6 sm:px-5">
             <h2 className="meta">Escenario de anegamientos</h2>
             <div className="mt-4">{flooding ? <FloodingOutlook flooding={flooding} /> : <SourceDown failure={failureOf("models") ?? failureOf("openMeteo")} />}</div>
           </section>
 
-          <section className="hairline px-5 py-6 sm:px-6">
+          <section className="hairline px-5 py-6 sm:px-5">
             <h2 className="meta">La lluvia que viene</h2>
             <div className="mt-4">{rain ? <RainOutlook rain={rain} /> : <SourceDown failure={failureOf("openMeteo")!} />}</div>
           </section>
 
-          <section className="hairline px-5 py-6 sm:px-6">
+          <section className="hairline px-5 py-6 sm:px-5">
             <h2 className="meta">A dónde va el río</h2>
             <div className="mt-4">
               {river ? (

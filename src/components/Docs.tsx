@@ -7,7 +7,7 @@ interface DocsProps {
 
 export function Docs({ children, title = "Fuentes y metodología" }: DocsProps) {
   return (
-    <details className="hairline group px-5 py-5 sm:px-6">
+    <details className="hairline group px-5 py-5 sm:px-5">
       <summary className="meta flex cursor-pointer list-none items-center gap-2 text-ink-soft transition-colors hover:text-ink [&::-webkit-details-marker]:hidden">
         <span className="inline-block transition-transform group-open:rotate-90" aria-hidden="true">
           ▸

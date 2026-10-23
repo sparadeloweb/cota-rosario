@@ -31,7 +31,7 @@ export default async function ResidentsPage() {
       rail={
         <div className="flex flex-col">
           <WeatherLine weather={weather} />
-          <section className="px-5 py-6 sm:px-6">
+          <section className="px-5 py-6 sm:px-5">
             <p className="meta">Rosario · ahora{risk.incomplete ? " · evaluación parcial" : ""}</p>
             <h1 className="mt-2 flex items-start gap-3 text-2xl font-semibold leading-tight tracking-tight text-ink">
               <span
@@ -49,7 +49,7 @@ export default async function ResidentsPage() {
 
           <section className="hairline flex flex-col">
             {risk.factors.map((factor) => (
-              <div key={factor.id} className="hairline flex flex-col gap-1.5 px-5 py-4 first:border-t-0 sm:px-6">
+              <div key={factor.id} className="hairline flex flex-col gap-1.5 px-5 py-4 first:border-t-0 sm:px-5">
                 <div className="flex items-baseline justify-between gap-3">
                   <h2 className="text-sm text-ink">{factor.title}</h2>
                   <span className="flex items-center gap-1.5 text-xs">
@@ -67,17 +67,17 @@ export default async function ResidentsPage() {
             ))}
           </section>
 
-          <section className="hairline px-5 py-6 sm:px-6">
+          <section className="hairline px-5 py-6 sm:px-5">
             <h2 className="meta">El río</h2>
             <div className="mt-4">{river ? <RiverGauge river={river} /> : <SourceDown failure={failureOf("ina")!} />}</div>
           </section>
 
-          <section className="hairline px-5 py-6 sm:px-6">
+          <section className="hairline px-5 py-6 sm:px-5">
             <h2 className="meta">La lluvia</h2>
             <div className="mt-4">{rain ? <RainStrip rain={rain} /> : <SourceDown failure={failureOf("openMeteo")!} />}</div>
           </section>
 
-          <section className="hairline px-5 py-6 sm:px-6">
+          <section className="hairline px-5 py-6 sm:px-5">
             <h2 className="meta">Qué conviene hacer</h2>
             <ul className="mt-4 flex flex-col gap-3">
               {tips.map((tip) => (
@@ -117,7 +117,7 @@ export default async function ResidentsPage() {
             </DocsSection>
           </Docs>
 
-          <p className="hairline px-5 py-6 text-xs leading-relaxed text-ink-faint sm:px-6">
+          <p className="hairline px-5 py-6 text-xs leading-relaxed text-ink-faint sm:px-5">
             Ante una emergencia, Defensa Civil 103.{" "}
             <Link href={HELP_HREF} className="underline decoration-rule underline-offset-4 hover:text-ink">
               Cómo funciona Cota

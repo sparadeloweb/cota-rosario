@@ -23,12 +23,12 @@ export default function MorePage() {
   return (
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-page flex-col pb-8">
+        <div className="flex w-full flex-col pb-8">
           <SectionHero pattern="summary" meta="Cota · Rosario" title="Más">
             Emergencias, instalar la app, cómo funciona Cota y los datos abiertos.
           </SectionHero>
 
-          <Motion className="grid gap-4 px-4 pt-5 sm:px-6 lg:grid-cols-2 lg:items-start">
+          <Motion className="grid gap-4 px-4 pt-5 sm:px-5 lg:grid-cols-2 lg:items-start">
             <a href={`tel:${EMERGENCY_PHONE}`} className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-critical/40 bg-critical/10 p-4 transition-colors hover:border-critical/70 lg:min-h-full lg:p-6" data-reveal>
               <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-critical text-ground">
                 <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

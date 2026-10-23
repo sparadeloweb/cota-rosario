@@ -54,7 +54,7 @@ export default async function ReportsPage() {
                 <LatestReports reports={list} />
               </PanelSection>
             ) : null}
-            <p className="hairline px-5 py-5 text-xs leading-relaxed text-ink-faint sm:px-6">Desde el panel los reportes son de sólo lectura. Los vecinos los cargan desde la pestaña Reportar o el mapa. Datos en <span className="readout">/api/reports</span>.</p>
+            <p className="hairline px-5 py-5 text-xs leading-relaxed text-ink-faint sm:px-5">Desde el panel los reportes son de sólo lectura. Los vecinos los cargan desde la pestaña Reportar o el mapa. Datos en <span className="readout">/api/reports</span>.</p>
           </div>
         }
       />

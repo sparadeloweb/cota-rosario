@@ -10,7 +10,7 @@ const STEPS = [
 
 export function ReportGuide() {
   return (
-    <aside className="mt-8 hidden flex-col gap-5 px-5 sm:px-6 lg:flex lg:px-0">
+    <aside className="mt-8 hidden flex-col gap-5 px-5 sm:px-5 lg:flex lg:px-0">
       <h2 className="meta">Qué pasa con tu reporte</h2>
       <ol className="flex flex-col gap-4">
         {STEPS.map((item, index) => (

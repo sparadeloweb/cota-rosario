@@ -32,7 +32,7 @@ export function WeatherLine({ weather }: WeatherBadgeProps) {
     return null;
   }
   return (
-    <div className="flex items-center gap-3 border-b border-rule px-5 pb-3 pt-1 sm:px-6 lg:hidden" title={`${weather.description} · dato modelado`}>
+    <div className="flex items-center gap-3 border-b border-rule px-5 pb-3 pt-1 sm:px-5 lg:hidden" title={`${weather.description} · dato modelado`}>
       <WeatherIconSvg icon={weather.icon} className="size-6 shrink-0 text-ink-soft" />
       <span className="readout text-lg leading-none text-ink">{weather.temperature}°</span>
       <span className="min-w-0 flex-1 truncate text-xs text-ink-soft">{weather.description}</span>

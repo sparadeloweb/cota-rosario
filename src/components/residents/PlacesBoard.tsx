@@ -94,12 +94,12 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
   const full = places.length >= MAX_PLACES;
 
   return (
-    <div className="mx-auto w-full max-w-page pb-8 lg:grid lg:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] lg:gap-x-8 lg:px-6">
+    <div className="w-full pb-8 lg:grid lg:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] lg:gap-x-8 lg:px-5">
       <div className="flex flex-col lg:sticky lg:top-0 lg:self-start">
-        <SectionHero pattern="zone" meta={`Mis lugares · ${ready ? places.length : 0} de ${MAX_PLACES}`} title="Mi zona">
+        <SectionHero inColumn pattern="zone" meta={`Mis lugares · ${ready ? places.length : 0} de ${MAX_PLACES}`} title="Mi zona">
           Guardá tu casa, el trabajo o la escuela y mirá qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.
         </SectionHero>
-        <div className="px-4 pt-5 sm:px-6 lg:px-0">
+        <div className="px-4 pt-5 sm:px-5 lg:px-0">
           {!available ? (
           <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (
@@ -108,7 +108,7 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
         </div>
       </div>
 
-      <div className="px-4 pt-4 sm:px-6 lg:px-0 lg:pt-7">
+      <div className="px-4 pt-4 sm:px-5 lg:px-0 lg:pt-7">
         {ready ? (
           places.length ? (
             <Motion>
