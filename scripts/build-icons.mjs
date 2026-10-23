@@ -1,10 +1,14 @@
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 
 const SOURCE = "src/app/icon.svg";
 const OUT_DIR = "public/icons";
 const GROUND = "#0b0c0e";
 const MASKABLE_SAFE_ZONE = 0.8;
+const FAVICON_FILE = "src/app/favicon.ico";
+const FAVICON_SIZE = 32;
+const ICO_HEADER_BYTES = 6;
+const ICO_ENTRY_BYTES = 16;
 const SIZES = [
   { file: "icon-192.png", size: 192, maskable: false },
   { file: "icon-512.png", size: 512, maskable: false },
@@ -25,4 +29,17 @@ for (const { file, size, maskable } of SIZES) {
     .toFile(`${OUT_DIR}/${file}`);
 }
 
-console.log(`Íconos generados en ${OUT_DIR}: ${SIZES.map((item) => item.file).join(", ")}`);
+const faviconPng = await sharp(svg, { density: 1200 }).resize(FAVICON_SIZE, FAVICON_SIZE).png().toBuffer();
+const header = Buffer.alloc(ICO_HEADER_BYTES + ICO_ENTRY_BYTES);
+header.writeUInt16LE(0, 0);
+header.writeUInt16LE(1, 2);
+header.writeUInt16LE(1, 4);
+header.writeUInt8(FAVICON_SIZE, 6);
+header.writeUInt8(FAVICON_SIZE, 7);
+header.writeUInt16LE(1, 10);
+header.writeUInt16LE(32, 12);
+header.writeUInt32LE(faviconPng.length, 14);
+header.writeUInt32LE(ICO_HEADER_BYTES + ICO_ENTRY_BYTES, 18);
+await writeFile(FAVICON_FILE, Buffer.concat([header, faviconPng]));
+
+console.log(`Icons written to ${OUT_DIR} and ${FAVICON_FILE}: ${SIZES.map((item) => item.file).join(", ")}`);
