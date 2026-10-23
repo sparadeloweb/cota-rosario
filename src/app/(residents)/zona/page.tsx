@@ -8,9 +8,8 @@ export const metadata: Metadata = { title: "Mi zona · Cota" };
 export default async function MyAreaPage() {
   const { risk } = await loadStatus();
   return (
-
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <PlacesBoard zones={risk.zones} />
-      </div>
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <PlacesBoard zones={risk.zones} />
+    </div>
   );
 }

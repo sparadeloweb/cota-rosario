@@ -21,36 +21,35 @@ export default async function SimulatorPage() {
 
   return (
     <SimulationProvider>
-
-        <Workspace
-          canvas={<FloodMap zones={risk.zones} />}
-          rail={
-            <div className="flex flex-col">
-              <SectionHero pattern="simulator" meta="Escenarios · no altera datos reales" title="Simulador" figures={figures}>
-                Mové la altura del río y la lluvia para ver cómo cambian el nivel y las zonas en el mapa. Restablecer vuelve a la consulta.
-              </SectionHero>
-              <PanelSection title="Escenario">
-                {river && rain?.peakWindow && hasUsableThresholds(river.station) ? (
-                  <Simulator
-                    currentMeters={river.station.meters}
-                    alert={river.station.alert!}
-                    evacuation={river.station.evacuation !== null && river.station.evacuation > 0 ? river.station.evacuation : null}
-                    currentPeakMm={rain.peakWindow.millimeters}
-                  />
-                ) : (
-                  <p className="text-xs leading-relaxed text-ink-soft">El simulador necesita altura, umbral de alerta y lluvia utilizables de las fuentes para iniciar el escenario.</p>
-                )}
-              </PanelSection>
-              <Docs>
-                <DocsSection title="El simulador">
-                  <p className="text-xs leading-relaxed text-ink-soft">
-                    Usa exactamente el mismo modelo que la vista pública: mover los controles pinta el mapa con el escenario, no altera ningún dato real ni queda guardado.
-                  </p>
-                </DocsSection>
-              </Docs>
-            </div>
-          }
-        />
+      <Workspace
+        canvas={<FloodMap zones={risk.zones} />}
+        rail={
+          <div className="flex flex-col">
+            <SectionHero pattern="simulator" meta="Escenarios · no altera datos reales" title="Simulador" figures={figures}>
+              Mové la altura del río y la lluvia para ver cómo cambian el nivel y las zonas en el mapa. Restablecer vuelve a la consulta.
+            </SectionHero>
+            <PanelSection title="Escenario">
+              {river && rain?.peakWindow && hasUsableThresholds(river.station) ? (
+                <Simulator
+                  currentMeters={river.station.meters}
+                  alert={river.station.alert!}
+                  evacuation={river.station.evacuation !== null && river.station.evacuation > 0 ? river.station.evacuation : null}
+                  currentPeakMm={rain.peakWindow.millimeters}
+                />
+              ) : (
+                <p className="text-xs leading-relaxed text-ink-soft">El simulador necesita altura, umbral de alerta y lluvia utilizables de las fuentes para iniciar el escenario.</p>
+              )}
+            </PanelSection>
+            <Docs>
+              <DocsSection title="El simulador">
+                <p className="text-xs leading-relaxed text-ink-soft">
+                  Usa exactamente el mismo modelo que la vista pública: mover los controles pinta el mapa con el escenario, no altera ningún dato real ni queda guardado.
+                </p>
+              </DocsSection>
+            </Docs>
+          </div>
+        }
+      />
     </SimulationProvider>
   );
 }

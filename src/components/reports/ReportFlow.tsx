@@ -110,7 +110,7 @@ export function ReportFlow() {
   const isPlaceValid = canAdvance("place", draft);
 
   return (
-    <div className="flex min-h-full flex-col lg:grid lg:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] lg:gap-x-10 lg:px-5">
+    <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] lg:gap-x-10 lg:px-5">
       <div className="lg:sticky lg:top-0 lg:self-start lg:pb-8">
         <SectionHero inColumn pattern="report" meta={`Reportar · paso ${number} de ${REPORT_STEPS.length}`} title={TITLES[step]}>
           {step === "type" ? "Tu aviso aparece en el mapa para que otros vecinos y el panel de operaciones lo vean." : null}
@@ -121,8 +121,8 @@ export function ReportFlow() {
         <ReportGuide />
       </div>
 
-      <div className="flex flex-1 flex-col lg:min-h-full lg:pt-6">
-      <section className="flex-1 px-5 py-6 sm:px-5 lg:px-0">
+      <div className="flex flex-1 flex-col lg:pt-6">
+      <section className="flex-1 px-5 py-6 sm:px-5 lg:flex lg:flex-col lg:px-0">
         {step === "type" ? <ReportTypePicker selected={draft.type} onSelect={(type) => update({ type })} /> : null}
 
         {step === "place" ? (

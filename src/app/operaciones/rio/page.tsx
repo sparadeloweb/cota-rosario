@@ -41,53 +41,52 @@ export default async function RiverPage() {
     : [];
 
   return (
+    <PanelPage>
+      <SectionHero pattern="river" meta="Paraná · INA y GloFAS" title="Río" figures={figures}>
+        La altura en Rosario contra los umbrales oficiales del INA, cómo viene el río en los últimos meses y qué pasa aguas arriba.
+      </SectionHero>
 
-      <PanelPage>
-        <SectionHero pattern="river" meta="Paraná · INA y GloFAS" title="Río" figures={figures}>
-          La altura en Rosario contra los umbrales oficiales del INA, cómo viene el río en los últimos meses y qué pasa aguas arriba.
-        </SectionHero>
-
-        {river ? (
-          <div className="grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-            <PanelSection title="Estación Rosario">
-              <LevelRuler station={river.station} range={indicators ? { min: indicators.min210.meters, max: indicators.max210.meters } : null} />
-            </PanelSection>
-            <PanelSection title={`Altura diaria · últimos ${history.length} días`} className="lg:border-l lg:border-rule-soft" note="Una lectura diaria del INA. Las líneas punteadas son los umbrales oficiales de la estación.">
-              <LineArea points={history.map((reading) => ({ date: reading.date, value: reading.meters }))} thresholds={thresholds} unit="m" height={280} />
-            </PanelSection>
-          </div>
-        ) : (
+      {river ? (
+        <div className="grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
           <PanelSection title="Estación Rosario">
-            <SourceDown failure={failureOf("ina")} />
+            <LevelRuler station={river.station} range={indicators ? { min: indicators.min210.meters, max: indicators.max210.meters } : null} />
           </PanelSection>
-        )}
-
-        <div className="grid lg:grid-cols-2">
-          <PanelSection title="Cadena del Paraná" note="Una subida aguas arriba no determina por sí sola qué pasará en Rosario: usala para anticipar, no para predecir.">
-            {kpis.upstream.length ? <UpstreamChain stations={kpis.upstream} /> : <SourceDown failure={failureOf("ina")} />}
-          </PanelSection>
-          <PanelSection title="Caudal frente a Rosario" className="lg:border-l lg:border-rule-soft" note={`Estimación de GloFAS (Copernicus) para la celda del canal (${PARANA_GLOFAS_CELL.lat}, ${PARANA_GLOFAS_CELL.lon}). La línea punteada es su pronóstico.`}>
-            {discharge && dischargeSeries.length > 1 ? <LineArea points={dischargeSeries} unit="m³/s" decimals={0} futureFrom={discharge.past.length} height={220} /> : <SourceDown failure={failureOf("glofas")} />}
+          <PanelSection title={`Altura diaria · últimos ${history.length} días`} className="lg:border-l lg:border-rule-soft" note="Una lectura diaria del INA. Las líneas punteadas son los umbrales oficiales de la estación.">
+            <LineArea points={history.map((reading) => ({ date: reading.date, value: reading.meters }))} thresholds={thresholds} unit="m" height={280} />
           </PanelSection>
         </div>
+      ) : (
+        <PanelSection title="Estación Rosario">
+          <SourceDown failure={failureOf("ina")} />
+        </PanelSection>
+      )}
 
-        <PanelSection title="Red hidrométrica del INA">{river ? <StationTable stations={river.network} /> : <SourceDown failure={failureOf("ina")} />}</PanelSection>
+      <div className="grid lg:grid-cols-2">
+        <PanelSection title="Cadena del Paraná" note="Una subida aguas arriba no determina por sí sola qué pasará en Rosario: usala para anticipar, no para predecir.">
+          {kpis.upstream.length ? <UpstreamChain stations={kpis.upstream} /> : <SourceDown failure={failureOf("ina")} />}
+        </PanelSection>
+        <PanelSection title="Caudal frente a Rosario" className="lg:border-l lg:border-rule-soft" note={`Estimación de GloFAS (Copernicus) para la celda del canal (${PARANA_GLOFAS_CELL.lat}, ${PARANA_GLOFAS_CELL.lon}). La línea punteada es su pronóstico.`}>
+          {discharge && dischargeSeries.length > 1 ? <LineArea points={dischargeSeries} unit="m³/s" decimals={0} futureFrom={discharge.past.length} height={220} /> : <SourceDown failure={failureOf("glofas")} />}
+        </PanelSection>
+      </div>
 
-        <Docs>
-          <DocsSection title="Cómo leer esta sección">
-            <p className="text-xs leading-relaxed text-ink-soft">
-              La regla usa la escala del hidrómetro de Rosario, no metros sobre el nivel del mar. Margen = alerta − altura. El ritmo es una recta de mínimos cuadrados sobre los últimos 14 días; extrapolarlo no es un pronóstico. El percentil compara la altura de hoy con los últimos 210 días. El caudal de GloFAS es un modelo: su relación con la altura de Rosario es débil.
-            </p>
-          </DocsSection>
-          <DocsSection title="Fuentes y última consulta">
-            <Provenance
-              stamps={[
-                { id: "ina", fetchedAt: river?.fetchedAt, failure: failureOf("ina") },
-                { id: "glofas", fetchedAt: discharge?.fetchedAt, failure: failureOf("glofas") },
-              ]}
-            />
-          </DocsSection>
-        </Docs>
-      </PanelPage>
+      <PanelSection title="Red hidrométrica del INA">{river ? <StationTable stations={river.network} /> : <SourceDown failure={failureOf("ina")} />}</PanelSection>
+
+      <Docs>
+        <DocsSection title="Cómo leer esta sección">
+          <p className="text-xs leading-relaxed text-ink-soft">
+            La regla usa la escala del hidrómetro de Rosario, no metros sobre el nivel del mar. Margen = alerta − altura. El ritmo es una recta de mínimos cuadrados sobre los últimos 14 días; extrapolarlo no es un pronóstico. El percentil compara la altura de hoy con los últimos 210 días. El caudal de GloFAS es un modelo: su relación con la altura de Rosario es débil.
+          </p>
+        </DocsSection>
+        <DocsSection title="Fuentes y última consulta">
+          <Provenance
+            stamps={[
+              { id: "ina", fetchedAt: river?.fetchedAt, failure: failureOf("ina") },
+              { id: "glofas", fetchedAt: discharge?.fetchedAt, failure: failureOf("glofas") },
+            ]}
+          />
+        </DocsSection>
+      </Docs>
+    </PanelPage>
   );
 }

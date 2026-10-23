@@ -35,83 +35,82 @@ export default async function SummaryPage() {
   ];
 
   return (
+    <Workspace
+      canvas={<FloodMap zones={risk.zones} reports corner={<WeatherBadge weather={weather} />} />}
+      rail={
+        <div className="flex flex-col">
+          <WeatherLine weather={weather} />
+          <SectionHero pattern="summary" meta={`Seguimiento hídrico${risk.incomplete ? " · evaluación parcial" : ""}`} title="Resumen" level={risk.level} status={riskLabel(risk.level)} figures={figures}>
+            {statusTitle(risk.level)}. Qué conviene revisar ahora, el parte para compartir y el pulso de cada sección.
+          </SectionHero>
 
-      <Workspace
-        canvas={<FloodMap zones={risk.zones} reports corner={<WeatherBadge weather={weather} />} />}
-        rail={
-          <div className="flex flex-col">
-            <WeatherLine weather={weather} />
-            <SectionHero pattern="summary" meta={`Seguimiento hídrico${risk.incomplete ? " · evaluación parcial" : ""}`} title="Resumen" level={risk.level} status={riskLabel(risk.level)} figures={figures}>
-              {statusTitle(risk.level)}. Qué conviene revisar ahora, el parte para compartir y el pulso de cada sección.
-            </SectionHero>
+          <DataStatus status={status} />
 
-            <DataStatus status={status} />
+          <PanelSection title="Sugerencias para revisar" note="Basadas en los indicadores y reportes disponibles. Cada una muestra el dato que la motiva.">
+            <Briefing recommendations={recommendations} situationReport={situationReport} />
+          </PanelSection>
 
-            <PanelSection title="Sugerencias para revisar" note="Basadas en los indicadores y reportes disponibles. Cada una muestra el dato que la motiva.">
-              <Briefing recommendations={recommendations} situationReport={situationReport} />
-            </PanelSection>
+          <PanelSection title="Por sección">
+            <PulseGrid>
+              <PulseCard href="/operaciones/rio" title="Río" value={kpis.river ? kpis.river.current.toFixed(2) : "—"} unit="m" detail={kpis.river?.change7dCm == null ? "sin variación semanal" : `${kpis.river.change7dCm > 0 ? "+" : ""}${kpis.river.change7dCm} cm en 7 días`} accent="var(--water)">
+                {kpis.river ? <PulseSpark values={kpis.river.sparkline.map((reading) => reading.meters)} alert={river?.station.alert} /> : null}
+              </PulseCard>
+              <PulseCard href="/operaciones/lluvia" title="Lluvia" value={rain?.peakWindow ? rain.peakWindow.millimeters.toFixed(1) : "—"} unit="mm / 2 h" detail={rain?.peakWindow ? "pico de las próximas horas" : "sin pico calculable"} accent="var(--water)" />
+              <PulseCard href="/operaciones/pronostico" title="Pronóstico" value={flooding ? flooding.cityExpected.toFixed(flooding.cityExpected < 10 ? 1 : 0) : "—"} unit="anegamientos" detail={flooding ? `esperados en ${flooding.windowDays} días · exploratorio` : "modelo no disponible"} accent="var(--watch)" />
+              <PulseCard href="/operaciones/reportes" title="Reportes" value={kpis.reports ? String(kpis.reports.active) : "—"} unit="activos" detail={kpis.reports?.byDistrict[0] ? `más en ${kpis.reports.byDistrict[0].district.toLowerCase()}` : "ningún distrito con reportes"} accent="var(--critical)" />
+            </PulseGrid>
+          </PanelSection>
 
-            <PanelSection title="Por sección">
-              <PulseGrid>
-                <PulseCard href="/operaciones/rio" title="Río" value={kpis.river ? kpis.river.current.toFixed(2) : "—"} unit="m" detail={kpis.river?.change7dCm == null ? "sin variación semanal" : `${kpis.river.change7dCm > 0 ? "+" : ""}${kpis.river.change7dCm} cm en 7 días`} accent="var(--water)">
-                  {kpis.river ? <PulseSpark values={kpis.river.sparkline.map((reading) => reading.meters)} alert={river?.station.alert} /> : null}
-                </PulseCard>
-                <PulseCard href="/operaciones/lluvia" title="Lluvia" value={rain?.peakWindow ? rain.peakWindow.millimeters.toFixed(1) : "—"} unit="mm / 2 h" detail={rain?.peakWindow ? "pico de las próximas horas" : "sin pico calculable"} accent="var(--water)" />
-                <PulseCard href="/operaciones/pronostico" title="Pronóstico" value={flooding ? flooding.cityExpected.toFixed(flooding.cityExpected < 10 ? 1 : 0) : "—"} unit="anegamientos" detail={flooding ? `esperados en ${flooding.windowDays} días · exploratorio` : "modelo no disponible"} accent="var(--watch)" />
-                <PulseCard href="/operaciones/reportes" title="Reportes" value={kpis.reports ? String(kpis.reports.active) : "—"} unit="activos" detail={kpis.reports?.byDistrict[0] ? `más en ${kpis.reports.byDistrict[0].district.toLowerCase()}` : "ningún distrito con reportes"} accent="var(--critical)" />
-              </PulseGrid>
-            </PanelSection>
+          <PanelSection title="Todos los indicadores">
+            <div className="flex flex-col gap-5">
+              <KpiGrid tiles={[...riverTiles(kpis), ...rainTiles(kpis), ...networkAndReportTiles(kpis)]}>
+                {kpis.river ? (
+                  <div className="flex flex-col gap-1">
+                    <Sparkline values={kpis.river.sparkline.map((reading) => reading.meters)} />
+                    <span className="meta">
+                      altura del río, últimos 60 días · de {kpis.river.min210.meters.toFixed(2)} a {kpis.river.max210.meters.toFixed(2)} m en 210 días
+                      {river?.station.alert ? ` · alerta ${river.station.alert.toFixed(2)} m` : ""}
+                    </span>
+                  </div>
+                ) : null}
+              </KpiGrid>
+            </div>
+          </PanelSection>
 
-            <PanelSection title="Todos los indicadores">
-              <div className="flex flex-col gap-5">
-                <KpiGrid tiles={[...riverTiles(kpis), ...rainTiles(kpis), ...networkAndReportTiles(kpis)]}>
-                  {kpis.river ? (
-                    <div className="flex flex-col gap-1">
-                      <Sparkline values={kpis.river.sparkline.map((reading) => reading.meters)} />
-                      <span className="meta">
-                        altura del río, últimos 60 días · de {kpis.river.min210.meters.toFixed(2)} a {kpis.river.max210.meters.toFixed(2)} m en 210 días
-                        {river?.station.alert ? ` · alerta ${river.station.alert.toFixed(2)} m` : ""}
-                      </span>
-                    </div>
-                  ) : null}
-                </KpiGrid>
-              </div>
-            </PanelSection>
-
-            <Docs>
-              <DocsSection title="Las recomendaciones">
-                <p className="text-xs leading-relaxed text-ink-soft">
-                  Reglas fijas sobre los mismos datos del panel, ordenadas por urgencia (ahora / hoy / cuando se pueda). Río: umbrales del INA superados;
-                  margen a alerta de 0,50 m o menos, o alerta a 7 días o menos al ritmo actual; dos o más estaciones aguas arriba a 0,50 m o menos de su alerta y
-                  creciendo; ritmo de 2 cm/día o más. Lluvia: pico de 2 h sobre los umbrales de atención/alerta del panel; 30 mm o más en 48 h; un día con
-                  período de retorno de 5 años o más; mes en curso al 150 % de lo normal. Anegamientos: 10 o más esperados en la semana, o 3 en un distrito.
-                  Reportes: agua en viviendas, 3 o más en 6 horas, calles cortadas. Fuentes: INA sin responder. Si nada aplica, se sugiere trabajo preventivo.
-                  El parte de situación se arma con las mismas cifras. Todo en JSON en <span className="readout">/api/recommendations</span>.
-                </p>
-              </DocsSection>
-              <DocsSection title="Los indicadores">
-                <p className="text-xs leading-relaxed text-ink-soft">
-                  Río: variaciones sobre la serie diaria del INA; el percentil compara la altura de hoy con los últimos 210 días; el ritmo es una recta de
-                  mínimos cuadrados sobre 14 días. Lluvia caída: horas pasadas del modelo de Open-Meteo, no un pluviómetro de Rosario. Mes en curso:
-                  archivo de Open-Meteo con fecha de cobertura contra la referencia histórica del mismo mes. Aguas arriba: margen = alerta − altura; se excluyen lecturas de más de 48 h.
-                  Reportes: los cargados por vecinos en las últimas 24 h, ubicados por distrito. Todo en JSON en <span className="readout">/api/kpis</span>.
-                </p>
-              </DocsSection>
-              <DocsSection title="Fuentes y última consulta">
-                <Provenance
-                  stamps={[
-                    { id: "ina", fetchedAt: river?.fetchedAt, failure: failureOf("ina") },
-                    { id: "openMeteo", fetchedAt: rain?.fetchedAt, failure: failureOf("openMeteo") },
-                    { id: "glofas", fetchedAt: discharge?.fetchedAt, failure: failureOf("glofas") },
-                  ]}
-                />
-                <a href="/api/status" className="readout inline-block text-xs text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
-                  GET /api/status · el cruce completo en JSON
-                </a>
-              </DocsSection>
-            </Docs>
-          </div>
-        }
-      />
+          <Docs>
+            <DocsSection title="Las recomendaciones">
+              <p className="text-xs leading-relaxed text-ink-soft">
+                Reglas fijas sobre los mismos datos del panel, ordenadas por urgencia (ahora / hoy / cuando se pueda). Río: umbrales del INA superados;
+                margen a alerta de 0,50 m o menos, o alerta a 7 días o menos al ritmo actual; dos o más estaciones aguas arriba a 0,50 m o menos de su alerta y
+                creciendo; ritmo de 2 cm/día o más. Lluvia: pico de 2 h sobre los umbrales de atención/alerta del panel; 30 mm o más en 48 h; un día con
+                período de retorno de 5 años o más; mes en curso al 150 % de lo normal. Anegamientos: 10 o más esperados en la semana, o 3 en un distrito.
+                Reportes: agua en viviendas, 3 o más en 6 horas, calles cortadas. Fuentes: INA sin responder. Si nada aplica, se sugiere trabajo preventivo.
+                El parte de situación se arma con las mismas cifras. Todo en JSON en <span className="readout">/api/recommendations</span>.
+              </p>
+            </DocsSection>
+            <DocsSection title="Los indicadores">
+              <p className="text-xs leading-relaxed text-ink-soft">
+                Río: variaciones sobre la serie diaria del INA; el percentil compara la altura de hoy con los últimos 210 días; el ritmo es una recta de
+                mínimos cuadrados sobre 14 días. Lluvia caída: horas pasadas del modelo de Open-Meteo, no un pluviómetro de Rosario. Mes en curso:
+                archivo de Open-Meteo con fecha de cobertura contra la referencia histórica del mismo mes. Aguas arriba: margen = alerta − altura; se excluyen lecturas de más de 48 h.
+                Reportes: los cargados por vecinos en las últimas 24 h, ubicados por distrito. Todo en JSON en <span className="readout">/api/kpis</span>.
+              </p>
+            </DocsSection>
+            <DocsSection title="Fuentes y última consulta">
+              <Provenance
+                stamps={[
+                  { id: "ina", fetchedAt: river?.fetchedAt, failure: failureOf("ina") },
+                  { id: "openMeteo", fetchedAt: rain?.fetchedAt, failure: failureOf("openMeteo") },
+                  { id: "glofas", fetchedAt: discharge?.fetchedAt, failure: failureOf("glofas") },
+                ]}
+              />
+              <a href="/api/status" className="readout inline-block text-xs text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
+                GET /api/status · el cruce completo en JSON
+              </a>
+            </DocsSection>
+          </Docs>
+        </div>
+      }
+    />
   );
 }

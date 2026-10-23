@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { Kpis } from "@/lib/kpis";
 
-
 export function PanelSection({ title, note, children, className = "" }: { title: string; note?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <section className={`hairline px-5 py-6 sm:px-5 ${className}`}>

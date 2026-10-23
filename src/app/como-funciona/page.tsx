@@ -9,7 +9,6 @@ import { DemoNotice } from "@/components/DemoNotice";
 import { RISK_ORDER } from "@/lib/risk";
 import { SOURCES } from "@/lib/sources";
 
-
 const CONCEPTS_PER_SLIDE = 4;
 const QUESTIONS_PER_SLIDE = 4;
 const FIGURES = [
