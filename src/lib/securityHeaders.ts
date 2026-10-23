@@ -1,6 +1,8 @@
 export const MAP_TILE_ORIGIN = "https://tile.openstreetmap.org";
 export const GEOCODER_ORIGIN = "https://nominatim.openstreetmap.org";
 export const SUGGESTION_ORIGIN = "https://photon.komoot.io";
+export const EDGE_ANALYTICS_SCRIPT_ORIGIN = "https://static.cloudflareinsights.com";
+export const EDGE_ANALYTICS_REPORT_ORIGIN = "https://cloudflareinsights.com";
 const HSTS_MAX_AGE_SECONDS = 31_536_000;
 
 export interface HeaderEntry {
@@ -11,11 +13,11 @@ export interface HeaderEntry {
 export function contentSecurityPolicy(isDevelopment: boolean): string {
   const directives = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline' ${EDGE_ANALYTICS_SCRIPT_ORIGIN}${isDevelopment ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${MAP_TILE_ORIGIN}`,
     "font-src 'self'",
-    `connect-src 'self' ${GEOCODER_ORIGIN} ${SUGGESTION_ORIGIN}${isDevelopment ? " ws: wss:" : ""}`,
+    `connect-src 'self' ${GEOCODER_ORIGIN} ${SUGGESTION_ORIGIN} ${EDGE_ANALYTICS_REPORT_ORIGIN}${isDevelopment ? " ws: wss:" : ""}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "frame-ancestors 'none'",
