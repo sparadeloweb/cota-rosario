@@ -19,9 +19,10 @@ interface PlaceFormProps {
   onSearch: (event: FormEvent) => void;
   onLocate: () => void;
   onPick: (suggestion: AddressSuggestion) => void;
+  hint?: string | null;
 }
 
-export function PlaceForm({ address, name, busy, full, message, fullNotice, onAddress, onName, onSearch, onLocate, onPick }: PlaceFormProps) {
+export function PlaceForm({ address, name, busy, full, message, fullNotice, onAddress, onName, onSearch, onLocate, onPick, hint }: PlaceFormProps) {
   const locked = full || busy;
   return (
     <form onSubmit={onSearch} className="flex flex-col gap-3 rounded-xl border border-rule bg-panel/70 p-4">
@@ -67,6 +68,7 @@ export function PlaceForm({ address, name, busy, full, message, fullNotice, onAd
       </div>
       {message ? <p role="alert" className="text-xs text-watch">{message}</p> : null}
       {full ? <p className="text-xs text-ink-faint">{fullNotice}</p> : null}
+      {hint ? <p className="border-t border-rule-soft pt-3 text-xs text-ink-faint">{hint}</p> : null}
     </form>
   );
 }

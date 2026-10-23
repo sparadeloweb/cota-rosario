@@ -5,12 +5,13 @@ interface WorkspaceProps {
   rail: ReactNode;
   canvas: ReactNode;
   lowerCanvas?: ReactNode;
+  sheetOpen?: boolean;
 }
 
-export function Workspace({ rail, canvas, lowerCanvas }: WorkspaceProps) {
+export function Workspace({ rail, canvas, lowerCanvas, sheetOpen }: WorkspaceProps) {
   return (
     <div className="relative flex min-h-0 flex-1 lg:flex-row">
-      <BottomSheet>
+      <BottomSheet requestedOpen={sheetOpen}>
         {rail}
         {lowerCanvas ? <div className="hairline px-5 py-6 lg:hidden">{lowerCanvas}</div> : null}
       </BottomSheet>

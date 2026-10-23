@@ -5,6 +5,14 @@ import { DESCRIPTION_MAX_CHARS } from "../src/lib/reportTypes";
 
 const COMPLETE_DRAFT = { type: "street" as const, lat: -32.9468, lon: -60.6393, placeLabel: "Córdoba 1500", description: "  Agua hasta el cordón  " };
 
+test("a report is complete only with a type, a point in Rosario and a valid detail", async () => {
+  const { isComplete, REPORT_STEPS } = await import("../src/lib/reportFlow");
+  assert.deepEqual([...REPORT_STEPS], ["type", "place", "detail"]);
+  assert.equal(isComplete(COMPLETE_DRAFT), true);
+  assert.equal(isComplete({ ...COMPLETE_DRAFT, type: null }), false);
+  assert.equal(isComplete({ ...COMPLETE_DRAFT, lat: -34.6, lon: -58.4 }), false);
+});
+
 test("each step requires its data before advancing", () => {
   assert.equal(canAdvance("type", EMPTY_DRAFT), false);
   assert.equal(canAdvance("type", { ...EMPTY_DRAFT, type: "home" }), true);
@@ -27,7 +35,7 @@ test("the submission body exists only for a complete draft and trims the descrip
 
 test("step navigation never goes past either end", () => {
   assert.equal(nextStep("type"), "place");
-  assert.equal(nextStep("review"), "review");
+  assert.equal(nextStep("detail"), "detail");
   assert.equal(previousStep("type"), "type");
   assert.equal(previousStep("detail"), "place");
 });

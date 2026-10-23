@@ -1,0 +1,78 @@
+import { PlaceFactsGrid } from "@/components/residents/PlaceFactsGrid";
+import type { ReadingState } from "@/components/residents/usePlaceReadings";
+import { riskColor } from "@/components/status";
+import { CLIMATE_CATEGORY_LABEL, type Finding, type TerrainMeta } from "@/lib/lookup";
+import type { Place } from "@/lib/places";
+import { riskLabel, type RiskLevel } from "@/lib/risk";
+
+const OUTSIDE_COLOR = "var(--ink-soft)";
+const LOADING_COLOR = "var(--ink-faint)";
+
+export function titleCase(text: string): string {
+  return text.toLowerCase().replace(/(^|\s)\p{L}/gu, (letter) => letter.toUpperCase());
+}
+
+export function findingFor(place: Place, state: ReadingState, zoneLevel: (zone: string) => RiskLevel | null): Finding | null {
+  if (state.status !== "ready") {
+    return null;
+  }
+  const { reading } = state;
+  return { ...reading, label: place.name, level: reading.zone ? zoneLevel(reading.zone) : undefined };
+}
+
+export function placeColor(finding: Finding | null): string {
+  if (!finding) {
+    return LOADING_COLOR;
+  }
+  return finding.inside ? riskColor(finding.level ?? null) : OUTSIDE_COLOR;
+}
+
+function summary(finding: Finding | null, state: ReadingState): string {
+  if (state.status === "failed") {
+    return "No pudimos leer las capas de este lugar";
+  }
+  if (!finding) {
+    return "Leyendo las capas…";
+  }
+  const official = finding.inside ? `Zona ${finding.zone ?? "—"} · hoy ${riskLabel(finding.level ?? null).toLowerCase()}` : "Fuera del área inundable oficial";
+  const climate = finding.climateRisk ? `lluvias torrenciales ${CLIMATE_CATEGORY_LABEL[finding.climateRisk]}` : null;
+  return [official, climate].filter(Boolean).join(" · ");
+}
+
+interface PlaceRowProps {
+  place: Place;
+  state: ReadingState;
+  finding: Finding | null;
+  terrain: TerrainMeta | null;
+  selected: boolean;
+  onSelect: () => void;
+  onRemove: () => void;
+}
+
+export function PlaceRow({ place, state, finding, terrain, selected, onSelect, onRemove }: PlaceRowProps) {
+  const color = placeColor(finding);
+  const location = [finding?.neighbourhood ? titleCase(finding.neighbourhood) : null, finding?.district ? `distrito ${titleCase(finding.district.district)}` : null].filter(Boolean).join(" · ");
+  return (
+    <li className={`relative border-b border-rule-soft transition-colors ${selected ? "bg-panel-soft/70" : "hover:bg-panel-soft/40"}`}>
+      <span className={`absolute inset-y-0 left-0 w-[3px] transition-opacity ${selected ? "opacity-100" : "opacity-0"}`} style={{ background: color }} aria-hidden="true" />
+      <button type="button" onClick={onSelect} aria-expanded={selected} className="flex w-full items-start gap-3 px-5 py-4 text-left">
+        <span className="mt-1.5 size-3 shrink-0 rounded-full ring-2 ring-ground" style={{ background: color }} aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-baseline justify-between gap-3">
+            <span className="truncate text-base font-medium text-ink">{place.name}</span>
+            <span className="shrink-0 text-[0.6875rem] text-ink-faint">{location || "Rosario"}</span>
+          </span>
+          <span className="mt-0.5 block text-xs leading-snug text-ink-soft">{summary(finding, state)}</span>
+        </span>
+      </button>
+      {selected ? (
+        <div className="flex flex-col gap-3 px-5 pb-4">
+          {finding ? <PlaceFactsGrid finding={finding} terrain={terrain} /> : null}
+          <button type="button" onClick={onRemove} className="self-end rounded-md px-2 py-1 text-xs text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink">
+            Quitar {place.name}
+          </button>
+        </div>
+      ) : null}
+    </li>
+  );
+}

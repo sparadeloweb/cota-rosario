@@ -1,27 +1,36 @@
-import { useId } from "react";
-
 interface LogoMarkProps {
   size?: number;
   className?: string;
 }
 
-const DEFAULT_SIZE = 30;
+const DEFAULT_SIZE = 34;
+const SUN_RAYS = "M47.0 7.3L47.0 3.9 M53.5 10.0L55.9 7.6 M56.2 16.5L59.6 16.5 M53.5 23.0L55.9 25.4 M47.0 25.7L47.0 29.1 M40.5 23.0L38.1 25.4 M37.8 16.5L34.4 16.5 M40.5 10.0L38.1 7.6";
+const BRAND = {
+  sky: "#74ACDF",
+  skyShadow: "#4F8FCB",
+  sun: "#F6B40E",
+  drop: "#FFFFFF",
+  dropShade: "#D7E8F7",
+  face: "#15304D",
+  cheek: "#F49BB0",
+} as const;
 
 export function LogoMark({ size = DEFAULT_SIZE, className = "" }: LogoMarkProps) {
-  const gradientId = useId();
   return (
-    <svg viewBox="0 0 32 32" width={size} height={size} className={className} role="img" aria-label="Cota" fill="none">
-      <defs>
-        <linearGradient id={gradientId} x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#3f7f9e" />
-          <stop offset="1" stopColor="#173c4e" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="8" fill={`url(#${gradientId})`} />
-      <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="#ffffff" strokeOpacity="0.14" />
-      <path d="M10.5 8.5h11L16 16.5Z" fill="#f4f6f8" />
-      <path d="M7 19h18" stroke="#f4f6f8" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M8 24c2.67 0 2.67-1.75 5.33-1.75S16 24 18.67 24s2.66-1.75 5.33-1.75" stroke="#f4f6f8" strokeOpacity="0.62" strokeWidth="1.8" strokeLinecap="round" />
+    <svg viewBox="0 0 64 64" width={size} height={size} className={className} role="img" aria-label="Cota" fill="none">
+      <rect width="64" height="64" rx="18" fill={BRAND.skyShadow} />
+      <rect width="64" height="60" rx="18" fill={BRAND.sky} />
+      <path d={SUN_RAYS} stroke={BRAND.sun} strokeWidth="3.4" strokeLinecap="round" />
+      <circle cx="47" cy="16.5" r="6.6" fill={BRAND.sun} />
+      <path d="M27.4 12.4Q29 10.1 30.6 12.4C34.6 18 43.5 28.4 43.5 37.5a14.5 14.5 0 0 1-29 0C14.5 28.4 23.4 18 27.4 12.4Z" fill={BRAND.drop} />
+      <path d="M43.5 37.5a14.5 14.5 0 0 1-21.8 12.5C30.5 51 39 45 39.4 33.8c.1-3-1-6.3-2.6-9.6C40.8 29.3 43.5 34 43.5 37.5Z" fill={BRAND.dropShade} />
+      <ellipse cx="23.6" cy="37" rx="3.1" ry="4" fill={BRAND.face} />
+      <ellipse cx="33.4" cy="37" rx="3.1" ry="4" fill={BRAND.face} />
+      <circle cx="24.6" cy="35.4" r="1.2" fill={BRAND.drop} />
+      <circle cx="34.4" cy="35.4" r="1.2" fill={BRAND.drop} />
+      <ellipse cx="19.6" cy="42.4" rx="2.6" ry="1.7" fill={BRAND.cheek} fillOpacity="0.55" />
+      <ellipse cx="37.4" cy="42.4" rx="2.6" ry="1.7" fill={BRAND.cheek} fillOpacity="0.55" />
+      <path d="M24.8 44.2c2.4 2.4 5.8 2.4 8.2 0" stroke={BRAND.face} strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
 }
@@ -29,7 +38,7 @@ export function LogoMark({ size = DEFAULT_SIZE, className = "" }: LogoMarkProps)
 export function Wordmark() {
   return (
     <span className="flex items-center gap-3">
-      <span className="text-[1.0625rem] font-semibold leading-none tracking-[-0.02em] text-ink">Cota</span>
+      <span className="font-brand text-[1.6rem] font-black lowercase leading-none tracking-[-0.03em] text-[#8EC1EC]">cota</span>
       <span className="h-6 w-px bg-rule max-sm:hidden" aria-hidden="true" />
       <span className="flex flex-col gap-1 leading-none max-sm:hidden">
         <span className="text-[0.6875rem] font-medium text-ink-soft">Riesgo hídrico</span>

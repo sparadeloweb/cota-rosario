@@ -12,6 +12,7 @@ const INTERACTIVE = "a, button, input, textarea, select, summary, label, [role='
 
 interface BottomSheetProps {
   children: ReactNode;
+  requestedOpen?: boolean;
 }
 
 interface Gesture {
@@ -56,14 +57,27 @@ function dragOffset(start: Gesture, y: number): number {
   return Math.min(start.travel, Math.max(0, base + y - start.y));
 }
 
-export function BottomSheet({ children }: BottomSheetProps) {
-  const [open, setOpen] = useState(false);
+export function BottomSheet({ children, requestedOpen }: BottomSheetProps) {
+  const [open, setOpen] = useState(requestedOpen ?? false);
+  const [appliedRequest, setAppliedRequest] = useState(requestedOpen);
+  if (requestedOpen !== appliedRequest) {
+    setAppliedRequest(requestedOpen);
+    if (requestedOpen !== undefined) {
+      setOpen(requestedOpen);
+    }
+  }
   const [dragPx, setDragPx] = useState<number | null>(null);
   const sheetRef = useRef<HTMLElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
   const suppressClick = useRef(false);
   const reduced = usePrefersReducedMotion();
+
+  useEffect(() => {
+    if (!open && scrollerRef.current) {
+      scrollerRef.current.scrollTop = 0;
+    }
+  }, [open]);
 
   useEffect(() => {
     document.documentElement.dataset.sheetOpen = String(open);
@@ -188,6 +202,11 @@ export function BottomSheet({ children }: BottomSheetProps) {
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onClickCapture={onClickCapture}
+      onFocusCapture={(event) => {
+        if (!open && !window.matchMedia(DESKTOP_QUERY).matches && (event.target as HTMLElement).matches("input, textarea, select")) {
+          setOpen(true);
+        }
+      }}
       className={`glass-sheet lg:glass-rail fixed inset-x-0 bottom-[var(--tabbar-h)] z-30 flex h-[calc(86dvh-var(--tabbar-h))] flex-col rounded-t-2xl border-t border-rule shadow-[0_-18px_48px_-24px_rgb(0_0_0/0.9)] ${restingClass} ${open ? "" : "max-lg:touch-none max-lg:select-none"} lg:static lg:z-20 lg:h-auto lg:w-[27rem] lg:shrink-0 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-r lg:shadow-none xl:w-[30rem]`}
       style={style}
     >
