@@ -3,7 +3,7 @@ import { Motion } from "@/components/motion/Motion";
 import { riskColor } from "@/components/status";
 import type { RiskLevel } from "@/lib/risk";
 
-export type HeroPattern = "summary" | "river" | "rain" | "forecast" | "reports" | "simulator" | "zone" | "report";
+export type HeroPattern = "summary" | "river" | "rain" | "forecast" | "reports" | "simulator";
 export type FigureTone = "neutral" | "watch" | "alert" | "critical";
 
 export interface HeroFigure {
@@ -24,7 +24,6 @@ interface SectionHeroProps {
   figures?: HeroFigure[];
   level?: RiskLevel | null;
   status?: string;
-  inColumn?: boolean;
 }
 
 const TONE_TEXT: Record<FigureTone, string> = {
@@ -39,8 +38,6 @@ const WAVE_GAP = 26;
 const RAIN_STREAKS = 46;
 const SCATTER_DOTS = 60;
 const TIMELINE_TICKS = 28;
-const CONTOUR_RINGS = 9;
-const RIPPLE_RINGS = 5;
 
 function pseudoRandom(seed: number): number {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
@@ -83,28 +80,6 @@ function Pattern({ pattern }: { pattern: HeroPattern }) {
   if (pattern === "simulator") {
     return <div className={`${common} opacity-[0.35] [background-image:linear-gradient(var(--rule-soft)_1px,transparent_1px),linear-gradient(90deg,var(--rule-soft)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(90deg,transparent,black_35%,black)]`} aria-hidden="true" />;
   }
-  if (pattern === "zone") {
-    return (
-      <svg className={`${common} text-water opacity-[0.2]`} viewBox="0 0 800 220" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
-        {Array.from({ length: CONTOUR_RINGS }, (_, ring) => (
-          <ellipse key={ring} cx="640" cy="110" rx={24 + ring * 34} ry={16 + ring * 22} transform={`rotate(${-12 + ring * 2} 640 110)`} fill="none" stroke="currentColor" strokeWidth={ring === 0 ? 1.6 : 0.8} />
-        ))}
-        <circle cx="640" cy="110" r="4" fill="currentColor" />
-      </svg>
-    );
-  }
-  if (pattern === "report") {
-    return (
-      <svg className={`${common} opacity-[0.22]`} viewBox="0 0 800 220" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
-        {Array.from({ length: RIPPLE_RINGS }, (_, ring) => (
-          <circle key={ring} cx="680" cy="70" r={14 + ring * 30} fill="none" stroke={ring === 0 ? "var(--watch)" : "var(--water)"} strokeWidth="1" opacity={1 - ring * 0.16} />
-        ))}
-        {Array.from({ length: RIPPLE_RINGS - 1 }, (_, ring) => (
-          <circle key={`b${ring}`} cx="560" cy="180" r={8 + ring * 22} fill="none" stroke="var(--water)" strokeWidth="0.8" opacity={0.7 - ring * 0.15} />
-        ))}
-      </svg>
-    );
-  }
   if (pattern === "forecast") {
     return (
       <svg className={`${common} text-ink-faint opacity-[0.25]`} viewBox="0 0 800 220" preserveAspectRatio="none" aria-hidden="true">
@@ -118,11 +93,11 @@ function Pattern({ pattern }: { pattern: HeroPattern }) {
   return <div className={`${common} opacity-[0.4] [background-image:radial-gradient(var(--rule)_1px,transparent_1.2px)] [background-size:16px_16px] [mask-image:linear-gradient(90deg,transparent,black_45%,black)]`} aria-hidden="true" />;
 }
 
-export function SectionHero({ pattern, meta, title, children, figures = [], level, status, inColumn = false }: SectionHeroProps) {
+export function SectionHero({ pattern, meta, title, children, figures = [], level, status }: SectionHeroProps) {
   return (
     <Motion className="relative overflow-hidden border-b border-rule-soft">
       <Pattern pattern={pattern} />
-      <div className={`relative px-5 pb-6 pt-7 ${inColumn ? "lg:px-0" : ""}`}>
+      <div className="relative px-5 pb-6 pt-7">
         <p className="meta" data-reveal>
           {meta}
         </p>

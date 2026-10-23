@@ -12,6 +12,7 @@ const INTERACTIVE = "a, button, input, textarea, select, summary, label, [role='
 
 interface BottomSheetProps {
   children: ReactNode;
+  requestedOpen?: boolean;
 }
 
 interface Gesture {
@@ -56,8 +57,15 @@ function dragOffset(start: Gesture, y: number): number {
   return Math.min(start.travel, Math.max(0, base + y - start.y));
 }
 
-export function BottomSheet({ children }: BottomSheetProps) {
-  const [open, setOpen] = useState(false);
+export function BottomSheet({ children, requestedOpen }: BottomSheetProps) {
+  const [open, setOpen] = useState(requestedOpen ?? false);
+  const [appliedRequest, setAppliedRequest] = useState(requestedOpen);
+  if (requestedOpen !== appliedRequest) {
+    setAppliedRequest(requestedOpen);
+    if (requestedOpen !== undefined) {
+      setOpen(requestedOpen);
+    }
+  }
   const [dragPx, setDragPx] = useState<number | null>(null);
   const sheetRef = useRef<HTMLElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);

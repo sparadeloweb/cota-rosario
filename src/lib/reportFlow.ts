@@ -1,7 +1,7 @@
 import { isInsideRosario } from "@/lib/places";
 import { DESCRIPTION_MAX_CHARS, REPORT_TYPES, type ReportType } from "@/lib/reportTypes";
 
-export const REPORT_STEPS = ["type", "place", "detail", "review"] as const;
+export const REPORT_STEPS = ["type", "place", "detail"] as const;
 export type ReportStep = (typeof REPORT_STEPS)[number];
 
 export interface ReportDraftFlow {
@@ -26,9 +26,11 @@ export function canAdvance(step: ReportStep, draft: ReportDraftFlow): boolean {
       return draft.lat !== null && draft.lon !== null && isInsideRosario(draft.lat, draft.lon);
     case "detail":
       return draft.description.trim().length <= DESCRIPTION_MAX_CHARS;
-    case "review":
-      return REPORT_STEPS.slice(0, -1).every((previous) => canAdvance(previous, draft));
   }
+}
+
+export function isComplete(draft: ReportDraftFlow): boolean {
+  return REPORT_STEPS.every((step) => canAdvance(step, draft));
 }
 
 export function nextStep(step: ReportStep): ReportStep {
@@ -42,7 +44,7 @@ export function previousStep(step: ReportStep): ReportStep {
 }
 
 export function submissionBody(draft: ReportDraftFlow): { lat: number; lon: number; type: ReportType; description: string; web: "" } | null {
-  if (!canAdvance("review", draft) || draft.type === null || draft.lat === null || draft.lon === null) {
+  if (!isComplete(draft) || draft.type === null || draft.lat === null || draft.lon === null) {
     return null;
   }
   return { lat: draft.lat, lon: draft.lon, type: draft.type, description: draft.description.trim(), web: "" };

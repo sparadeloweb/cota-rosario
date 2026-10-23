@@ -1,11 +1,11 @@
 import { REPORT_STEPS, type ReportStep } from "@/lib/reportFlow";
 
-const LABELS: Record<ReportStep, string> = { type: "Qué", place: "Dónde", detail: "Detalle", review: "Enviar" };
+const LABELS: Record<ReportStep, string> = { type: "Qué", place: "Dónde", detail: "Detalle y envío" };
 
 export function ReportStepper({ step }: { step: ReportStep }) {
   const current = REPORT_STEPS.indexOf(step);
   return (
-    <ol className="mt-5 grid grid-cols-4 gap-1.5">
+    <ol className="mt-5 grid grid-cols-3 gap-1.5">
       {REPORT_STEPS.map((stepId, index) => (
         <li key={stepId} className="flex flex-col gap-1.5" aria-current={index === current ? "step" : undefined}>
           <span className="h-1 overflow-hidden rounded-full bg-rule">

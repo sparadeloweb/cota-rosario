@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Motion } from "@/components/motion/Motion";
-import { SectionHero } from "@/components/panel/SectionHero";
+import { PointMap, type MapPoint } from "@/components/PointMap";
 import { EmptyPlaces } from "@/components/residents/EmptyPlaces";
-import { PlaceCard } from "@/components/residents/PlaceCard";
 import { PlaceForm } from "@/components/residents/PlaceForm";
+import { PlaceRow, findingFor, placeColor } from "@/components/residents/PlaceRow";
+import { usePlaceReadings } from "@/components/residents/usePlaceReadings";
 import { usePlaces } from "@/components/residents/usePlaces";
+import { Workspace } from "@/components/shell/Workspace";
 import type { AddressSuggestion } from "@/lib/addressSuggestions";
 import type { TerrainMeta } from "@/lib/lookup";
 import { createPlaceReader, geocode, type PlaceReader } from "@/lib/placeReader";
@@ -32,6 +33,9 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [candidate, setCandidate] = useState<{ lat: number; lon: number } | null>(null);
+  const readingOf = usePlaceReadings(places, reader);
 
   useEffect(() => {
     reader.terrain().then(setTerrain).catch(() => setTerrain(null));
@@ -48,6 +52,8 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
     setMessage(save(result.places) ? null : "Este navegador no permite guardar lugares.");
     setAddress("");
     setName("");
+    setCandidate(null);
+    setSelectedId(place.id);
   };
 
   const addSuggestion = (suggestion: AddressSuggestion) => {
@@ -98,37 +104,89 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
   };
 
   const full = places.length >= MAX_PLACES;
+  const findings = places.map((place) => ({ place, state: readingOf(place), finding: findingFor(place, readingOf(place), zoneLevel) }));
+  const selected = places.find((place) => place.id === selectedId) ?? null;
 
-  return (
-    <div className="w-full pb-8 lg:grid lg:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] lg:gap-x-8 lg:px-5">
-      <div className="flex flex-col lg:sticky lg:top-0 lg:self-start">
-        <SectionHero inColumn pattern="zone" meta={`Mis lugares · ${ready ? places.length : 0} de ${MAX_PLACES}`} title="Mi zona">
-          Guardá tu casa, el trabajo o la escuela y mirá qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.
-        </SectionHero>
-        <div className="px-4 pt-5 sm:px-5 lg:px-0">
-          {!available ? (
+  const points: MapPoint[] = findings.map(({ place, finding }) => ({ id: place.id, lat: place.lat, lon: place.lon, color: placeColor(finding), label: place.name, kind: "place", selected: place.id === selectedId }));
+
+  const chooseOnMap = (lat: number, lon: number) => {
+    if (full || !available) {
+      return;
+    }
+    setMessage(null);
+    setCandidate({ lat, lon });
+  };
+
+  const rail = (
+    <div className="flex flex-col">
+      <header className="px-5 pb-4 pt-6">
+        <p className="meta">Mis lugares · {ready ? places.length : 0} de {MAX_PLACES}</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Mi zona</h1>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">Tu casa, el trabajo o la escuela: qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.</p>
+      </header>
+
+      <div className="px-5 pb-5">
+        {!available ? (
           <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (
-            <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} onPick={addSuggestion} />
-          )}
-        </div>
-      </div>
-
-      <div className="px-4 pt-4 sm:px-5 lg:px-0 lg:pt-7">
-        {ready ? (
-          places.length ? (
-            <Motion>
-              <ul className="grid gap-3 xl:grid-cols-2 min-[2000px]:grid-cols-3">
-                {places.map((place) => (
-                  <PlaceCard key={place.id} place={place} reader={reader} terrain={terrain} zoneLevel={zoneLevel} onRemove={() => save(removePlace(places, place.id))} />
-                ))}
-              </ul>
-            </Motion>
-          ) : (
-            <EmptyPlaces />
-          )
+          <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} onPick={addSuggestion} />
+        )}
+        {available && !full ? <p className="mt-2.5 text-xs text-ink-faint">También podés tocar el mapa para elegir un punto.</p> : null}
+        {candidate ? (
+          <div className="mt-3 flex items-center gap-3 rounded-xl border border-ink-faint bg-panel-soft px-4 py-3">
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm text-ink">Punto elegido en el mapa</span>
+              <span className="readout block text-[0.6875rem] text-ink-faint">{candidate.lat.toFixed(4)}, {candidate.lon.toFixed(4)} · podés arrastrarlo</span>
+            </span>
+            <button type="button" onClick={() => setCandidate(null)} className="text-xs text-ink-faint hover:text-ink">Descartar</button>
+            <button type="button" onClick={() => addToPlaces({ id: newId(), name: name.trim() || `Lugar ${places.length + 1}`, lat: candidate.lat, lon: candidate.lon })} className="rounded-lg bg-ink px-3 py-2 text-sm font-medium text-ground hover:opacity-90">Guardar</button>
+          </div>
         ) : null}
       </div>
+
+      {ready ? (
+        places.length ? (
+          <ul className="border-t border-rule-soft">
+            {findings.map(({ place, state, finding }) => (
+              <PlaceRow
+                key={place.id}
+                place={place}
+                state={state}
+                finding={finding}
+                terrain={terrain}
+                selected={place.id === selectedId}
+                onSelect={() => setSelectedId((current) => (current === place.id ? null : place.id))}
+                onRemove={() => {
+                  save(removePlace(places, place.id));
+                  setSelectedId(null);
+                }}
+              />
+            ))}
+          </ul>
+        ) : (
+          <div className="px-5 pb-6">
+            <EmptyPlaces />
+          </div>
+        )
+      ) : null}
     </div>
+  );
+
+  return (
+    <Workspace
+      rail={rail}
+      canvas={
+        <PointMap
+          points={points}
+          pin={candidate ? { ...candidate, color: "#eceef1" } : null}
+          focus={selected ? { lat: selected.lat, lon: selected.lon } : null}
+          fitPoints={!selected && !candidate && places.length > 0}
+          onMapClick={chooseOnMap}
+          onPinMove={(lat, lon) => setCandidate({ lat, lon })}
+          onPointSelect={setSelectedId}
+          crosshair={available && !full}
+        />
+      }
+    />
   );
 }

@@ -289,3 +289,41 @@ html[data-motion="on"] [data-motion-scope]:not([data-motion-done]) [data-draw] {
     transition: none;
   }
 }
+
+.map-point,
+.map-pin {
+  background: none;
+  border: 0;
+}
+
+.map-point {
+  display: flex;
+  align-items: center;
+}
+
+.map-point-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--ground);
+  outline: 1.5px solid var(--ink);
+  transition: box-shadow 200ms ease;
+}
+
+.map-point-label {
+  position: absolute;
+  left: 24px;
+  white-space: nowrap;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.map-pin svg {
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.55));
+}
