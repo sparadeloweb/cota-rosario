@@ -1,5 +1,6 @@
 export const MAP_TILE_ORIGIN = "https://tile.openstreetmap.org";
 export const GEOCODER_ORIGIN = "https://nominatim.openstreetmap.org";
+export const SUGGESTION_ORIGIN = "https://photon.komoot.io";
 const HSTS_MAX_AGE_SECONDS = 31_536_000;
 
 export interface HeaderEntry {
@@ -14,7 +15,7 @@ export function contentSecurityPolicy(isDevelopment: boolean): string {
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${MAP_TILE_ORIGIN}`,
     "font-src 'self'",
-    `connect-src 'self' ${GEOCODER_ORIGIN}${isDevelopment ? " ws: wss:" : ""}`,
+    `connect-src 'self' ${GEOCODER_ORIGIN} ${SUGGESTION_ORIGIN}${isDevelopment ? " ws: wss:" : ""}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "frame-ancestors 'none'",

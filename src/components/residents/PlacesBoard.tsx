@@ -7,6 +7,7 @@ import { EmptyPlaces } from "@/components/residents/EmptyPlaces";
 import { PlaceCard } from "@/components/residents/PlaceCard";
 import { PlaceForm } from "@/components/residents/PlaceForm";
 import { usePlaces } from "@/components/residents/usePlaces";
+import type { AddressSuggestion } from "@/lib/addressSuggestions";
 import type { TerrainMeta } from "@/lib/lookup";
 import { createPlaceReader, geocode, type PlaceReader } from "@/lib/placeReader";
 import { ADD_ERROR, MAX_PLACES, addPlace, removePlace, type Place } from "@/lib/places";
@@ -47,6 +48,11 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
     setMessage(save(result.places) ? null : "Este navegador no permite guardar lugares.");
     setAddress("");
     setName("");
+  };
+
+  const addSuggestion = (suggestion: AddressSuggestion) => {
+    setMessage(null);
+    addToPlaces({ id: newId(), name: name.trim() || suggestion.label, lat: suggestion.lat, lon: suggestion.lon });
   };
 
   const addAddress = async (event: FormEvent) => {
@@ -103,7 +109,7 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
           {!available ? (
           <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (
-            <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} />
+            <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} onPick={addSuggestion} />
           )}
         </div>
       </div>

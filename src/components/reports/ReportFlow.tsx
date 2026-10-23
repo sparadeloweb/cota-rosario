@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { AddressSearch } from "@/components/AddressSearch";
 import { SectionHero } from "@/components/panel/SectionHero";
 import { ReportGlyph } from "@/components/reports/ReportGlyph";
 import { ReportGuide } from "@/components/reports/ReportGuide";
@@ -142,8 +143,21 @@ export function ReportFlow() {
               <span className="h-px flex-1 bg-rule-soft" />o escribí la dirección<span className="h-px flex-1 bg-rule-soft" />
             </div>
             <form onSubmit={searchAddress} className="flex gap-2">
-              <label htmlFor="direccion-reporte" className="sr-only">Dirección</label>
-              <input id="direccion-reporte" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Ej.: Pellegrini y Oroño" className="min-w-0 flex-1 rounded-lg border border-rule bg-ground px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none" />
+              <div className="min-w-0 flex-1">
+                <AddressSearch
+                  id="report-address"
+                  value={address}
+                  onValueChange={setAddress}
+                  onPick={(suggestion) => {
+                    setPlaceNotice(null);
+                    setAddress(suggestion.label);
+                    update({ lat: suggestion.lat, lon: suggestion.lon, placeLabel: `${suggestion.label}, ${suggestion.detail}` });
+                  }}
+                  label="Dirección"
+                  placeholder="Ej.: Pellegrini y Oroño"
+                  inputClassName="w-full rounded-lg border border-rule bg-ground px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none"
+                />
+              </div>
               <button type="submit" disabled={searching || !address.trim()} className="rounded-lg border border-rule px-4 py-2.5 text-sm text-ink-soft hover:text-ink disabled:opacity-40">{searching ? "…" : "Buscar"}</button>
             </form>
             {hasPlace ? (

@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { LookupResult } from "@/components/LookupResult";
+import { AddressSearch } from "@/components/AddressSearch";
 import { MapLegend, type LegendOverlay } from "@/components/MapLegend";
 import { MobileReportPanel, ReportFab } from "@/components/reports/MobileReports";
 import { ReportPanel } from "@/components/reports/ReportPanel";
@@ -11,7 +12,8 @@ import { useReports } from "@/components/reports/useReports";
 import { useSimulation } from "@/components/SimulationContext";
 import { RISK_FILL, riskColor } from "@/components/status";
 import type { ClimateMeta, Finding, TerrainMeta } from "@/lib/lookup";
-import { createPlaceReader, geocode, type PlaceReader } from "@/lib/placeReader";
+import { createPlaceReader, geocode, type GeocodedPlace, type PlaceReader } from "@/lib/placeReader";
+import type { AddressSuggestion } from "@/lib/addressSuggestions";
 import { RISK_LABEL, riskLabel, type RiskLevel } from "@/lib/risk";
 import { escapeHtml } from "@/lib/html";
 import { loadLeaflet } from "@/lib/leaflet";
@@ -210,44 +212,54 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
     });
   }, [mapReady, terrain, climateRisk, showTerrain, showClimate]);
 
-  const search = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const term = searchText.trim();
-    if (!term) {
-      return;
+  const showPlace = async (place: GeocodedPlace) => {
+    const { lat, lon } = place;
+    const reading = await readerRef.current.read(lat, lon);
+    const map = mapRef.current;
+    if (map) {
+      const L = await loadLeaflet();
+      markerRef.current?.remove();
+      markerRef.current = L.circleMarker([lat, lon], {
+        radius: 7,
+        color: "#ececee",
+        weight: 2,
+        fillColor: riskColor(reading.zone ? zoneLevel(reading.zone) : null),
+        fillOpacity: 1,
+      }).addTo(map);
+      map.setView([lat, lon], FOUND_ZOOM);
     }
+    setFinding({ ...reading, label: place.label, level: reading.zone ? zoneLevel(reading.zone) : undefined });
+  };
+
+  const locate = async (findPlace: () => Promise<GeocodedPlace | null>) => {
     setSearching(true);
     setError(null);
     setFinding(null);
     try {
-      const found = await geocode(term);
+      const found = await findPlace();
       if (!found) {
         setError("No encontramos esa dirección dentro de Rosario.");
         return;
       }
-      const { lat, lon } = found;
-      const reading = await readerRef.current.read(lat, lon);
-
-      const map = mapRef.current;
-      if (map) {
-        const L = await loadLeaflet();
-        markerRef.current?.remove();
-        markerRef.current = L.circleMarker([lat, lon], {
-          radius: 7,
-          color: "#ececee",
-          weight: 2,
-          fillColor: riskColor(reading.zone ? zoneLevel(reading.zone) : null),
-          fillOpacity: 1,
-        }).addTo(map);
-        map.setView([lat, lon], FOUND_ZOOM);
-      }
-
-      setFinding({ ...reading, label: found.label, level: reading.zone ? zoneLevel(reading.zone) : undefined });
+      await showPlace(found);
     } catch {
       setError("El buscador de direcciones no respondió. Probá de nuevo en un momento.");
     } finally {
       setSearching(false);
     }
+  };
+
+  const search = (event: React.FormEvent) => {
+    event.preventDefault();
+    const term = searchText.trim();
+    if (term) {
+      void locate(() => geocode(term));
+    }
+  };
+
+  const pickSuggestion = (suggestion: AddressSuggestion) => {
+    setSearchText(suggestion.label);
+    void locate(async () => ({ lat: suggestion.lat, lon: suggestion.lon, label: `${suggestion.label}, ${suggestion.detail}` }));
   };
 
   const overlays: LegendOverlay[] = [
@@ -286,16 +298,19 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3 sm:p-4">
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">
           {searcher ? (
-            <div className="pointer-events-auto flex w-full max-w-lg flex-col overflow-hidden rounded-md border border-rule bg-panel shadow-xl">
+            <div className="pointer-events-auto flex w-full max-w-lg flex-col rounded-md border border-rule bg-panel shadow-xl">
               <form onSubmit={search} className="flex items-center">
-                <input
-                  id="direccion"
-                  value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                  placeholder="Buscá tu dirección"
-                  aria-label="Dirección a consultar"
-                  className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-ink-faint"
-                />
+                <div className="min-w-0 flex-1">
+                  <AddressSearch
+                    id="map-address"
+                    value={searchText}
+                    onValueChange={setSearchText}
+                    onPick={pickSuggestion}
+                    label="Dirección a consultar"
+                    placeholder="Buscá tu dirección"
+                    inputClassName="w-full bg-transparent px-4 py-3 text-sm outline-none placeholder:text-ink-faint"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={searching}
