@@ -19,13 +19,13 @@ export const HERRAMIENTAS: Herramienta[] = [
     "Activar capas por separado: sus colores describen datos distintos. Estar fuera de un polígono no descarta anegamiento.",
     "Compartir lo que observás en tu cuadra. Los reportes se muestran durante 24 horas y otros vecinos pueden confirmarlos.",
   ]},
-  { vista: "Operaciones", href: "/operaciones", para: "Seguí los indicadores y compará escenarios sobre el mapa.", ofrece: [
+  { vista: "Operaciones", href: "/operaciones", para: "Un panel por secciones: resumen, río, lluvia, pronóstico, reportes y simulador.", ofrece: [
     "Recomendaciones acompañadas por el dato que las motiva y un parte de situación listo para compartir.",
     "Simulador de altura y lluvia: los controles cambian el escenario del mapa y Restablecer vuelve a la consulta.",
     "Red devuelta por el INA, con fechas, búsqueda y filtros. La cantidad de estaciones puede variar.",
     "Estaciones de la cadena del Paraná y su margen a alerta en metros; los indicadores de red excluyen lecturas de más de 48 horas.",
   ]},
-  { vista: "Predicciones", href: "/operaciones/pronostico", para: "Consultá la lluvia prevista y las tendencias de la próxima semana.", ofrece: [
+  { vista: "Pronóstico (dentro de Operaciones)", href: "/operaciones/pronostico", para: "Consultá la lluvia prevista y las tendencias de la próxima semana.", ofrece: [
     "Escenarios de anegamientos por día y distrito, construidos a partir de un modelo mensual y la participación histórica de cada zona.",
     "Lluvia pronosticada y referencia de extremos históricos. Los períodos de retorno dependen del ajuste y del archivo usado.",
     "Extrapolación del río si continúa el ritmo, y ajuste altura–caudal con GloFAS. Las bandas no son intervalos predictivos calibrados.",
