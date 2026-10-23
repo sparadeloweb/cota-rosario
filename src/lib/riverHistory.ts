@@ -1,4 +1,4 @@
-import snapshot from "../../public/data/rio-historia.json";
+import snapshot from "../../public/data/river-history.json";
 import { fetchRiver, type RiverReading } from "@/lib/river";
 
 const LONG_HISTORY_DAYS = 210;
@@ -6,32 +6,32 @@ const STALE_AFTER_DAYS = 3;
 const MILLIS_PER_DAY = 86_400_000;
 
 export interface RiverHistory {
-  serie: RiverReading[];
-  desde: string;
-  hasta: string;
-  origen: "instantanea" | "renovada";
-  instantaneaCalculada: string;
+  series: RiverReading[];
+  from: string;
+  until: string;
+  origin: "instantanea" | "renovada";
+  computedSnapshot: string;
 }
 
 interface LongHistoryCache {
-  serie: RiverReading[];
-  origen: RiverHistory["origen"];
+  series: RiverReading[];
+  origin: RiverHistory["origin"];
   refreshing: boolean;
   attemptedAt: number;
 }
 
-const cache: LongHistoryCache = { serie: snapshot.serie as RiverReading[], origen: "instantanea", refreshing: false, attemptedAt: 0 };
+const cache: LongHistoryCache = { series: snapshot.series as RiverReading[], origin: "instantanea", refreshing: false, attemptedAt: 0 };
 
-function dayKey(fecha: string): string {
-  return fecha.slice(0, 10);
+function dayKey(date: string): string {
+  return date.slice(0, 10);
 }
 
 function mergeSeries(base: RiverReading[], recent: RiverReading[]): RiverReading[] {
-  const byDay = new Map(base.map((reading) => [dayKey(reading.fecha), reading]));
+  const byDay = new Map(base.map((reading) => [dayKey(reading.date), reading]));
   for (const reading of recent) {
-    byDay.set(dayKey(reading.fecha), reading);
+    byDay.set(dayKey(reading.date), reading);
   }
-  return [...byDay.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+  return [...byDay.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function daysBetween(earlier: string, later: string): number {
@@ -45,12 +45,12 @@ function refreshLongHistoryInBackground(): void {
   cache.refreshing = true;
   cache.attemptedAt = Date.now();
   fetchRiver(LONG_HISTORY_DAYS)
-    .then((snapshotVivo) => {
-      cache.serie = mergeSeries(cache.serie, snapshotVivo.serie);
-      cache.origen = "renovada";
+    .then((liveSnapshot) => {
+      cache.series = mergeSeries(cache.series, liveSnapshot.series);
+      cache.origin = "renovada";
     })
     .catch((error: unknown) => {
-      console.warn("No se pudo renovar la serie larga del INA:", error instanceof Error ? error.message : error);
+      console.warn("Could not refresh the long INA series:", error instanceof Error ? error.message : error);
     })
     .finally(() => {
       cache.refreshing = false;
@@ -58,19 +58,19 @@ function refreshLongHistoryInBackground(): void {
 }
 
 export function mergeRiverHistory(recent: RiverReading[]): RiverHistory {
-  const merged = mergeSeries(cache.serie, recent);
-  const latest = merged.at(-1)?.fecha;
-  const serie = latest ? merged.filter((reading) => daysBetween(reading.fecha, latest) <= LONG_HISTORY_DAYS) : [];
-  const ultimoLargo = cache.serie[cache.serie.length - 1]?.fecha;
-  const ultimoReciente = recent[recent.length - 1]?.fecha;
-  if (ultimoLargo && ultimoReciente && daysBetween(ultimoLargo, ultimoReciente) > STALE_AFTER_DAYS) {
+  const merged = mergeSeries(cache.series, recent);
+  const latest = merged.at(-1)?.date;
+  const series = latest ? merged.filter((reading) => daysBetween(reading.date, latest) <= LONG_HISTORY_DAYS) : [];
+  const lastLong = cache.series[cache.series.length - 1]?.date;
+  const lastRecent = recent[recent.length - 1]?.date;
+  if (lastLong && lastRecent && daysBetween(lastLong, lastRecent) > STALE_AFTER_DAYS) {
     refreshLongHistoryInBackground();
   }
   return {
-    serie,
-    desde: serie[0]?.fecha ?? "",
-    hasta: serie[serie.length - 1]?.fecha ?? "",
-    origen: cache.origen,
-    instantaneaCalculada: snapshot.calculado,
+    series,
+    from: series[0]?.date ?? "",
+    until: series[series.length - 1]?.date ?? "",
+    origin: cache.origin,
+    computedSnapshot: snapshot.computedAt,
   };
 }

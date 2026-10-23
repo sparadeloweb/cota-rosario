@@ -1,84 +1,84 @@
-import { formatoDistancia, type CategoriaClima, type Hallazgo, type TerrainMeta } from "@/lib/lookup";
+import { CLIMATE_CATEGORY_LABEL, formatDistance, type ClimateCategory, type Finding, type TerrainMeta } from "@/lib/lookup";
 import { riskLabel } from "@/lib/risk";
 
-const CLIMA_TEXT: Record<CategoriaClima, string> = {
-  "muy bajo": "text-ink",
-  bajo: "text-ink",
-  medio: "text-atencion",
-  alto: "text-alerta",
+const CLIMATE_TEXT: Record<ClimateCategory, string> = {
+  "very low": "text-ink",
+  "low": "text-ink",
+  "medium": "text-watch",
+  "high": "text-alert",
 };
 
-function titulo(texto: string): string {
-  return texto
+function title(text: string): string {
+  return text
     .toLowerCase()
     .split(" ")
-    .map((palabra) => (palabra ? palabra[0].toUpperCase() + palabra.slice(1) : palabra))
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
     .join(" ");
 }
 
 interface LookupResultProps {
-  hallazgo: Hallazgo;
+  finding: Finding;
   terrain: TerrainMeta | null;
 }
 
-export function LookupResult({ hallazgo, terrain }: LookupResultProps) {
-  const ubicacion = [hallazgo.etiqueta, hallazgo.barrio ? `barrio ${titulo(hallazgo.barrio)}` : null, hallazgo.distrito ? `distrito ${titulo(hallazgo.distrito.distrito)}` : null]
+export function LookupResult({ finding, terrain }: LookupResultProps) {
+  const locationLabel = [finding.label, finding.neighbourhood ? `barrio ${title(finding.neighbourhood)}` : null, finding.district ? `distrito ${title(finding.district.district)}` : null]
     .filter(Boolean)
     .join(" · ");
 
   return (
     <div className="flex flex-col gap-2.5 border-t border-rule px-4 py-3 text-sm">
-      <p className="text-xs text-ink-faint">{ubicacion}</p>
+      <p className="text-xs text-ink-faint">{locationLabel}</p>
 
-      {hallazgo.dentro ? (
+      {finding.inside ? (
         <p className="text-ink">
-          Dentro del área inundable oficial zona {hallazgo.zona}. Hoy:{" "}
-          <span className={hallazgo.nivel === "normal" ? "text-normal" : "text-alerta"}>{riskLabel(hallazgo.nivel).toLowerCase()}</span>.
+          Dentro del área inundable oficial zona {finding.zone}. Hoy:{" "}
+          <span className={finding.level === "normal" ? "text-normal" : "text-alert"}>{riskLabel(finding.level).toLowerCase()}</span>.
         </p>
       ) : (
         <p className="leading-relaxed text-ink">
           Fuera de los polígonos oficiales del Ludueña y el Saladillo
-          {hallazgo.cercano ? (
+          {finding.nearest ? (
             <>
-              ; el más cercano es la zona {hallazgo.cercano.zona}, a <span className="readout">{formatoDistancia(hallazgo.cercano.metros)}</span>
+              ; el más cercano es la zona {finding.nearest.zone}, a <span className="readout">{formatDistance(finding.nearest.meters)}</span>
             </>
           ) : null}
           .
         </p>
       )}
 
-      {hallazgo.clima ? (
+      {finding.climateRisk ? (
         <p className="leading-relaxed text-ink">
-          Riesgo por lluvias torrenciales <span className={`${CLIMA_TEXT[hallazgo.clima]} readout`}>{hallazgo.clima}</span>
+          Riesgo por lluvias torrenciales <span className={`${CLIMATE_TEXT[finding.climateRisk]} readout`}>{CLIMATE_CATEGORY_LABEL[finding.climateRisk]}</span>
           <span className="text-ink-soft"> según el mapa municipal de riesgo climático de 2024.</span>
         </p>
       ) : null}
 
-      {hallazgo.distrito ? (
+      {finding.district ? (
         <p className="leading-relaxed text-ink-soft">
-          En el registro incorporado (2021–enero de 2024), este distrito concentra el <span className="readout text-ink">{hallazgo.distrito.participacion} %</span> de las intervenciones por anegamientos registradas. Esta proporción no indica el riesgo de esta dirección.
-          {hallazgo.distrito.mesPico ? (
+          En el registro incorporado (2021–enero de 2024), este distrito concentra el <span className="readout text-ink">{finding.district.share} %</span> de las intervenciones por anegamientos registradas. Esta proporción no indica el riesgo de esta dirección.
+          {finding.district.peakMonth ? (
             <>
               {" "}
-              Su mes más cargado registrado tuvo {hallazgo.distrito.mesPico.casos} casos con{" "}
-              <span className="readout text-ink">{Math.round(hallazgo.distrito.mesPico.lluviaMm)} mm</span> de lluvia.
+              Su mes más cargado registrado tuvo {finding.district.peakMonth.cases} casos con{" "}
+              <span className="readout text-ink">{Math.round(finding.district.peakMonth.rainMm)} mm</span> de lluvia.
             </>
           ) : null}
         </p>
       ) : null}
 
-      {hallazgo.terreno ? (
+      {finding.terrain ? (
         <p className="leading-relaxed text-ink-soft">
-          {hallazgo.terreno.estado === "bajo" ? (
+          {finding.terrain.status === "low" ? (
             <>
               Según el modelo de terreno está{" "}
               <span className="readout text-ink">
-                {terrain && hallazgo.terreno.metros >= terrain.escalaMaximaMetros ? `más de ${terrain.escalaMaximaMetros} m` : `${hallazgo.terreno.metros.toFixed(1)} m`}
+                {terrain && finding.terrain.meters >= terrain.maxScaleMeters ? `más de ${terrain.maxScaleMeters} m` : `${finding.terrain.meters.toFixed(1)} m`}
               </span>{" "}
-              por debajo de la mediana de su entorno de {terrain?.ventanaMetros} m: ahí el agua tiende a juntarse.
+              por debajo de la mediana de su entorno de {terrain?.windowMeters} m: ahí el agua tiende a juntarse.
             </>
-          ) : hallazgo.terreno.estado === "plano" ? (
-            <>Según el modelo de terreno no es un punto bajo respecto de la mediana de su entorno de {terrain?.ventanaMetros} m.</>
+          ) : finding.terrain.status === "flat" ? (
+            <>Según el modelo de terreno no es un punto bajo respecto de la mediana de su entorno de {terrain?.windowMeters} m.</>
           ) : (
             <>En manzanas densas el relieve no aporta lectura; acá pesan el mapa oficial y el historial.</>
           )}

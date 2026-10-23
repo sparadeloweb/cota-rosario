@@ -7,37 +7,37 @@ interface InstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-type Estado = "desconocido" | "instalada" | "disponible" | "ios" | "manual";
+type Status = "unknown" | "installed" | "available" | "ios" | "manual";
 
 const IOS_PATTERN = /iphone|ipad|ipod/i;
 
 const STANDALONE_QUERY = "(display-mode: standalone)";
 
-function estadoDelDispositivo(): Estado {
+function deviceState(): Status {
   if (window.matchMedia(STANDALONE_QUERY).matches) {
-    return "instalada";
+    return "installed";
   }
   return IOS_PATTERN.test(navigator.userAgent) ? "ios" : "manual";
 }
 
-function suscribirModo(onChange: () => void): () => void {
+function subscribeDisplayMode(onChange: () => void): () => void {
   const query = window.matchMedia(STANDALONE_QUERY);
   query.addEventListener("change", onChange);
   return () => query.removeEventListener("change", onChange);
 }
 
 export function InstallButton() {
-  const dispositivo = useSyncExternalStore(suscribirModo, estadoDelDispositivo, (): Estado => "desconocido");
-  const [evento, setEvento] = useState<InstallPromptEvent | null>(null);
-  const [resultado, setResultado] = useState<Estado | null>(null);
-  const estado: Estado = resultado ?? (evento ? "disponible" : dispositivo);
+  const device = useSyncExternalStore(subscribeDisplayMode, deviceState, (): Status => "unknown");
+  const [promptEvent, setPromptEvent] = useState<InstallPromptEvent | null>(null);
+  const [result, setResult] = useState<Status | null>(null);
+  const status: Status = result ?? (promptEvent ? "available" : device);
 
   useEffect(() => {
     const onPrompt = (event: Event) => {
       event.preventDefault();
-      setEvento(event as InstallPromptEvent);
+      setPromptEvent(event as InstallPromptEvent);
     };
-    const onInstalled = () => setResultado("instalada");
+    const onInstalled = () => setResult("installed");
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
     return () => {
@@ -46,30 +46,30 @@ export function InstallButton() {
     };
   }, []);
 
-  const instalar = async () => {
-    if (!evento) {
+  const install = async () => {
+    if (!promptEvent) {
       return;
     }
-    await evento.prompt();
-    const { outcome } = await evento.userChoice;
-    setEvento(null);
-    setResultado(outcome === "accepted" ? "instalada" : "manual");
+    await promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
+    setPromptEvent(null);
+    setResult(outcome === "accepted" ? "installed" : "manual");
   };
 
-  if (estado === "desconocido") {
+  if (status === "unknown") {
     return null;
   }
-  if (estado === "instalada") {
+  if (status === "installed") {
     return <p className="text-sm text-ink-soft">Cota ya está instalada en este dispositivo.</p>;
   }
-  if (estado === "disponible") {
+  if (status === "available") {
     return (
-      <button type="button" onClick={instalar} className="rounded-md border border-ink-soft px-4 py-2 text-sm text-ink hover:border-ink">
+      <button type="button" onClick={install} className="rounded-md border border-ink-soft px-4 py-2 text-sm text-ink hover:border-ink">
         Instalar Cota
       </button>
     );
   }
-  if (estado === "ios") {
+  if (status === "ios") {
     return <p className="text-sm leading-relaxed text-ink-soft">En iPhone: tocá Compartir en Safari y elegí «Agregar a inicio».</p>;
   }
   return <p className="text-sm leading-relaxed text-ink-soft">Desde el menú del navegador elegí «Instalar Cota» o «Agregar a la pantalla de inicio».</p>;

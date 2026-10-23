@@ -4,6 +4,6 @@ import { DEMO_SCOPE } from "@/lib/demo";
 export const dynamic = "force-dynamic";
 export async function GET() {
   const kpis = await loadKpis();
-  const sinDatos = !kpis.rio && !kpis.lluvia && !kpis.reportes;
-  return Response.json({ ...kpis, incompleto: kpis.fallas.length > 0, alcance: DEMO_SCOPE }, { status: sinDatos ? 503 : 200, headers: { "cache-control": "no-store" } });
+  const noData = !kpis.river && !kpis.rain && !kpis.reports;
+  return Response.json({ ...kpis, incomplete: kpis.failures.length > 0, scope: DEMO_SCOPE }, { status: noData ? 503 : 200, headers: { "cache-control": "no-store" } });
 }

@@ -1,21 +1,21 @@
-import type { DailyForecast } from "@/lib/predicciones";
+import type { DailyForecast } from "@/lib/predictions";
 
-const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+const WEEKDAY_LABELS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const PERCENT = 100;
 
 interface DailyOutlookProps {
-  dias: DailyForecast[];
-  alerta: number | null;
+  days: DailyForecast[];
+  alert: number | null;
 }
 
-function etiquetaDia(fecha: string): string {
-  const [anio, mes, dia] = fecha.split("-").map(Number);
-  return `${DIAS[new Date(Date.UTC(anio, mes - 1, dia)).getUTCDay()]} ${dia}/${mes}`;
+function dayLabel(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return `${WEEKDAY_LABELS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]} ${day}/${month}`;
 }
 
-export function DailyOutlook({ dias, alerta }: DailyOutlookProps) {
-  const maxLluvia = Math.max(...dias.map((dia) => dia.lluviaMm), 1);
-  const maxCasos = Math.max(...dias.map((dia) => dia.anegamientosEsperados ?? 0), 0.1);
+export function DailyOutlook({ days, alert }: DailyOutlookProps) {
+  const maxRain = Math.max(...days.map((day) => day.rainMm), 1);
+  const maxCases = Math.max(...days.map((day) => day.expectedFloods ?? 0), 0.1);
   return (
     <div className="overflow-x-auto"><table className="w-full text-xs">
       <thead>
@@ -27,33 +27,33 @@ export function DailyOutlook({ dias, alerta }: DailyOutlookProps) {
         </tr>
       </thead>
       <tbody>
-        {dias.map((dia) => (
-          <tr key={dia.fecha} className="border-t border-rule-soft">
-            <td className="py-2 pr-3 text-ink">{etiquetaDia(dia.fecha)}</td>
+        {days.map((day) => (
+          <tr key={day.date} className="border-t border-rule-soft">
+            <td className="py-2 pr-3 text-ink">{dayLabel(day.date)}</td>
             <td className="py-2 pr-3">
               <div className="flex items-center gap-2">
                 <span className="h-1 w-24 overflow-hidden rounded-full bg-rule-soft">
-                  <span className="block h-full rounded-full bg-water/70" style={{ width: `${(dia.lluviaMm / maxLluvia) * PERCENT}%` }} />
+                  <span className="block h-full rounded-full bg-water/70" style={{ width: `${(day.rainMm / maxRain) * PERCENT}%` }} />
                 </span>
-                <span className="readout text-ink">{dia.lluviaMm.toFixed(0)} mm</span>
-                <span className="readout text-ink-faint">{dia.probabilidad === null ? "sin probabilidad" : `${dia.probabilidad} %`}</span>
+                <span className="readout text-ink">{day.rainMm.toFixed(0)} mm</span>
+                <span className="readout text-ink-faint">{day.probability === null ? "sin probabilidad" : `${day.probability} %`}</span>
               </div>
             </td>
             <td className="py-2 pr-3">
               <div className="flex items-center gap-2">
                 <span className="h-1 w-24 overflow-hidden rounded-full bg-rule-soft">
-                  <span className="block h-full rounded-full bg-alerta/80" style={{ width: `${((dia.anegamientosEsperados ?? 0) / maxCasos) * PERCENT}%` }} />
+                  <span className="block h-full rounded-full bg-alert/80" style={{ width: `${((day.expectedFloods ?? 0) / maxCases) * PERCENT}%` }} />
                 </span>
-                <span className="readout text-ink">{dia.anegamientosEsperados === null ? "—" : dia.anegamientosEsperados.toFixed(1)}</span>
+                <span className="readout text-ink">{day.expectedFloods === null ? "—" : day.expectedFloods.toFixed(1)}</span>
               </div>
             </td>
             <td className="py-2">
-              {dia.rioMetros === null ? (
+              {day.riverMeters === null ? (
                 <span className="text-ink-faint">—</span>
               ) : (
                 <span className="readout text-ink">
-                  {dia.rioMetros.toFixed(2)} m
-                  {alerta !== null ? <span className="text-ink-faint"> · {(alerta - dia.rioMetros).toFixed(2)} a alerta</span> : null}
+                  {day.riverMeters.toFixed(2)} m
+                  {alert !== null ? <span className="text-ink-faint"> · {(alert - day.riverMeters).toFixed(2)} a alerta</span> : null}
                 </span>
               )}
             </td>

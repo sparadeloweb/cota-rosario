@@ -11,39 +11,39 @@ const INA_TIMEOUT_MS = 30_000;
 const EXCEPTION_MESSAGE_CHARS = 120;
 
 export interface RiverReading {
-  fecha: string;
-  metros: number;
+  date: string;
+  meters: number;
 }
 
 export interface RiverStation {
-  nombre: string;
-  rio: string;
-  metros: number;
-  fecha: string;
-  tendencia: string;
-  estado: string;
-  alerta: number | null;
-  evacuacion: number | null;
-  aguasBajas: number | null;
+  name: string;
+  river: string;
+  meters: number;
+  date: string;
+  trend: string;
+  status: string;
+  alert: number | null;
+  evacuation: number | null;
+  lowWater: number | null;
   lat: number;
   lon: number;
 }
 
 export interface RiverSnapshot {
-  estacion: RiverStation;
-  serie: RiverReading[];
-  margenHastaAlerta: number | null;
-  red: RiverStation[];
-  consultadoEn: string;
+  station: RiverStation;
+  series: RiverReading[];
+  marginToAlert: number | null;
+  network: RiverStation[];
+  fetchedAt: string;
 }
 
 interface WfsProperties {
-  nombre?: string;
-  rio?: string;
-  valor?: string | number;
-  fecha?: string;
-  tendencia?: string;
-  estado?: string;
+  "nombre"?: string;
+  "rio"?: string;
+  "valor"?: string | number;
+  "fecha"?: string;
+  "tendencia"?: string;
+  "estado"?: string;
   nivel_de_alerta?: string | number | null;
   nivel_de_evacuacion?: string | number | null;
   nivel_de_aguas_bajas?: string | number | null;
@@ -65,21 +65,21 @@ function toNumber(value: string | number | null | undefined): number | null {
 
 function toStation(feature: WfsFeature): RiverStation | null {
   const properties = feature.properties;
-  const metros = toNumber(properties.valor);
-  if (metros === null || !properties.nombre) {
+  const meters = toNumber(properties["valor"]);
+  if (meters === null || !properties["nombre"]) {
     return null;
   }
   const [lon, lat] = feature.geometry?.coordinates ?? [0, 0];
   return {
-    nombre: properties.nombre,
-    rio: properties.rio ?? "",
-    metros,
-    fecha: properties.fecha ?? "",
-    tendencia: properties.tendencia ?? "",
-    estado: properties.estado ?? "",
-    alerta: toNumber(properties.nivel_de_alerta),
-    evacuacion: toNumber(properties.nivel_de_evacuacion),
-    aguasBajas: toNumber(properties.nivel_de_aguas_bajas),
+    name: properties["nombre"],
+    river: properties["rio"] ?? "",
+    meters,
+    date: properties["fecha"] ?? "",
+    trend: properties["tendencia"] ?? "",
+    status: properties["estado"] ?? "",
+    alert: toNumber(properties.nivel_de_alerta),
+    evacuation: toNumber(properties.nivel_de_evacuacion),
+    lowWater: toNumber(properties.nivel_de_aguas_bajas),
     lat,
     lon,
   };
@@ -91,9 +91,9 @@ function toSeries(raw: WfsProperties["timeseries"]): RiverReading[] {
   }
   const entries = typeof raw === "string" ? (JSON.parse(raw) as [string, string][]) : raw;
   return entries
-    .map(([fecha, valor]) => ({ fecha, metros: Number(valor) }))
-    .filter((reading) => Number.isFinite(reading.metros))
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+    .map(([date, value]) => ({ date, meters: Number(value) }))
+    .filter((reading) => Number.isFinite(reading.meters))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function isoDay(offsetDays: number): string {
@@ -120,14 +120,14 @@ function serviceExceptionMessage(body: string): string {
   return detail.slice(0, EXCEPTION_MESSAGE_CHARS) || "excepción del servicio sin detalle";
 }
 
-async function getCollection(url: string, etiqueta: string, timeoutMs = INA_TIMEOUT_MS): Promise<{ features: WfsFeature[] }> {
+async function getCollection(url: string, label: string, timeoutMs = INA_TIMEOUT_MS): Promise<{ features: WfsFeature[] }> {
   const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(timeoutMs) });
   if (!response.ok) {
-    throw new Error(`El servicio del INA respondió ${response.status} al pedir ${etiqueta}`);
+    throw new Error(`El servicio del INA respondió ${response.status} al pedir ${label}`);
   }
   const body = await response.text();
   if (body.trimStart().startsWith("<")) {
-    throw new Error(`El INA devolvió una excepción al pedir ${etiqueta}: ${serviceExceptionMessage(body)}`);
+    throw new Error(`El INA devolvió una excepción al pedir ${label}: ${serviceExceptionMessage(body)}`);
   }
   return JSON.parse(body) as { features: WfsFeature[] };
 }
@@ -137,7 +137,7 @@ export async function fetchRiver(historyDays: number = HISTORY_DAYS): Promise<Ri
 }
 
 async function fetchRiverUncached(historyDays: number): Promise<RiverSnapshot> {
-  const [detalle, redCompleta] = await Promise.all([
+  const [detail, fullNetwork] = await Promise.all([
     getCollection(
       wfsUrl({
         CQL_FILTER: `nombre='${INA_STATION}'`,
@@ -149,20 +149,20 @@ async function fetchRiverUncached(historyDays: number): Promise<RiverSnapshot> {
     getCollection(wfsUrl({ propertyName: NETWORK_FIELDS, maxFeatures: String(MAX_FEATURES) }), "la red completa"),
   ]);
 
-  const target = detalle.features[0];
-  const estacion = target ? toStation(target) : null;
-  if (!estacion) {
+  const target = detail.features[0];
+  const station = target ? toStation(target) : null;
+  if (!station) {
     throw new Error(`El INA no devolvió la estación ${INA_STATION}`);
   }
-  requireRecent(estacion.fecha, 48 * 3_600_000, "Estación Rosario del INA");
+  requireRecent(station.date, 48 * 3_600_000, "Estación Rosario del INA");
 
-  const red = redCompleta.features.map(toStation).filter((station): station is RiverStation => station !== null);
+  const network = fullNetwork.features.map(toStation).filter((station): station is RiverStation => station !== null);
 
   return {
-    estacion,
-    serie: toSeries(target?.properties.timeseries),
-    margenHastaAlerta: estacion.alerta === null ? null : Number((estacion.alerta - estacion.metros).toFixed(2)),
-    red: red.sort((a, b) => a.nombre.localeCompare(b.nombre)),
-    consultadoEn: new Date().toISOString(),
+    station,
+    series: toSeries(target?.properties.timeseries),
+    marginToAlert: station.alert === null ? null : Number((station.alert - station.meters).toFixed(2)),
+    network: network.sort((a, b) => a.name.localeCompare(b.name)),
+    fetchedAt: new Date().toISOString(),
   };
 }

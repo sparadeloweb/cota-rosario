@@ -1,33 +1,33 @@
 import type { RiverReading } from "@/lib/river";
 
 export interface ProjectedLevel {
-  fecha: string;
-  metros: number;
-  inferior: number;
-  superior: number;
+  date: string;
+  meters: number;
+  lower: number;
+  upper: number;
 }
 
 export interface TrendProjection {
-  ventanaDias: number;
-  metrosPorDia: number;
-  sigmaMetros: number;
-  proyeccion: ProjectedLevel[];
-  diasHasta: Record<string, number | null>;
+  windowDays: number;
+  metersPerDay: number;
+  sigmaMeters: number;
+  projection: ProjectedLevel[];
+  daysUntil: Record<string, number | null>;
 }
 
 export interface RatingCurve {
   a: number;
   b: number;
   r2: number;
-  sigmaMetros: number;
+  sigmaMeters: number;
   n: number;
-  desfaseDias: number;
-  proyeccion: ProjectedLevel[];
+  lagDays: number;
+  projection: ProjectedLevel[];
 }
 
 interface DischargeDay {
-  fecha: string;
-  caudal: number;
+  date: string;
+  discharge: number;
 }
 
 const MILLIS_PER_DAY = 86_400_000;
@@ -49,70 +49,70 @@ function ols(xs: number[], ys: number[]): { slope: number; intercept: number; si
   return { slope, intercept, sigma: Math.sqrt(sse / Math.max(1, n - 2)), r2: sst === 0 ? 0 : 1 - sse / sst };
 }
 
-function addDays(fecha: string, days: number): string {
-  return new Date(new Date(fecha).getTime() + days * MILLIS_PER_DAY).toISOString().slice(0, 10);
+function addDays(date: string, days: number): string {
+  return new Date(new Date(date).getTime() + days * MILLIS_PER_DAY).toISOString().slice(0, 10);
 }
 
 function round(value: number): number {
   return Number(value.toFixed(2));
 }
 
-export function trendProjection(serie: RiverReading[], ventanaDias: number, horizonteDias: number, umbrales: Record<string, number | null>): TrendProjection | null {
-  const ultimo = serie[serie.length - 1];
-  if (!ultimo) {
+export function trendProjection(series: RiverReading[], windowDays: number, horizonDays: number, thresholds: Record<string, number | null>): TrendProjection | null {
+  const last = series[series.length - 1];
+  if (!last) {
     return null;
   }
-  const desde = new Date(ultimo.fecha).getTime() - ventanaDias * MILLIS_PER_DAY;
-  const ventana = serie.filter((reading) => new Date(reading.fecha).getTime() >= desde);
-  if (ventana.length < MIN_POINTS) {
+  const from = new Date(last.date).getTime() - windowDays * MILLIS_PER_DAY;
+  const trendWindow = series.filter((reading) => new Date(reading.date).getTime() >= from);
+  if (trendWindow.length < MIN_POINTS) {
     return null;
   }
-  const xs = ventana.map((reading) => (new Date(reading.fecha).getTime() - desde) / MILLIS_PER_DAY);
-  const { slope, sigma } = ols(xs, ventana.map((reading) => reading.metros));
-  const proyeccion = Array.from({ length: horizonteDias }, (_, index) => {
-    const dias = index + 1;
-    const metros = ultimo.metros + slope * dias;
-    const banda = BAND_SIGMAS * sigma * Math.sqrt(1 + dias / ventanaDias);
-    return { fecha: addDays(ultimo.fecha, dias), metros: round(metros), inferior: round(metros - banda), superior: round(metros + banda) };
+  const xs = trendWindow.map((reading) => (new Date(reading.date).getTime() - from) / MILLIS_PER_DAY);
+  const { slope, sigma } = ols(xs, trendWindow.map((reading) => reading.meters));
+  const projection = Array.from({ length: horizonDays }, (_, index) => {
+    const days = index + 1;
+    const meters = last.meters + slope * days;
+    const band = BAND_SIGMAS * sigma * Math.sqrt(1 + days / windowDays);
+    return { date: addDays(last.date, days), meters: round(meters), lower: round(meters - band), upper: round(meters + band) };
   });
-  const diasHasta = Object.fromEntries(
-    Object.entries(umbrales).map(([nombre, umbral]) => {
-      if (umbral === null || slope <= 0 || umbral <= ultimo.metros) {
-        return [nombre, null];
+  const daysUntil = Object.fromEntries(
+    Object.entries(thresholds).map(([name, threshold]) => {
+      if (threshold === null || slope <= 0 || threshold <= last.meters) {
+        return [name, null];
       }
-      return [nombre, Math.round((umbral - ultimo.metros) / slope)];
+      return [name, Math.round((threshold - last.meters) / slope)];
     }),
   );
-  return { ventanaDias, metrosPorDia: Number(slope.toFixed(3)), sigmaMetros: round(sigma), proyeccion, diasHasta };
+  return { windowDays, metersPerDay: Number(slope.toFixed(3)), sigmaMeters: round(sigma), projection, daysUntil };
 }
 
-function fitLaggedCurve(serie: RiverReading[], caudalPorDia: Map<string, number>, lag: number) {
-  const pares = serie.flatMap((reading) => {
-    const caudal = caudalPorDia.get(addDays(reading.fecha, -lag));
-    return caudal && caudal > 0 ? [{ x: Math.log(caudal), y: reading.metros }] : [];
+function fitLaggedCurve(series: RiverReading[], dischargeByDay: Map<string, number>, lag: number) {
+  const pairs = series.flatMap((reading) => {
+    const discharge = dischargeByDay.get(addDays(reading.date, -lag));
+    return discharge && discharge > 0 ? [{ x: Math.log(discharge), y: reading.meters }] : [];
   });
-  if (pares.length < MIN_POINTS) {
+  if (pairs.length < MIN_POINTS) {
     return null;
   }
-  return { lag, n: pares.length, ...ols(pares.map((par) => par.x), pares.map((par) => par.y)) };
+  return { lag, n: pairs.length, ...ols(pairs.map((pair) => pair.x), pairs.map((pair) => pair.y)) };
 }
 
-export function ratingCurve(serie: RiverReading[], caudalPasado: DischargeDay[], caudalFuturo: DischargeDay[]): RatingCurve | null {
-  const caudalPorDia = new Map([...caudalPasado, ...caudalFuturo].map((dia) => [dia.fecha, dia.caudal]));
-  const mejor = Array.from({ length: MAX_LAG_DAYS + 1 }, (_, lag) => fitLaggedCurve(serie, caudalPorDia, lag))
+export function ratingCurve(series: RiverReading[], pastDischarge: DischargeDay[], futureDischarge: DischargeDay[]): RatingCurve | null {
+  const dischargeByDay = new Map([...pastDischarge, ...futureDischarge].map((day) => [day.date, day.discharge]));
+  const best = Array.from({ length: MAX_LAG_DAYS + 1 }, (_, lag) => fitLaggedCurve(series, dischargeByDay, lag))
     .filter((fit): fit is NonNullable<typeof fit> => fit !== null)
     .reduce<ReturnType<typeof fitLaggedCurve>>((best, fit) => (best === null || fit.r2 > best.r2 ? fit : best), null);
-  if (!mejor) {
+  if (!best) {
     return null;
   }
-  const { slope, intercept, sigma, r2, lag, n } = mejor;
-  const proyeccion = caudalFuturo.flatMap((dia) => {
-    const caudal = caudalPorDia.get(addDays(dia.fecha, -lag));
-    if (!caudal || caudal <= 0) {
+  const { slope, intercept, sigma, r2, lag, n } = best;
+  const projection = futureDischarge.flatMap((day) => {
+    const discharge = dischargeByDay.get(addDays(day.date, -lag));
+    if (!discharge || discharge <= 0) {
       return [];
     }
-    const metros = intercept + slope * Math.log(caudal);
-    return [{ fecha: dia.fecha, metros: round(metros), inferior: round(metros - BAND_SIGMAS * sigma), superior: round(metros + BAND_SIGMAS * sigma) }];
+    const meters = intercept + slope * Math.log(discharge);
+    return [{ date: day.date, meters: round(meters), lower: round(meters - BAND_SIGMAS * sigma), upper: round(meters + BAND_SIGMAS * sigma) }];
   });
-  return { a: Number(intercept.toFixed(3)), b: Number(slope.toFixed(3)), r2: Number(r2.toFixed(3)), sigmaMetros: round(sigma), n, desfaseDias: lag, proyeccion };
+  return { a: Number(intercept.toFixed(3)), b: Number(slope.toFixed(3)), r2: Number(r2.toFixed(3)), sigmaMeters: round(sigma), n, lagDays: lag, projection };
 }

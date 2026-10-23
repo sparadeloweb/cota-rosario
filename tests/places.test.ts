@@ -1,45 +1,45 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MAX_LUGARES, agregarLugar, parseLugares, quitarLugar, renombrarLugar, serializeLugares, type Lugar } from "../src/lib/places";
+import { MAX_PLACES, addPlace, parsePlaces, removePlace, renamePlace, serializePlaces, type Place } from "../src/lib/places";
 
-const CASA: Lugar = { id: "casa", nombre: "Casa", lat: -32.9468, lon: -60.6393 };
-const TRABAJO: Lugar = { id: "trabajo", nombre: "Trabajo", lat: -32.9552, lon: -60.6723 };
+const HOME_PLACE: Place = { id: "casa", name: "Casa", lat: -32.9468, lon: -60.6393 };
+const WORK_PLACE: Place = { id: "trabajo", name: "Trabajo", lat: -32.9552, lon: -60.6723 };
 
-test("guardar y leer conserva nombre y coordenadas", () => {
-  assert.deepEqual(parseLugares(serializeLugares([CASA, TRABAJO])), [CASA, TRABAJO]);
+test("saving and reading keeps name and coordinates", () => {
+  assert.deepEqual(parsePlaces(serializePlaces([HOME_PLACE, WORK_PLACE])), [HOME_PLACE, WORK_PLACE]);
 });
 
-test("datos corruptos o ajenos devuelven una lista vacía sin romper", () => {
-  assert.deepEqual(parseLugares(null), []);
-  assert.deepEqual(parseLugares("{no es json"), []);
-  assert.deepEqual(parseLugares(JSON.stringify({ casa: CASA })), []);
-  assert.deepEqual(parseLugares(JSON.stringify([{ ...CASA, lat: "-32.9" }, { ...CASA, id: "x", nombre: "  " }])), []);
+test("corrupt or foreign data returns an empty list without throwing", () => {
+  assert.deepEqual(parsePlaces(null), []);
+  assert.deepEqual(parsePlaces("{no es json"), []);
+  assert.deepEqual(parsePlaces(JSON.stringify({ home: HOME_PLACE })), []);
+  assert.deepEqual(parsePlaces(JSON.stringify([{ ...HOME_PLACE, lat: "-32.9" }, { ...HOME_PLACE, id: "x", name: "  " }])), []);
 });
 
-test("se descartan puntos fuera de Rosario y se corta en el máximo", () => {
-  const buenos = Array.from({ length: MAX_LUGARES + 2 }, (_, i) => ({ ...CASA, id: `l${i}`, lat: CASA.lat - i * 0.001 }));
-  const cordoba = { ...CASA, id: "cba", lat: -31.42, lon: -64.18 };
-  const leidos = parseLugares(JSON.stringify([cordoba, ...buenos]));
-  assert.equal(leidos.length, MAX_LUGARES);
-  assert.ok(!leidos.some((lugar) => lugar.id === "cba"));
+test("points outside Rosario are dropped and the list is capped", () => {
+  const good = Array.from({ length: MAX_PLACES + 2 }, (_, i) => ({ ...HOME_PLACE, id: `l${i}`, lat: HOME_PLACE.lat - i * 0.001 }));
+  const cordoba = { ...HOME_PLACE, id: "cba", lat: -31.42, lon: -64.18 };
+  const read = parsePlaces(JSON.stringify([cordoba, ...good]));
+  assert.equal(read.length, MAX_PLACES);
+  assert.ok(!read.some((place) => place.id === "cba"));
 });
 
-test("agregar rechaza duplicados a menos de 30 m, puntos fuera, nombres vacíos y la lista llena", () => {
-  assert.equal(agregarLugar([CASA], { ...TRABAJO }).error, null);
-  assert.equal(agregarLugar([CASA], { ...CASA, id: "otra", lat: CASA.lat + 0.0001 }).error, "duplicado");
-  assert.equal(agregarLugar([], { ...CASA, lat: -34.6, lon: -58.4 }).error, "fuera");
-  assert.equal(agregarLugar([], { ...CASA, nombre: "   " }).error, "nombre");
-  const llena = Array.from({ length: MAX_LUGARES }, (_, i) => ({ ...CASA, id: `l${i}`, lat: CASA.lat - i * 0.002 }));
-  const resultado = agregarLugar(llena, TRABAJO);
-  assert.equal(resultado.error, "lleno");
-  assert.equal(resultado.lugares.length, MAX_LUGARES);
+test("adding rejects duplicates within 30 m, outside points, empty names and a full list", () => {
+  assert.equal(addPlace([HOME_PLACE], { ...WORK_PLACE }).error, null);
+  assert.equal(addPlace([HOME_PLACE], { ...HOME_PLACE, id: "otra", lat: HOME_PLACE.lat + 0.0001 }).error, "duplicate");
+  assert.equal(addPlace([], { ...HOME_PLACE, lat: -34.6, lon: -58.4 }).error, "outside");
+  assert.equal(addPlace([], { ...HOME_PLACE, name: "   " }).error, "name");
+  const full = Array.from({ length: MAX_PLACES }, (_, i) => ({ ...HOME_PLACE, id: `l${i}`, lat: HOME_PLACE.lat - i * 0.002 }));
+  const result = addPlace(full, WORK_PLACE);
+  assert.equal(result.error, "full");
+  assert.equal(result.places.length, MAX_PLACES);
 });
 
-test("quitar y renombrar no mutan la lista original", () => {
-  const lista = [CASA, TRABAJO];
-  assert.deepEqual(quitarLugar(lista, "casa"), [TRABAJO]);
-  assert.equal(renombrarLugar(lista, "casa", "  Depto  ")[0].nombre, "Depto");
-  assert.equal(renombrarLugar(lista, "casa", "   ")[0].nombre, "Casa");
-  assert.equal(lista[0].nombre, "Casa");
-  assert.equal(lista.length, 2);
+test("removing and renaming do not mutate the original list", () => {
+  const list = [HOME_PLACE, WORK_PLACE];
+  assert.deepEqual(removePlace(list, "casa"), [WORK_PLACE]);
+  assert.equal(renamePlace(list, "casa", "  Depto  ")[0].name, "Depto");
+  assert.equal(renamePlace(list, "casa", "   ")[0].name, "Casa");
+  assert.equal(list[0].name, "Casa");
+  assert.equal(list.length, 2);
 });

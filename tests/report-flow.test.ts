@@ -1,42 +1,42 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { EMPTY_DRAFT, cuerpoDelEnvio, esTipo, pasoAnterior, puedeAvanzar, siguientePaso } from "../src/lib/reportFlow";
+import { EMPTY_DRAFT, submissionBody, isReportType, previousStep, canAdvance, nextStep } from "../src/lib/reportFlow";
 import { DESCRIPTION_MAX_CHARS } from "../src/lib/reportTypes";
 
-const COMPLETO = { tipo: "calle" as const, lat: -32.9468, lon: -60.6393, etiquetaLugar: "Córdoba 1500", descripcion: "  Agua hasta el cordón  " };
+const COMPLETE_DRAFT = { type: "street" as const, lat: -32.9468, lon: -60.6393, placeLabel: "Córdoba 1500", description: "  Agua hasta el cordón  " };
 
-test("cada paso exige su dato antes de avanzar", () => {
-  assert.equal(puedeAvanzar("tipo", EMPTY_DRAFT), false);
-  assert.equal(puedeAvanzar("tipo", { ...EMPTY_DRAFT, tipo: "vivienda" }), true);
-  assert.equal(puedeAvanzar("lugar", { ...EMPTY_DRAFT, lat: -32.95 }), false);
-  assert.equal(puedeAvanzar("lugar", { ...EMPTY_DRAFT, lat: -34.6, lon: -58.4 }), false);
-  assert.equal(puedeAvanzar("lugar", COMPLETO), true);
-  assert.equal(puedeAvanzar("detalle", { ...COMPLETO, descripcion: "" }), true);
-  assert.equal(puedeAvanzar("detalle", { ...COMPLETO, descripcion: "x".repeat(DESCRIPTION_MAX_CHARS + 1) }), false);
+test("each step requires its data before advancing", () => {
+  assert.equal(canAdvance("type", EMPTY_DRAFT), false);
+  assert.equal(canAdvance("type", { ...EMPTY_DRAFT, type: "home" }), true);
+  assert.equal(canAdvance("place", { ...EMPTY_DRAFT, lat: -32.95 }), false);
+  assert.equal(canAdvance("place", { ...EMPTY_DRAFT, lat: -34.6, lon: -58.4 }), false);
+  assert.equal(canAdvance("place", COMPLETE_DRAFT), true);
+  assert.equal(canAdvance("detail", { ...COMPLETE_DRAFT, description: "" }), true);
+  assert.equal(canAdvance("detail", { ...COMPLETE_DRAFT, description: "x".repeat(DESCRIPTION_MAX_CHARS + 1) }), false);
 });
 
-test("los tipos heredados del prototipo no pasan como tipos de reporte", () => {
-  assert.equal(esTipo("toString"), false);
-  assert.equal(esTipo("calle"), true);
+test("prototype-inherited names are not accepted as report types", () => {
+  assert.equal(isReportType("toString"), false);
+  assert.equal(isReportType("street"), true);
 });
 
-test("el cuerpo del envío sólo existe con el borrador completo y recorta la descripción", () => {
-  assert.equal(cuerpoDelEnvio({ ...COMPLETO, lat: null }), null);
-  assert.deepEqual(cuerpoDelEnvio(COMPLETO), { lat: COMPLETO.lat, lon: COMPLETO.lon, tipo: "calle", descripcion: "Agua hasta el cordón", web: "" });
+test("the submission body exists only for a complete draft and trims the description", () => {
+  assert.equal(submissionBody({ ...COMPLETE_DRAFT, lat: null }), null);
+  assert.deepEqual(submissionBody(COMPLETE_DRAFT), { lat: COMPLETE_DRAFT.lat, lon: COMPLETE_DRAFT.lon, type: "street", description: "Agua hasta el cordón", web: "" });
 });
 
-test("la navegación entre pasos no se sale de los extremos", () => {
-  assert.equal(siguientePaso("tipo"), "lugar");
-  assert.equal(siguientePaso("revisar"), "revisar");
-  assert.equal(pasoAnterior("tipo"), "tipo");
-  assert.equal(pasoAnterior("detalle"), "lugar");
+test("step navigation never goes past either end", () => {
+  assert.equal(nextStep("type"), "place");
+  assert.equal(nextStep("review"), "review");
+  assert.equal(previousStep("type"), "type");
+  assert.equal(previousStep("detail"), "place");
 });
 
-test("las frases rápidas se suman a la descripción sin repetirse ni pasarse del máximo", async () => {
-  const { agregarFrase } = await import("../src/lib/reportFlow");
-  assert.equal(agregarFrase("", "llega al cordón"), "llega al cordón");
-  assert.equal(agregarFrase("llega al cordón", "no pasan autos"), "llega al cordón, no pasan autos");
-  assert.equal(agregarFrase("Llega al cordón", "llega al cordón"), "Llega al cordón");
-  const largo = "x".repeat(DESCRIPTION_MAX_CHARS - 3);
-  assert.equal(agregarFrase(largo, "no pasan autos"), largo);
+test("quick phrases are appended without repeating or passing the limit", async () => {
+  const { appendPhrase } = await import("../src/lib/reportFlow");
+  assert.equal(appendPhrase("", "llega al cordón"), "llega al cordón");
+  assert.equal(appendPhrase("llega al cordón", "no pasan autos"), "llega al cordón, no pasan autos");
+  assert.equal(appendPhrase("Llega al cordón", "llega al cordón"), "Llega al cordón");
+  const length = "x".repeat(DESCRIPTION_MAX_CHARS - 3);
+  assert.equal(appendPhrase(length, "no pasan autos"), length);
 });

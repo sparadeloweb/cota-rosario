@@ -6,7 +6,7 @@ const STATION = "Rosario";
 const HISTORY_DAYS = 210;
 const MILLIS_PER_DAY = 86_400_000;
 const OUT_DIR = "public/data";
-const OUT_FILE = "rio-historia.json";
+const OUT_FILE = "river-history.json";
 
 function isoDay(offsetDays) {
   return new Date(Date.now() + offsetDays * MILLIS_PER_DAY).toISOString().slice(0, 10);
@@ -26,36 +26,36 @@ const started = Date.now();
 const response = await fetch(endpoint);
 const body = await response.text();
 if (!response.ok || body.trimStart().startsWith("<")) {
-  throw new Error(`El INA respondió ${response.status}: ${body.slice(0, 200)}`);
+  throw new Error(`INA responded ${response.status}: ${body.slice(0, 200)}`);
 }
 const feature = JSON.parse(body).features[0];
 if (!feature) {
-  throw new Error(`El INA no devolvió la estación ${STATION}`);
+  throw new Error(`INA did not return the station ${STATION}`);
 }
 const raw = feature.properties.timeseries;
 const entries = typeof raw === "string" ? JSON.parse(raw) : raw;
-const serie = entries
-  .map(([fecha, valor]) => ({ fecha, metros: Number(valor) }))
-  .filter((reading) => Number.isFinite(reading.metros))
-  .sort((a, b) => a.fecha.localeCompare(b.fecha));
+const series = entries
+  .map(([date, value]) => ({ date, meters: Number(value) }))
+  .filter((reading) => Number.isFinite(reading.meters))
+  .sort((a, b) => a.date.localeCompare(b.date));
 
 await mkdir(OUT_DIR, { recursive: true });
 await writeFile(
   `${OUT_DIR}/${OUT_FILE}`,
   JSON.stringify(
     {
-      nombre: `Altura diaria del Paraná en ${STATION}, serie del INA`,
-      estacion: STATION,
+      name: `Altura diaria del Paraná en ${STATION}, serie del INA`,
+      station: STATION,
       endpoint,
-      diasPedidos: HISTORY_DAYS,
-      desde: serie[0]?.fecha ?? null,
-      hasta: serie[serie.length - 1]?.fecha ?? null,
-      puntos: serie.length,
-      serie,
-      calculado: new Date().toISOString(),
+      requestedDays: HISTORY_DAYS,
+      from: series[0]?.date ?? null,
+      until: series[series.length - 1]?.date ?? null,
+      points: series.length,
+      series,
+      computedAt: new Date().toISOString(),
     },
     null,
     2,
   ),
 );
-console.log(`${STATION}: ${serie.length} lecturas ${serie[0]?.fecha.slice(0, 10)} → ${serie[serie.length - 1]?.fecha.slice(0, 10)} en ${((Date.now() - started) / 1000).toFixed(0)} s`);
+console.log(`${STATION}: ${series.length} readings ${series[0]?.date.slice(0, 10)} → ${series[series.length - 1]?.date.slice(0, 10)} in ${((Date.now() - started) / 1000).toFixed(0)} s`);

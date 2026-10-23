@@ -4,27 +4,27 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import type { SimulationResult } from "@/lib/risk";
 
 interface SimulationState {
-  escenario: SimulationResult | null;
+  scenario: SimulationResult | null;
   version: number;
-  setEscenario: (escenario: SimulationResult | null) => void;
+  setScenario: (scenario: SimulationResult | null) => void;
   reset: () => void;
 }
 
 const SimulationContext = createContext<SimulationState>({
-  escenario: null,
+  scenario: null,
   version: 0,
-  setEscenario: () => undefined,
+  setScenario: () => undefined,
   reset: () => undefined,
 });
 
 export function SimulationProvider({ children }: { children: ReactNode }) {
-  const [escenario, setEscenario] = useState<SimulationResult | null>(null);
+  const [scenario, setScenario] = useState<SimulationResult | null>(null);
   const [version, setVersion] = useState(0);
   const reset = useCallback(() => {
-    setEscenario(null);
+    setScenario(null);
     setVersion((current) => current + 1);
   }, []);
-  const value = useMemo(() => ({ escenario, version, setEscenario, reset }), [escenario, version, reset]);
+  const value = useMemo(() => ({ scenario, version, setScenario, reset }), [scenario, version, reset]);
   return <SimulationContext.Provider value={value}>{children}</SimulationContext.Provider>;
 }
 

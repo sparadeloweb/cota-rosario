@@ -6,26 +6,26 @@ interface RainBalanceBarsProps {
   balance: RainBalance;
 }
 
-function fmtDia(fecha: string): string {
-  const [, mes, dia] = fecha.split("-");
-  return `${dia}/${mes}`;
+function formatDay(date: string): string {
+  const [, month, day] = date.split("-");
+  return `${day}/${month}`;
 }
 
 export function RainBalanceBars({ balance }: RainBalanceBarsProps) {
-  const maximo = Math.max(...balance.porDia.map((dia) => Math.max(dia.caidoMm, dia.previstoMm)), 1);
+  const max = Math.max(...balance.byDay.map((day) => Math.max(day.fallenMm, day.expectedMm)), 1);
   return (
     <ul className="flex items-end gap-1.5" aria-label="Lluvia caída y prevista por día">
-      {balance.porDia.map((dia) => {
-        const esHoy = dia.fecha === balance.ahoraLocal.slice(0, 10);
-        const total = dia.caidoMm + dia.previstoMm;
+      {balance.byDay.map((day) => {
+        const isToday = day.date === balance.localNow.slice(0, 10);
+        const total = day.fallenMm + day.expectedMm;
         return (
-          <li key={dia.fecha} className="flex flex-1 flex-col items-center gap-1">
+          <li key={day.date} className="flex flex-1 flex-col items-center gap-1">
             <span className="readout text-[10px] text-ink-soft">{total > 0 ? total.toFixed(0) : ""}</span>
             <span className="flex h-14 w-full flex-col-reverse overflow-hidden rounded-sm bg-rule-soft">
-              <span className="block w-full bg-water/80" style={{ height: `${(dia.caidoMm / maximo) * PERCENT}%` }} />
-              <span className="block w-full bg-water/30" style={{ height: `${(dia.previstoMm / maximo) * PERCENT}%` }} />
+              <span className="block w-full bg-water/80" style={{ height: `${(day.fallenMm / max) * PERCENT}%` }} />
+              <span className="block w-full bg-water/30" style={{ height: `${(day.expectedMm / max) * PERCENT}%` }} />
             </span>
-            <span className={`readout text-[10px] ${esHoy ? "text-ink" : "text-ink-faint"}`}>{esHoy ? "hoy" : fmtDia(dia.fecha)}</span>
+            <span className={`readout text-[10px] ${isToday ? "text-ink" : "text-ink-faint"}`}>{isToday ? "hoy" : formatDay(day.date)}</span>
           </li>
         );
       })}

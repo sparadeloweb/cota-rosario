@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://cota.pegasustudio.com">cota.pegasustudio.com</a> ·
   <a href="https://cota.pegasustudio.com/como-funciona">cómo funciona</a> ·
-  <a href="https://cota.pegasustudio.com/api/estado">/api/estado</a>
+  <a href="https://cota.pegasustudio.com/api/status">/api/status</a>
 </p>
 
 <p align="center">
@@ -59,7 +59,7 @@ Ver [alcance de la demo](docs/demo-alcance.md) y [registro de uso de IA](docs/tr
 | **Municipalidad de Rosario** · InfoMapa | Mapa de Riesgo Climático 2024: afectación a vivienda por lluvias torrenciales, por radio censal | Capa fija |
 | **Mapzen Terrain Tiles** | Modelo propio de puntos bajos del terreno · marcado como modelo | Capa fija |
 
-Todo el detalle técnico (fórmulas, umbrales, endpoints, vigencia de cada dato) está al pie de cada vista en un bloque "Documentación" colapsado, y en los JSON públicos `/api/estado`, `/api/predicciones`, `/api/kpis`, `/api/recomendaciones` y `/api/reportes`.
+Todo el detalle técnico (fórmulas, umbrales, endpoints, vigencia de cada dato) está al pie de cada vista en un bloque "Documentación" colapsado, y en los JSON públicos `/api/status`, `/api/predictions`, `/api/kpis`, `/api/recommendations` y `/api/reports`.
 
 ## Cómo se decide el nivel
 

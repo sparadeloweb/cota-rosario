@@ -1,47 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { avisoDesdeCache, avisoSinConexion } from "@/lib/offline";
+import { cachedCopyNotice, offlineNotice } from "@/lib/offline";
 
 interface OfflineBannerProps {
-  actualizadoEn?: string;
+  updatedAt?: string;
 }
 
-interface Situacion {
-  desdeCache: boolean;
-  conectado: boolean;
-  ahora: number;
+interface Situation {
+  fromCache: boolean;
+  online: boolean;
+  now: number;
 }
 
 declare global {
   interface Window {
-    __cotaDesdeCache?: string;
+    __cotaFromCache?: string;
   }
 }
 
-export function OfflineBanner({ actualizadoEn }: OfflineBannerProps) {
-  const [situacion, setSituacion] = useState<Situacion | null>(null);
+export function OfflineBanner({ updatedAt }: OfflineBannerProps) {
+  const [situation, setSituation] = useState<Situation | null>(null);
 
   useEffect(() => {
-    const actualizar = () => setSituacion({ desdeCache: window.__cotaDesdeCache === window.location.href, conectado: navigator.onLine, ahora: Date.now() });
-    actualizar();
-    window.addEventListener("online", actualizar);
-    window.addEventListener("offline", actualizar);
+    const update = () => setSituation({ fromCache: window.__cotaFromCache === window.location.href, online: navigator.onLine, now: Date.now() });
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
     return () => {
-      window.removeEventListener("online", actualizar);
-      window.removeEventListener("offline", actualizar);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
     };
   }, []);
 
-  if (!situacion || (situacion.conectado && !situacion.desdeCache)) {
+  if (!situation || (situation.online && !situation.fromCache)) {
     return null;
   }
-  const texto = situacion.desdeCache ? avisoDesdeCache(actualizadoEn, situacion.ahora, situacion.conectado) : avisoSinConexion(actualizadoEn, situacion.ahora);
+  const text = situation.fromCache ? cachedCopyNotice(updatedAt, situation.now, situation.online) : offlineNotice(updatedAt, situation.now);
   return (
-    <p role="status" className="shrink-0 border-b border-rule bg-atencion/10 px-4 py-2 text-xs text-ink">
+    <p role="status" className="shrink-0 border-b border-rule bg-watch/10 px-4 py-2 text-xs text-ink">
       <span className="mr-2 inline-block size-1.5 rounded-full bg-ink-faint align-middle" aria-hidden="true" />
-      {texto}{" "}
-      {situacion.desdeCache && situacion.conectado ? (
+      {text}{" "}
+      {situation.fromCache && situation.online ? (
         <button type="button" onClick={() => window.location.reload()} className="underline decoration-rule underline-offset-4 hover:text-ink">
           Reintentar
         </button>

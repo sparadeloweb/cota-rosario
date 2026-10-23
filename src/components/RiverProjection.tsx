@@ -1,4 +1,4 @@
-import type { RiverForecast } from "@/lib/predicciones";
+import type { RiverForecast } from "@/lib/predictions";
 
 const WIDTH = 600;
 const HEIGHT = 220;
@@ -7,49 +7,49 @@ const Y_MARGIN_M = 0.3;
 const MILLIS_PER_DAY = 86_400_000;
 
 interface RiverProjectionProps {
-  rio: RiverForecast;
+  river: RiverForecast;
 }
 
-function fmtDia(fecha: string): string {
-  const [, mes, dia] = fecha.slice(0, 10).split("-");
-  return `${dia}/${mes}`;
+function formatDay(date: string): string {
+  const [, month, day] = date.slice(0, 10).split("-");
+  return `${day}/${month}`;
 }
 
-export function RiverProjection({ rio }: RiverProjectionProps) {
-  const puntos = rio.historia.map((reading) => ({ t: new Date(reading.fecha).getTime(), m: reading.metros }));
-  const tendencia = rio.tendencia?.proyeccion.map((p) => ({ t: new Date(p.fecha).getTime(), ...p })) ?? [];
-  const curva = rio.curva?.proyeccion.map((p) => ({ t: new Date(p.fecha).getTime(), ...p })) ?? [];
-  const todos = [...puntos.map((p) => p.t), ...tendencia.map((p) => p.t), ...curva.map((p) => p.t)];
-  if (todos.length < 2) {
+export function RiverProjection({ river }: RiverProjectionProps) {
+  const points = river.history.map((reading) => ({ t: new Date(reading.date).getTime(), m: reading.meters }));
+  const trend = river.trend?.projection.map((p) => ({ t: new Date(p.date).getTime(), ...p })) ?? [];
+  const curve = river.curve?.projection.map((p) => ({ t: new Date(p.date).getTime(), ...p })) ?? [];
+  const all = [...points.map((p) => p.t), ...trend.map((p) => p.t), ...curve.map((p) => p.t)];
+  if (all.length < 2) {
     return <p className="text-xs text-ink-soft">No hay serie suficiente para proyectar.</p>;
   }
-  const t0 = Math.min(...todos);
-  const t1 = Math.max(...todos);
-  const niveles = [...puntos.map((p) => p.m), ...tendencia.flatMap((p) => [p.inferior, p.superior]), ...curva.flatMap((p) => [p.inferior, p.superior])];
-  const umbrales = [rio.alerta, rio.evacuacion].filter((v): v is number => v !== null);
-  const yMin = Math.min(...niveles) - Y_MARGIN_M;
-  const yMax = Math.max(...niveles, ...umbrales.filter((u) => u <= Math.max(...niveles) + 1.5)) + Y_MARGIN_M;
+  const t0 = Math.min(...all);
+  const t1 = Math.max(...all);
+  const levels = [...points.map((p) => p.m), ...trend.flatMap((p) => [p.lower, p.upper]), ...curve.flatMap((p) => [p.lower, p.upper])];
+  const thresholds = [river.alert, river.evacuation].filter((v): v is number => v !== null);
+  const yMin = Math.min(...levels) - Y_MARGIN_M;
+  const yMax = Math.max(...levels, ...thresholds.filter((u) => u <= Math.max(...levels) + 1.5)) + Y_MARGIN_M;
   const x = (t: number) => PAD.left + ((t - t0) / (t1 - t0)) * (WIDTH - PAD.left - PAD.right);
   const y = (m: number) => PAD.top + ((yMax - m) / (yMax - yMin)) * (HEIGHT - PAD.top - PAD.bottom);
-  const line = (serie: { t: number; m: number }[]) => serie.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.t).toFixed(1)},${y(p.m).toFixed(1)}`).join(" ");
-  const band = (serie: { t: number; inferior: number; superior: number }[], start: { t: number; m: number }) =>
+  const line = (series: { t: number; m: number }[]) => series.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.t).toFixed(1)},${y(p.m).toFixed(1)}`).join(" ");
+  const band = (series: { t: number; lower: number; upper: number }[], start: { t: number; m: number }) =>
     [
       `M${x(start.t).toFixed(1)},${y(start.m).toFixed(1)}`,
-      ...serie.map((p) => `L${x(p.t).toFixed(1)},${y(p.superior).toFixed(1)}`),
-      ...serie
+      ...series.map((p) => `L${x(p.t).toFixed(1)},${y(p.upper).toFixed(1)}`),
+      ...series
         .slice()
         .reverse()
-        .map((p) => `L${x(p.t).toFixed(1)},${y(p.inferior).toFixed(1)}`),
+        .map((p) => `L${x(p.t).toFixed(1)},${y(p.lower).toFixed(1)}`),
       "Z",
     ].join(" ");
-  const ultimo = puntos[puntos.length - 1];
+  const last = points[points.length - 1];
   const ticks = Array.from({ length: 5 }, (_, i) => yMin + ((yMax - yMin) * i) / 4);
-  const dias = Math.round((t1 - t0) / MILLIS_PER_DAY);
-  const fechas = [t0, t0 + (t1 - t0) / 2, t1];
+  const days = Math.round((t1 - t0) / MILLIS_PER_DAY);
+  const dates = [t0, t0 + (t1 - t0) / 2, t1];
 
   return (
     <figure className="flex flex-col gap-2">
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`Altura del Paraná, últimos ${dias} días y proyección`} className="w-full">
+      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`Altura del Paraná, últimos ${days} días y proyección`} className="w-full">
         {ticks.map((tick) => (
           <g key={tick}>
             <line x1={PAD.left} x2={WIDTH - PAD.right} y1={y(tick)} y2={y(tick)} stroke="var(--rule-soft)" strokeWidth="1" />
@@ -59,24 +59,24 @@ export function RiverProjection({ rio }: RiverProjectionProps) {
           </g>
         ))}
         {[
-          { valor: rio.alerta, color: "var(--alerta)" },
-          { valor: rio.evacuacion, color: "var(--critico)" },
+          { value: river.alert, color: "var(--alert)" },
+          { value: river.evacuation, color: "var(--critical)" },
         ]
-          .filter((u): u is { valor: number; color: string } => u.valor !== null && u.valor >= yMin && u.valor <= yMax)
+          .filter((u): u is { value: number; color: string } => u.value !== null && u.value >= yMin && u.value <= yMax)
           .map((u) => (
-            <line key={u.color} x1={PAD.left} x2={WIDTH - PAD.right} y1={y(u.valor)} y2={y(u.valor)} stroke={u.color} strokeDasharray="4 4" strokeWidth="1" />
+            <line key={u.color} x1={PAD.left} x2={WIDTH - PAD.right} y1={y(u.value)} y2={y(u.value)} stroke={u.color} strokeDasharray="4 4" strokeWidth="1" />
           ))}
-        {ultimo && tendencia.length ? <path d={band(tendencia, ultimo)} fill="var(--ink-faint)" opacity="0.18" /> : null}
-        {ultimo && curva.length ? <path d={band(curva, ultimo)} fill="var(--water)" opacity="0.18" /> : null}
-        <path d={line(puntos)} fill="none" stroke="var(--water)" strokeWidth="1.5" />
-        {ultimo && tendencia.length ? (
-          <path d={line([ultimo, ...tendencia.map((p) => ({ t: p.t, m: p.metros }))])} fill="none" stroke="var(--ink-soft)" strokeWidth="1.5" strokeDasharray="5 4" />
+        {last && trend.length ? <path d={band(trend, last)} fill="var(--ink-faint)" opacity="0.18" /> : null}
+        {last && curve.length ? <path d={band(curve, last)} fill="var(--water)" opacity="0.18" /> : null}
+        <path d={line(points)} fill="none" stroke="var(--water)" strokeWidth="1.5" />
+        {last && trend.length ? (
+          <path d={line([last, ...trend.map((p) => ({ t: p.t, m: p.meters }))])} fill="none" stroke="var(--ink-soft)" strokeWidth="1.5" strokeDasharray="5 4" />
         ) : null}
-        {ultimo && curva.length ? <path d={line([ultimo, ...curva.map((p) => ({ t: p.t, m: p.metros }))])} fill="none" stroke="var(--water)" strokeWidth="1.5" /> : null}
-        {ultimo ? <line x1={x(ultimo.t)} x2={x(ultimo.t)} y1={PAD.top} y2={HEIGHT - PAD.bottom} stroke="var(--rule)" strokeWidth="1" /> : null}
-        {fechas.map((t, i) => (
+        {last && curve.length ? <path d={line([last, ...curve.map((p) => ({ t: p.t, m: p.meters }))])} fill="none" stroke="var(--water)" strokeWidth="1.5" /> : null}
+        {last ? <line x1={x(last.t)} x2={x(last.t)} y1={PAD.top} y2={HEIGHT - PAD.bottom} stroke="var(--rule)" strokeWidth="1" /> : null}
+        {dates.map((t, i) => (
           <text key={t} x={x(t)} y={HEIGHT - 6} textAnchor={i === 0 ? "start" : i === 2 ? "end" : "middle"} fontSize="10" fill="var(--ink-faint)" fontFamily="var(--font-mono)">
-            {fmtDia(new Date(t).toISOString())}
+            {formatDay(new Date(t).toISOString())}
           </text>
         ))}
       </svg>
@@ -87,7 +87,7 @@ export function RiverProjection({ rio }: RiverProjectionProps) {
         </span>
         <span className="flex items-center gap-2">
           <span className="h-0 w-4 border-t border-dashed" style={{ borderColor: "var(--ink-soft)" }} aria-hidden="true" />
-          tendencia lineal {rio.tendencia?.ventanaDias ?? ""} días
+          tendencia lineal {river.trend?.windowDays ?? ""} días
         </span>
         <span>bandas: ±2σ del ajuste</span>
       </figcaption>
