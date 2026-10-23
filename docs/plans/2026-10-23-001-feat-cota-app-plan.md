@@ -1,7 +1,7 @@
 ---
 title: "feat: Cota as an installable app (Vecinos home, Operaciones panel with Predicciones)"
 type: feat
-status: active
+status: completed
 date: 2026-10-23
 depth: deep
 ---
