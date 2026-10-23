@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { REPORT_TYPES, type Report, type ReportType } from "@/lib/reportTypes";
+import { escapeHtml } from "@/lib/html";
 
 const API = "/api/reports";
 const REFRESH_MS = 60_000;
@@ -28,10 +29,6 @@ export interface ReportsState {
   updateDraft: (changes: Partial<ReportDraft>) => void;
   submit: () => Promise<void>;
   confirm: (id: string) => Promise<void>;
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
 }
 
 export function howLongAgo(iso: string): string {

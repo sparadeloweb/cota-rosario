@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 const BUILD_ID = process.env.NEXT_PUBLIC_COTA_BUILD ?? "dev";
+const IDLE_TIMEOUT_MS = 3_000;
 
 export function ServiceWorker() {
   const pathname = usePathname();
@@ -12,9 +13,17 @@ export function ServiceWorker() {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) {
       return;
     }
-    navigator.serviceWorker.ready
-      .then((registration) => registration.active?.postMessage({ type: "cota:cache-page", url: window.location.href }))
-      .catch(() => undefined);
+    const href = window.location.href;
+    const postWhenIdle = () =>
+      navigator.serviceWorker.ready
+        .then((registration) => registration.active?.postMessage({ type: "cota:cache-page", url: href }))
+        .catch((error: unknown) => console.warn("Could not ask the service worker to keep this page.", error));
+    if ("requestIdleCallback" in window) {
+      const handle = window.requestIdleCallback(postWhenIdle, { timeout: IDLE_TIMEOUT_MS });
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = setTimeout(postWhenIdle, IDLE_TIMEOUT_MS);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   useEffect(() => {

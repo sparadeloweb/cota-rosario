@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ResidentsShell } from "@/components/shell/ResidentsShell";
 import { Workspace } from "@/components/shell/Workspace";
 import { HELP_HREF } from "@/lib/navigation";
 import { tipsFor, statusTitle } from "@/lib/residents";
@@ -26,7 +25,7 @@ export default async function ResidentsPage() {
   const title = statusTitle(risk.level);
 
   return (
-    <ResidentsShell level={risk.level} updatedAt={risk.assessedAt}>
+
     <Workspace
       canvas={<FloodMap zones={risk.zones} searcher reports report corner={<WeatherBadge weather={weather} />} />}
       rail={
@@ -128,6 +127,5 @@ export default async function ResidentsPage() {
         </div>
       }
     />
-    </ResidentsShell>
   );
 }

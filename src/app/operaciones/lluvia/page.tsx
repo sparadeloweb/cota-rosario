@@ -5,7 +5,6 @@ import { PanelPage, PanelSection } from "@/components/panel/PanelBlocks";
 import { HourlyRain, MonthProgress, WeekRain } from "@/components/panel/rain";
 import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
 import { Provenance } from "@/components/Provenance";
-import { PanelShell } from "@/components/shell/PanelShell";
 import { SourceDown } from "@/components/SourceDown";
 import { loadPanel } from "@/lib/panelData";
 
@@ -25,7 +24,7 @@ function dayLabel(date: string, today: string): string {
 
 export default async function RainPage() {
   const { status, kpis, predictions, failureOf } = await loadPanel();
-  const { risk, rain } = status;
+  const { rain } = status;
   const balance = kpis.rain?.balance ?? null;
   const month = kpis.rain?.month ?? null;
   const normal = kpis.rain?.monthNormalMm ?? null;
@@ -41,7 +40,7 @@ export default async function RainPage() {
     : [];
 
   return (
-    <PanelShell level={risk.level} updatedAt={risk.assessedAt}>
+
       <PanelPage>
         <SectionHero pattern="rain" meta="Open-Meteo · modelo, no pluviómetro" title="Lluvia" figures={figures}>
           Lo que cayó, lo que viene hora por hora y en la semana, y cómo viene el mes contra su referencia histórica.
@@ -81,6 +80,5 @@ export default async function RainPage() {
           </DocsSection>
         </Docs>
       </PanelPage>
-    </PanelShell>
   );
 }

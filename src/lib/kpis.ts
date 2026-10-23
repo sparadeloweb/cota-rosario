@@ -6,7 +6,7 @@ import { loadStatus, type Status } from "@/lib/status";
 import { trendProjection } from "@/lib/forecast/river";
 import { featureAt } from "@/lib/lookup";
 import { fetchMonthToDateRain, fetchRainBalance, type MonthRain, type RainBalance } from "@/lib/rain";
-import { listReports } from "@/lib/reports";
+import { listReportsForRequest } from "@/lib/reports";
 import { REPORT_TYPES, type Report, type ReportType } from "@/lib/reportTypes";
 import { hasUsableThresholds } from "@/lib/risk";
 import { type RiverReading, type RiverSnapshot, type RiverStation } from "@/lib/river";
@@ -194,7 +194,7 @@ function monthNormal(month: string): number | null {
 }
 
 export async function loadKpis(input?: Status | Promise<Status>): Promise<Kpis> {
-  const [status, [balanceResult, monthResult, reportsResult]] = await Promise.all([input ?? loadStatus(), Promise.allSettled([fetchRainBalance(), fetchMonthToDateRain(), listReports()])]);
+  const [status, [balanceResult, monthResult, reportsResult]] = await Promise.all([input ?? loadStatus(), Promise.allSettled([fetchRainBalance(), fetchMonthToDateRain(), listReportsForRequest()])]);
   const failures: SourceFailure[] = [...status.failures];
   if (balanceResult.status === "rejected") {
     failures.push(failure("openMeteo", balanceResult.reason));

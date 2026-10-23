@@ -17,8 +17,7 @@ const WORKSPACES: readonly { id: Workspace; href: string; label: string }[] = [
 interface TopBarProps {
   home: string;
   workspace?: Workspace | null;
-  level?: RiskLevel | null;
-  updatedAt?: string;
+  status?: ReactNode;
   center?: ReactNode;
 }
 
@@ -42,7 +41,7 @@ function WorkspaceSwitch({ current }: { current: Workspace | null }) {
   );
 }
 
-function StatusPill({ level, updatedAt }: { level: RiskLevel | null; updatedAt?: string }) {
+export function StatusPill({ level, updatedAt }: { level: RiskLevel | null; updatedAt?: string }) {
   return (
     <div className="flex items-center rounded-full border border-rule bg-ground/60 py-0.5 pl-2.5 pr-0.5">
       <span
@@ -68,7 +67,16 @@ function StatusPill({ level, updatedAt }: { level: RiskLevel | null; updatedAt?:
   );
 }
 
-export function TopBar({ home, workspace, level, updatedAt, center }: TopBarProps) {
+export function StatusPillPending() {
+  return (
+    <div className="flex h-8 items-center gap-2 rounded-full border border-rule bg-ground/60 px-3" role="status" aria-label="Consultando el estado">
+      <span className="size-2 animate-pulse rounded-full bg-ink-faint" aria-hidden="true" />
+      <span className="text-[13px] text-ink-faint max-md:hidden">Consultando…</span>
+    </div>
+  );
+}
+
+export function TopBar({ home, workspace, status, center }: TopBarProps) {
   return (
     <header className="glass-rail z-40 grid h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-rule px-3 pt-[env(safe-area-inset-top)] box-content sm:gap-6 sm:px-5">
       <Link href={home} className="group flex items-center gap-3 rounded-lg py-1 pr-1 focus-visible:outline-offset-4" aria-label="Cota, inicio">
@@ -79,7 +87,7 @@ export function TopBar({ home, workspace, level, updatedAt, center }: TopBarProp
       <div className="flex min-w-0 justify-center">{center}</div>
 
       <div className="flex items-center justify-end gap-2">
-        {level !== undefined ? <StatusPill level={level} updatedAt={updatedAt} /> : null}
+        {status}
         {workspace !== undefined ? <WorkspaceSwitch current={workspace} /> : null}
         <Link
           href={HELP_HREF}

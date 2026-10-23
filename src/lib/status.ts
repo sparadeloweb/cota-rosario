@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { fetchDischarge, fetchRain, type DischargeSnapshot, type RainSnapshot } from "@/lib/rain";
 import { fetchRiver, type RiverSnapshot } from "@/lib/river";
 import { fetchWeather, type WeatherNow } from "@/lib/weather";
@@ -36,7 +37,7 @@ function settle<T>(source: SourceId, result: PromiseSettledResult<T>, failures: 
   return null;
 }
 
-export async function loadStatus(): Promise<Status> {
+export const loadStatus = cache(async function loadStatus(): Promise<Status> {
   const [riverResult, rainResult, dischargeResult, weatherResult] = await Promise.allSettled([fetchRiver(), fetchRain(), fetchDischarge(), fetchWeather()]);
   const failures: SourceFailure[] = [];
   const river = settle("ina", riverResult, failures);
@@ -44,4 +45,4 @@ export async function loadStatus(): Promise<Status> {
   const discharge = settle("glofas", dischargeResult, failures);
   const weather = settle("weather", weatherResult, failures);
   return { risk: assessRisk(river, rain), river, rain, discharge, weather, failures };
-}
+});

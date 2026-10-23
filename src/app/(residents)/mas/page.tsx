@@ -4,7 +4,6 @@ import { InstallButton } from "@/components/InstallButton";
 import { Motion } from "@/components/motion/Motion";
 import { SectionHero } from "@/components/panel/SectionHero";
 import { NavGlyph } from "@/components/shell/NavGlyph";
-import { ResidentsShell } from "@/components/shell/ResidentsShell";
 import type { NavIcon } from "@/lib/navigation";
 import { EMERGENCY_PHONE, HELP_HREF, PANEL_HOME } from "@/lib/navigation";
 
@@ -22,7 +21,7 @@ const OPEN_DATA = ["/api/status", "/api/kpis", "/api/predictions", "/api/recomme
 
 export default function MorePage() {
   return (
-    <ResidentsShell>
+
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-xl flex-col pb-8">
           <SectionHero pattern="summary" meta="Cota · Rosario" title="Más">
@@ -98,6 +97,5 @@ export default function MorePage() {
           </Motion>
         </div>
       </div>
-    </ResidentsShell>
   );
 }

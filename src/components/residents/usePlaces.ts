@@ -27,15 +27,22 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-function isStorageAvailable(): boolean {
+let storageAvailable: boolean | null = null;
+
+function probeStorage(): boolean {
   try {
-    const probe = `${PLACES_STORAGE_KEY}:prueba`;
+    const probe = `${PLACES_STORAGE_KEY}:probe`;
     window.localStorage.setItem(probe, "1");
     window.localStorage.removeItem(probe);
     return true;
   } catch {
     return false;
   }
+}
+
+function isStorageAvailable(): boolean {
+  storageAvailable ??= probeStorage();
+  return storageAvailable;
 }
 
 export interface PlacesState {

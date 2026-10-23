@@ -1,8 +1,11 @@
 "use client";
 
+import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import type { DistrictExpectation } from "@/lib/forecast/poisson";
+import { escapeHtml } from "@/lib/html";
+import { loadLeaflet } from "@/lib/leaflet";
 
 const CENTER: [number, number] = [-32.955, -60.66];
 const ZOOM = 12;
@@ -50,7 +53,7 @@ export function ForecastMap({ districts, windowDays, corner }: ForecastMapProps)
     const max = Math.max(...districts.map((entry) => entry.expected), 0.1);
     const byDistrict = new Map(districts.map((entry) => [entry.district, entry]));
 
-    import("leaflet").then((L) => {
+    loadLeaflet().then((L) => {
       if (cancelled || !container.current) {
         return;
       }
@@ -70,7 +73,7 @@ export function ForecastMap({ districts, windowDays, corner }: ForecastMapProps)
           const center = (layer as import("leaflet").Polygon).getBounds().getCenter();
           L.marker(center, {
             interactive: false,
-            icon: L.divIcon({ className: "district-label", html: `<span>${title(name)}</span><strong>${entry ? entry.expected.toFixed(1) : "—"}</strong>` }),
+            icon: L.divIcon({ className: "district-label", html: `<span>${escapeHtml(title(name))}</span><strong>${entry ? entry.expected.toFixed(1) : "—"}</strong>` }),
           }).addTo(map);
           layer.bindTooltip(
             entry

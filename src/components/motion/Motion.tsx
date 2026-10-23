@@ -1,11 +1,10 @@
 "use client";
 
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
-import { useRef, type ReactNode } from "react";
+import type { gsap as Gsap } from "gsap";
+import { useEffect, useRef, type ReactNode } from "react";
 import { MOTION_READY_FLAG } from "@/components/motion/flag";
 
-gsap.registerPlugin(useGSAP);
+type GsapApi = typeof Gsap;
 
 const VISIBLE_THRESHOLD = 0.12;
 const EASE = "power3.out";
@@ -25,7 +24,7 @@ function formatFigure(value: number, decimals: number): string {
   return value.toFixed(decimals);
 }
 
-function animate(scope: HTMLElement) {
+function animate(gsap: GsapApi, scope: HTMLElement) {
   const timeline = gsap.timeline({ paused: true, defaults: { ease: EASE } });
   const reveal = scope.querySelectorAll<HTMLElement>("[data-reveal]");
   if (reveal.length) {
@@ -71,34 +70,55 @@ function animate(scope: HTMLElement) {
   return timeline;
 }
 
+function markDone(root: HTMLElement) {
+  root.dataset.motionDone = "true";
+}
+
 export function Motion({ children, className }: MotionProps) {
   const scope = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      const root = scope.current;
-      (window as unknown as Record<string, boolean>)[MOTION_READY_FLAG] = true;
-      if (!root || document.documentElement.dataset.motion !== "on") {
-        return;
+  useEffect(() => {
+    const root = scope.current;
+    Reflect.set(window, MOTION_READY_FLAG, true);
+    if (!root || document.documentElement.dataset.motion !== "on") {
+      return;
+    }
+    let context: ReturnType<GsapApi["context"]> | null = null;
+    let disposed = false;
+    const play = async () => {
+      try {
+        const { gsap } = await import("gsap");
+        if (disposed) {
+          return;
+        }
+        context = gsap.context(() => {
+          const timeline = animate(gsap, root);
+          requestAnimationFrame(() => {
+            markDone(root);
+            timeline.play();
+          });
+        }, root);
+      } catch (error: unknown) {
+        console.warn("Motion library unavailable; showing content without animation.", error);
+        markDone(root);
       }
-      const timeline = animate(root);
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) {
-            observer.disconnect();
-            requestAnimationFrame(() => {
-              root.dataset.motionDone = "true";
-              timeline.play();
-            });
-          }
-        },
-        { threshold: VISIBLE_THRESHOLD },
-      );
-      observer.observe(root);
-      return () => observer.disconnect();
-    },
-    { scope },
-  );
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          void play();
+        }
+      },
+      { threshold: VISIBLE_THRESHOLD },
+    );
+    observer.observe(root);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      context?.revert();
+    };
+  }, []);
 
   return (
     <div ref={scope} data-motion-scope className={className}>

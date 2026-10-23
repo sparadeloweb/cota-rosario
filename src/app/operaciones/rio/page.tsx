@@ -5,7 +5,6 @@ import { PanelPage, PanelSection } from "@/components/panel/PanelBlocks";
 import { LevelRuler, UpstreamChain } from "@/components/panel/river";
 import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
 import { Provenance } from "@/components/Provenance";
-import { PanelShell } from "@/components/shell/PanelShell";
 import { SourceDown } from "@/components/SourceDown";
 import { StationTable } from "@/components/StationTable";
 import { loadPanel } from "@/lib/panelData";
@@ -19,7 +18,7 @@ const WEEK_DAYS = 7;
 
 export default async function RiverPage() {
   const { status, kpis, predictions, failureOf } = await loadPanel();
-  const { risk, river, discharge } = status;
+  const { river, discharge } = status;
   const indicators = kpis.river;
   const history = predictions.river?.history ?? indicators?.sparkline ?? [];
   const thresholds: ChartThreshold[] = river
@@ -42,7 +41,7 @@ export default async function RiverPage() {
     : [];
 
   return (
-    <PanelShell level={risk.level} updatedAt={risk.assessedAt}>
+
       <PanelPage>
         <SectionHero pattern="river" meta="Paraná · INA y GloFAS" title="Río" figures={figures}>
           La altura en Rosario contra los umbrales oficiales del INA, cómo viene el río en los últimos meses y qué pasa aguas arriba.
@@ -90,6 +89,5 @@ export default async function RiverPage() {
           </DocsSection>
         </Docs>
       </PanelPage>
-    </PanelShell>
   );
 }

@@ -3,7 +3,6 @@ import { Docs, DocsSection } from "@/components/Docs";
 import { FloodMap } from "@/components/FloodMap";
 import { PanelSection } from "@/components/panel/PanelBlocks";
 import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
-import { PanelShell } from "@/components/shell/PanelShell";
 import { Workspace } from "@/components/shell/Workspace";
 import { SimulationProvider } from "@/components/SimulationContext";
 import { Simulator } from "@/components/Simulator";
@@ -22,7 +21,7 @@ export default async function SimulatorPage() {
 
   return (
     <SimulationProvider>
-      <PanelShell level={risk.level} updatedAt={risk.assessedAt}>
+
         <Workspace
           canvas={<FloodMap zones={risk.zones} />}
           rail={
@@ -52,7 +51,6 @@ export default async function SimulatorPage() {
             </div>
           }
         />
-      </PanelShell>
     </SimulationProvider>
   );
 }

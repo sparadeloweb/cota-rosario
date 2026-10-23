@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
-import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { MOTION_READY_FLAG } from "@/components/motion/flag";

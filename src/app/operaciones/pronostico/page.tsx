@@ -1,6 +1,5 @@
 import models from "../../../../public/data/models.json";
 import { DataStatus } from "@/components/DataStatus";
-import { PanelShell } from "@/components/shell/PanelShell";
 import { Workspace } from "@/components/shell/Workspace";
 import { DailyOutlook } from "@/components/DailyOutlook";
 import { Docs, DocsSection } from "@/components/Docs";
@@ -48,7 +47,7 @@ export default async function ForecastPage() {
   ];
 
   return (
-    <PanelShell level={status.risk.level} updatedAt={predictions.generatedAt}>
+
     <Workspace
       canvas={<ForecastMap districts={flooding?.byDistrict ?? []} windowDays={windowDays} corner={<WeatherBadge weather={status.weather} />} />}
       lowerCanvas={
@@ -174,6 +173,5 @@ export default async function ForecastPage() {
         </div>
       }
     />
-    </PanelShell>
   );
 }
