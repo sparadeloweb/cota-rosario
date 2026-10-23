@@ -91,3 +91,21 @@ export const SOURCES: Record<string, SourceRef> = {
     modelo: true,
   },
 };
+
+export const FLOODHUB_SOURCE: SourceRef = {
+  id: "floodHub",
+  organismo: "Google Flood Hub · Flood Forecasting API",
+  descripcion: "Caudal pronosticado del Paraná frente a Arroyo Seco con umbrales propios del modelo, y alertas de crecidas repentinas",
+  endpoint: "https://floodforecasting.googleapis.com/v1",
+  portal: "https://sites.research.google/floods",
+  licencia: "CC BY 4.0 · uso no comercial · requiere clave aprobada por Google",
+  modelo: true,
+};
+
+export function floodHubEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return Boolean(env.FLOODHUB_API_KEY?.trim());
+}
+
+export function activeSources(env: Record<string, string | undefined> = process.env): Record<string, SourceRef> {
+  return floodHubEnabled(env) ? { ...SOURCES, floodHub: FLOODHUB_SOURCE } : SOURCES;
+}

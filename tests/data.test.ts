@@ -73,3 +73,11 @@ test("control de fechas distingue hora de consulta y vigencia", () => {
   assert.throws(() => requireRecent("2026-10-14T00:00Z", 48 * 3600000, "INA", now));
   requireRecent("2026-10-13T00:00Z", 48 * 3600000, "INA", now);
 });
+
+test("Flood Hub queda fuera de las fuentes mientras no haya clave", async () => {
+  const { activeSources, floodHubEnabled } = await import("../src/lib/sources");
+  assert.equal(floodHubEnabled({}), false);
+  assert.equal(floodHubEnabled({ FLOODHUB_API_KEY: "   " }), false);
+  assert.equal("floodHub" in activeSources({}), false);
+  assert.equal(activeSources({ FLOODHUB_API_KEY: "clave" }).floodHub?.modelo, true);
+});

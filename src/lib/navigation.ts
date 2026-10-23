@@ -20,7 +20,11 @@ export const VECINOS_TABS: readonly NavItem[] = [
 
 export const PANEL_SECTIONS: readonly NavItem[] = [
   { href: PANEL_HOME, etiqueta: "Resumen", icono: "resumen" },
+  { href: "/operaciones/rio", etiqueta: "Río", icono: "rio" },
+  { href: "/operaciones/lluvia", etiqueta: "Lluvia", icono: "lluvia" },
   { href: "/operaciones/pronostico", etiqueta: "Pronóstico", icono: "pronostico" },
+  { href: "/operaciones/reportes", etiqueta: "Reportes", icono: "reportes" },
+  { href: "/operaciones/simulador", etiqueta: "Simulador", icono: "simulador" },
 ];
 
 export const LEGACY_REDIRECTS: readonly { source: string; destination: string; permanent: true }[] = [
