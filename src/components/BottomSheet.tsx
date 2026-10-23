@@ -74,6 +74,12 @@ export function BottomSheet({ children, requestedOpen }: BottomSheetProps) {
   const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
+    if (!open && scrollerRef.current) {
+      scrollerRef.current.scrollTop = 0;
+    }
+  }, [open]);
+
+  useEffect(() => {
     document.documentElement.dataset.sheetOpen = String(open);
     return () => {
       delete document.documentElement.dataset.sheetOpen;
@@ -196,6 +202,11 @@ export function BottomSheet({ children, requestedOpen }: BottomSheetProps) {
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onClickCapture={onClickCapture}
+      onFocusCapture={(event) => {
+        if (!open && !window.matchMedia(DESKTOP_QUERY).matches && (event.target as HTMLElement).matches("input, textarea, select")) {
+          setOpen(true);
+        }
+      }}
       className={`glass-sheet lg:glass-rail fixed inset-x-0 bottom-[var(--tabbar-h)] z-30 flex h-[calc(86dvh-var(--tabbar-h))] flex-col rounded-t-2xl border-t border-rule shadow-[0_-18px_48px_-24px_rgb(0_0_0/0.9)] ${restingClass} ${open ? "" : "max-lg:touch-none max-lg:select-none"} lg:static lg:z-20 lg:h-auto lg:w-[27rem] lg:shrink-0 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-r lg:shadow-none xl:w-[30rem]`}
       style={style}
     >

@@ -119,19 +119,20 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
 
   const rail = (
     <div className="flex flex-col">
-      <header className="px-5 pb-4 pt-6">
-        <p className="meta">Mis lugares · {ready ? places.length : 0} de {MAX_PLACES}</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Mi zona</h1>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">Tu casa, el trabajo o la escuela: qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.</p>
+      <header className="px-5 pb-6 pt-2 lg:pt-6">
+        <div className="flex items-baseline justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Mi zona</h1>
+          <p className="meta shrink-0">{ready ? places.length : 0} de {MAX_PLACES} lugares</p>
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-ink-soft max-lg:line-clamp-2">Tu casa, el trabajo o la escuela: qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.</p>
       </header>
 
-      <div className="px-5 pb-5">
+      <div className="px-5 pb-6">
         {!available ? (
           <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (
-          <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} onPick={addSuggestion} />
+          <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} onPick={addSuggestion} hint={full ? null : "También podés tocar el mapa para elegir un punto."} />
         )}
-        {available && !full ? <p className="mt-2.5 text-xs text-ink-faint">También podés tocar el mapa para elegir un punto.</p> : null}
         {candidate ? (
           <div className="mt-3 flex items-center gap-3 rounded-xl border border-ink-faint bg-panel-soft px-4 py-3">
             <span className="min-w-0 flex-1">
@@ -146,6 +147,8 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
 
       {ready ? (
         places.length ? (
+          <section aria-labelledby="saved-places" className="pb-6">
+          <h2 id="saved-places" className="meta px-5 pb-3">Tus lugares</h2>
           <ul className="border-t border-rule-soft">
             {findings.map(({ place, state, finding }) => (
               <PlaceRow
@@ -163,6 +166,7 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
               />
             ))}
           </ul>
+          </section>
         ) : (
           <div className="px-5 pb-6">
             <EmptyPlaces />
