@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { clearLiveSources, readLiveSource } from "../src/lib/liveSources";
 
-test("las respuestas se reutilizan dentro de la ventana y Actualizar vuelve a consultar", async () => {
+test("responses are reused inside the window and Refresh fetches again", async () => {
   let calls = 0;
   const load = async () => ++calls;
   const start = Date.now();
@@ -12,7 +12,7 @@ test("las respuestas se reutilizan dentro de la ventana y Actualizar vuelve a co
   assert.equal(await readLiveSource("prueba:reuso", load), 2);
 });
 
-test("los pedidos de actualización seguidos no vacían la memoria cada vez", async () => {
+test("back-to-back refresh requests do not clear the cache every time", async () => {
   let calls = 0;
   const load = async () => ++calls;
   const start = Date.now() + 120_000;

@@ -11,7 +11,7 @@ const WINDOW_RADIUS_PX = 20;
 const REFERENCE_BLOCK_PX = 8;
 const REFERENCE_PERCENTILE = 0.5;
 const BUILT_SPREAD_M = 8;
-const MASK_FILE = "terreno-edificado.png";
+const MASK_FILE = "terrain-built.png";
 const LOWNESS_MAX_M = 3;
 const OVERLAY_RGB = [214, 160, 74];
 const OUT_DIR = "public/data";
@@ -41,7 +41,7 @@ function yToLat(y) {
 async function fetchTile(x, y) {
   const response = await fetch(`${TILES_URL}/${ZOOM}/${x}/${y}.png`);
   if (!response.ok) {
-    throw new Error(`Tile ${ZOOM}/${x}/${y} devolvió ${response.status}`);
+    throw new Error(`Tile ${ZOOM}/${x}/${y} returned ${response.status}`);
   }
   const { data, info } = await sharp(Buffer.from(await response.arrayBuffer())).raw().toBuffer({ resolveWithObject: true });
   const elevations = new Float32Array(TILE * TILE);
@@ -131,7 +131,7 @@ const rows = y1 - y0 + 1;
 const width = cols * TILE;
 const height = rows * TILE;
 
-console.log(`z${ZOOM} · tiles x ${x0}…${x1} y ${y0}…${y1} → ${cols}×${rows} = ${cols * rows} tiles · mosaico ${width}×${height}`);
+console.log(`z${ZOOM} · tiles x ${x0}…${x1} y ${y0}…${y1} → ${cols}×${rows} = ${cols * rows} tiles · mosaic ${width}×${height}`);
 
 const coords = [];
 for (let ty = 0; ty < rows; ty += 1) {
@@ -201,13 +201,13 @@ function sampleAt(lat, lon) {
   const mercator = (value) => Math.log(Math.tan(Math.PI / 4 + (value * Math.PI) / 360));
   const row = Math.floor(((mercator(bounds.north) - mercator(lat)) / (mercator(bounds.north) - mercator(bounds.south))) * height);
   const index = row * width + col;
-  return { elevacion: elevation[index], hundimiento: lowness[index], edificado: built[index] === 1, dispersion: spreadAt(surface, col, row) };
+  return { elevation: elevation[index], lowness: lowness[index], built: built[index] === 1, dispersion: spreadAt(surface, col, row) };
 }
 
 const metersPerPixel = (40075016.686 * Math.cos((ROSARIO_CENTER.lat * Math.PI) / 180)) / (TILE * 2 ** ZOOM);
 
 await mkdir(OUT_DIR, { recursive: true });
-await sharp(rgba, { raw: { width, height, channels: 4 } }).png({ compressionLevel: 9, palette: true, colours: 128, dither: 0 }).toFile(`${OUT_DIR}/terreno.png`);
+await sharp(rgba, { raw: { width, height, channels: 4 } }).png({ compressionLevel: 9, palette: true, colours: 128, dither: 0 }).toFile(`${OUT_DIR}/terrain.png`);
 const mask = Buffer.alloc(width * height);
 for (let index = 0; index < built.length; index += 1) {
   mask[index] = built[index] ? 255 : 0;
@@ -215,33 +215,33 @@ for (let index = 0; index < built.length; index += 1) {
 await sharp(mask, { raw: { width, height, channels: 1 } }).png({ compressionLevel: 9, palette: true, colours: 2, dither: 0 }).toFile(`${OUT_DIR}/${MASK_FILE}`);
 
 const metadata = {
-  nombre: "Puntos bajos del terreno — modelo de elevación",
-  metodo: `Cuánto más bajo está cada punto que la mediana de su entorno de ${Math.round(WINDOW_RADIUS_PX * metersPerPixel)} m. La mediana ignora los edificios, que el modelo de superficie mide como terreno. Sólo sobre tierra (${LAND_MIN_M}–${LAND_MAX_M} m); el agua queda enmascarada.`,
-  fuente: "Mapzen Terrain Tiles en AWS (SRTM, GMTED2010, ETOPO1)",
+  name: "Puntos bajos del terreno — modelo de elevación",
+  method: `Cuánto más bajo está cada punto que la mediana de su entorno de ${Math.round(WINDOW_RADIUS_PX * metersPerPixel)} m. La mediana ignora los edificios, que el modelo de superficie mide como terreno. Sólo sobre tierra (${LAND_MIN_M}–${LAND_MAX_M} m); el agua queda enmascarada.`,
+  source: "Mapzen Terrain Tiles en AWS (SRTM, GMTED2010, ETOPO1)",
   endpoint: TILES_URL,
   zoom: ZOOM,
-  resolucionMetros: Number(metersPerPixel.toFixed(1)),
-  ventanaMetros: Math.round(WINDOW_RADIUS_PX * metersPerPixel),
-  escalaMaximaMetros: LOWNESS_MAX_M,
-  umbralEdificadoMetros: BUILT_SPREAD_M,
-  mascaraEdificado: MASK_FILE,
+  resolutionMeters: Number(metersPerPixel.toFixed(1)),
+  windowMeters: Math.round(WINDOW_RADIUS_PX * metersPerPixel),
+  maxScaleMeters: LOWNESS_MAX_M,
+  builtThresholdMeters: BUILT_SPREAD_M,
+  builtMask: MASK_FILE,
   bounds,
-  ancho: width,
-  alto: height,
-  celdasTierra: landCells,
-  celdasHundidas1m: flagged,
-  celdasEdificadas: builtCells,
-  calculado: new Date().toISOString(),
+  width: width,
+  height: height,
+  landCells: landCells,
+  sunken1mCells: flagged,
+  builtCells: builtCells,
+  computedAt: new Date().toISOString(),
 };
-await writeFile(`${OUT_DIR}/terreno.json`, JSON.stringify(metadata, null, 2));
+await writeFile(`${OUT_DIR}/terrain.json`, JSON.stringify(metadata, null, 2));
 
 const spreads = Array.from(surface.spread).filter((value) => !Number.isNaN(value)).sort((a, b) => a - b);
 const pct = (p) => spreads[Math.floor(p * (spreads.length - 1))].toFixed(1);
-console.log(`dispersión (máx − mediana) por bloque · p50 ${pct(0.5)} · p75 ${pct(0.75)} · p90 ${pct(0.9)} · p99 ${pct(0.99)} m · umbral edificado ${BUILT_SPREAD_M} m`);
-console.log(`tierra ${landCells} celdas · edificado (sin lectura): ${builtCells} (${((builtCells / landCells) * 100).toFixed(1)} %) · ≥1 m bajo el entorno: ${flagged} (${((flagged / (landCells - builtCells)) * 100).toFixed(1)} % de lo legible) · ${metersPerPixel.toFixed(1)} m/px`);
-console.log("centro:", sampleAt(ROSARIO_CENTER.lat, ROSARIO_CENTER.lon));
+console.log(`spread (max − median) per block · p50 ${pct(0.5)} · p75 ${pct(0.75)} · p90 ${pct(0.9)} · p99 ${pct(0.99)} m · built threshold ${BUILT_SPREAD_M} m`);
+console.log(`land ${landCells} cells · built (no reading): ${builtCells} (${((builtCells / landCells) * 100).toFixed(1)} %) · ≥1 m below surroundings: ${flagged} (${((flagged / (landCells - builtCells)) * 100).toFixed(1)} % de lo legible) · ${metersPerPixel.toFixed(1)} m/px`);
+console.log("center:", sampleAt(ROSARIO_CENTER.lat, ROSARIO_CENTER.lon));
 console.log("Peatonal Córdoba 1200 (Nominatim):", sampleAt(DOWNTOWN_STREET.lat, DOWNTOWN_STREET.lon));
-for (const [zona, lat, lon] of [["1", -32.9074, -60.7449], ["2", -32.9037, -60.7317], ["3", -32.902, -60.7359], ["A", -33.0249, -60.6637], ["B", -33.025, -60.668], ["C", -33.0208, -60.6629], ["D", -33.0219, -60.6573]]) {
+for (const [zone, lat, lon] of [["1", -32.9074, -60.7449], ["2", -32.9037, -60.7317], ["3", -32.902, -60.7359], ["A", -33.0249, -60.6637], ["B", -33.025, -60.668], ["C", -33.0208, -60.6629], ["D", -33.0219, -60.6573]]) {
   const sample = sampleAt(lat, lon);
-  console.log(`zona ${zona}: ${sample.elevacion.toFixed(1)} m · ${sample.hundimiento.toFixed(2)} m bajo su entorno · dispersión ${sample.dispersion?.toFixed(1)} m${sample.edificado ? " · EDIFICADO" : ""}`);
+  console.log(`zone ${zone}: ${sample.elevation.toFixed(1)} m · ${sample.lowness.toFixed(2)} m below its surroundings · spread ${sample.dispersion?.toFixed(1)} m${sample.built ? " · EDIFICADO" : ""}`);
 }

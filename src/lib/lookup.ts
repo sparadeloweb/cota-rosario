@@ -2,67 +2,69 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson"
 import type { RasterMeta } from "@/lib/rasters";
 import type { RiskLevel } from "@/lib/risk";
 
-export type CategoriaClima = "muy bajo" | "bajo" | "medio" | "alto";
+export type ClimateCategory = "very low" | "low" | "medium" | "high";
 
-export interface ClimaMeta extends RasterMeta {
-  nombre: string;
-  fuente: string;
-  unidad: string;
-  categorias: string[];
-  categoriaGris: number[];
-  archivoCategorias: string;
+export const CLIMATE_CATEGORY_LABEL: Record<ClimateCategory, string> = { "very low": "muy bajo", low: "bajo", medium: "medio", high: "alto" };
+
+export interface ClimateMeta extends RasterMeta {
+  name: string;
+  source: string;
+  unit: string;
+  categories: string[];
+  grayCategories: number[];
+  categoriesFile: string;
 }
 
-export interface MesPico {
-  mes: string;
-  casos: number;
-  lluviaMm: number;
+export interface PeakMonth {
+  month: string;
+  cases: number;
+  rainMm: number;
 }
 
-export interface ResumenAnegamientos {
+export interface FloodingSummary {
   total: number;
-  porAnio: Record<string, number>;
-  mesPico: MesPico | null;
+  byYear: Record<string, number>;
+  peakMonth: PeakMonth | null;
 }
 
-export interface DefensaCivil {
-  periodo: { desde: string; hasta: string };
-  mesesPorAnio: Record<string, number>;
-  distritos: Record<string, ResumenAnegamientos>;
-  ciudad: ResumenAnegamientos;
+export interface CivilDefense {
+  period: { from: string; until: string };
+  monthsPerYear: Record<string, number>;
+  districts: Record<string, FloodingSummary>;
+  city: FloodingSummary;
 }
 
-export interface LecturaDistrito {
-  distrito: string;
-  participacion: number;
-  mesPico: MesPico | null;
+export interface DistrictReading {
+  district: string;
+  share: number;
+  peakMonth: PeakMonth | null;
 }
 
 export interface TerrainMeta extends RasterMeta {
-  escalaMaximaMetros: number;
-  ventanaMetros: number;
-  mascaraEdificado: string;
+  maxScaleMeters: number;
+  windowMeters: number;
+  builtMask: string;
 }
 
-export type LecturaTerreno = { estado: "bajo" | "plano" | "edificado"; metros: number } | null;
+export type TerrainReading = { status: "low" | "flat" | "built"; meters: number } | null;
 
-export interface Hallazgo {
-  etiqueta: string;
-  zona?: string;
-  nivel?: RiskLevel | null;
-  dentro: boolean;
-  cercano: { zona: string; metros: number } | null;
-  terreno: LecturaTerreno;
-  clima: CategoriaClima | null;
-  distrito: LecturaDistrito | null;
-  barrio: string | null;
+export interface Finding {
+  label: string;
+  zone?: string;
+  level?: RiskLevel | null;
+  inside: boolean;
+  nearest: { zone: string; meters: number } | null;
+  terrain: TerrainReading;
+  climateRisk: ClimateCategory | null;
+  district: DistrictReading | null;
+  neighbourhood: string | null;
 }
 
 type AnyPolygonFeature = Feature<Polygon | MultiPolygon, Record<string, string>>;
 
 const PERCENT = 100;
 const EARTH_RADIUS_M = 6371000;
-const MES_LABEL = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const MONTH_LABEL = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
 export function pointInPolygon(lat: number, lon: number, rings: number[][][]): boolean {
   let inside = false;
@@ -100,39 +102,39 @@ function segmentDistanceM(lat: number, lon: number, a: number[], b: number[]): n
 }
 
 export function nearestFeature(collection: FeatureCollection<Polygon | MultiPolygon, Record<string, string>>, lat: number, lon: number) {
-  return collection.features.reduce<{ feature: AnyPolygonFeature; metros: number } | null>((best, feature) => {
-    const metros = ringsOf(feature)
+  return collection.features.reduce<{ feature: AnyPolygonFeature; meters: number } | null>((best, feature) => {
+    const meters = ringsOf(feature)
       .flat()
       .reduce((min, ring) => ring.reduce((distance, point, i) => Math.min(distance, segmentDistanceM(lat, lon, point, ring[(i + 1) % ring.length])), min), Number.POSITIVE_INFINITY);
-    return best === null || metros < best.metros ? { feature, metros } : best;
+    return best === null || meters < best.meters ? { feature, meters } : best;
   }, null);
 }
 
-export function categoriaDesdeGris(meta: ClimaMeta, gris: number): CategoriaClima | null {
-  const index = meta.categoriaGris.findIndex((value) => Math.abs(value - gris) <= 1);
+export function categoryFromGray(meta: ClimateMeta, gray: number): ClimateCategory | null {
+  const index = meta.grayCategories.findIndex((value) => Math.abs(value - gray) <= 1);
   if (index <= 0) {
     return null;
   }
-  return meta.categorias[index] as CategoriaClima;
+  return meta.categories[index] as ClimateCategory;
 }
 
-export function lecturaDistrito(datos: DefensaCivil, distrito: string): LecturaDistrito | null {
-  const propio = datos.distritos[distrito];
-  if (!propio) {
+export function districtReading(data: CivilDefense, district: string): DistrictReading | null {
+  const own = data.districts[district];
+  if (!own) {
     return null;
   }
   return {
-    distrito,
-    participacion: datos.ciudad.total === 0 ? 0 : Math.round((propio.total / datos.ciudad.total) * PERCENT),
-    mesPico: propio.mesPico,
+    district,
+    share: data.city.total === 0 ? 0 : Math.round((own.total / data.city.total) * PERCENT),
+    peakMonth: own.peakMonth,
   };
 }
 
-export function etiquetaMes(mes: string): string {
-  const [anio, numero] = mes.split("-");
-  return `${MES_LABEL[Number(numero) - 1]} de ${anio}`;
+export function monthLabel(month: string): string {
+  const [year, number] = month.split("-");
+  return `${MONTH_LABEL[Number(number) - 1]} de ${year}`;
 }
 
-export function formatoDistancia(metros: number): string {
-  return metros < 1000 ? `${Math.round(metros / 10) * 10} m` : `${(metros / 1000).toFixed(1)} km`;
+export function formatDistance(meters: number): string {
+  return meters < 1000 ? `${Math.round(meters / 10) * 10} m` : `${(meters / 1000).toFixed(1)} km`;
 }

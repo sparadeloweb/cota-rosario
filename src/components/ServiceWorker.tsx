@@ -29,7 +29,7 @@ export function ServiceWorker() {
         registration.active?.postMessage({ type: "cota:precache", urls });
       })
       .catch((error: unknown) => {
-        console.warn("No se pudo registrar el service worker de Cota.", error);
+        console.warn("Could not register the Cota service worker.", error);
       });
   }, []);
   return null;

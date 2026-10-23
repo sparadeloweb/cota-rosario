@@ -11,46 +11,46 @@ const STEP_METERS = 0.01;
 const STEP_MM = 0.1;
 
 interface SimulatorProps {
-  metrosActuales: number;
-  alerta: number;
-  evacuacion: number | null;
-  picoActualMm: number;
+  currentMeters: number;
+  alert: number;
+  evacuation: number | null;
+  currentPeakMm: number;
 }
 
-function Estado({ nivel, grande = false }: { nivel: RiskLevel; grande?: boolean }) {
+function Status({ level, large = false }: { level: RiskLevel; large?: boolean }) {
   return (
-    <span className={`flex items-center gap-2 ${grande ? "text-base" : "text-sm"}`}>
-      <span className={`${grande ? "size-2.5" : "size-1.5"} rounded-full`} style={{ background: RISK_FILL[nivel] }} aria-hidden="true" />
-      <span className="text-ink">{RISK_LABEL[nivel]}</span>
+    <span className={`flex items-center gap-2 ${large ? "text-base" : "text-sm"}`}>
+      <span className={`${large ? "size-2.5" : "size-1.5"} rounded-full`} style={{ background: RISK_FILL[level] }} aria-hidden="true" />
+      <span className="text-ink">{RISK_LABEL[level]}</span>
     </span>
   );
 }
 
-function SimulatorPanel({ metrosActuales, alerta, evacuacion, picoActualMm }: SimulatorProps) {
-  const { setEscenario, reset } = useSimulation();
-  const [metros, setMetros] = useState(metrosActuales);
-  const [lluvia, setLluvia] = useState(picoActualMm);
-  const resultado = simulate({ metros, alerta, evacuacion, picoLluviaMm: lluvia });
-  const modificado = metros !== metrosActuales || lluvia !== picoActualMm;
+function SimulatorPanel({ currentMeters, alert, evacuation, currentPeakMm }: SimulatorProps) {
+  const { setScenario, reset } = useSimulation();
+  const [meters, setMeters] = useState(currentMeters);
+  const [rain, setRain] = useState(currentPeakMm);
+  const result = simulate({ meters, alert, evacuation, rainPeakMm: rain });
+  const modified = meters !== currentMeters || rain !== currentPeakMm;
 
-  const aplicar = (nuevosMetros: number, nuevaLluvia: number) => {
-    setMetros(nuevosMetros);
-    setLluvia(nuevaLluvia);
-    const cambia = nuevosMetros !== metrosActuales || nuevaLluvia !== picoActualMm;
-    setEscenario(cambia ? simulate({ metros: nuevosMetros, alerta, evacuacion, picoLluviaMm: nuevaLluvia }) : null);
+  const apply = (nextMeters: number, nextRain: number) => {
+    setMeters(nextMeters);
+    setRain(nextRain);
+    const changes = nextMeters !== currentMeters || nextRain !== currentPeakMm;
+    setScenario(changes ? simulate({ meters: nextMeters, alert, evacuation, rainPeakMm: nextRain }) : null);
   };
 
-  useEffect(() => () => setEscenario(null), [setEscenario]);
+  useEffect(() => () => setScenario(null), [setScenario]);
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Estado nivel={resultado.nivel} grande />
-        {modificado ? <span className="text-xs text-atencion">escenario simulado · el mapa lo refleja</span> : <span className="meta">valores iniciales de la consulta</span>}
+        <Status level={result.level} large />
+        {modified ? <span className="text-xs text-watch">escenario simulado · el mapa lo refleja</span> : <span className="meta">valores iniciales de la consulta</span>}
         <button
           type="button"
           onClick={reset}
-          disabled={!modificado}
+          disabled={!modified}
           className="ml-auto rounded-md border border-rule px-3 py-1 text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-40"
         >
           Restablecer
@@ -61,40 +61,40 @@ function SimulatorPanel({ metrosActuales, alerta, evacuacion, picoActualMm }: Si
         <label htmlFor="sim-rio" className="flex flex-col gap-2">
           <span className="flex items-baseline justify-between">
             <span className="text-sm text-ink">Altura del río</span>
-            <span className="readout text-sm text-ink">{metros.toFixed(2)} m</span>
+            <span className="readout text-sm text-ink">{meters.toFixed(2)} m</span>
           </span>
           <input
             id="sim-rio"
             type="range"
-            min={Math.min(0, metrosActuales)}
-            max={Math.max(MAX_METERS, metrosActuales)}
+            min={Math.min(0, currentMeters)}
+            max={Math.max(MAX_METERS, currentMeters)}
             step={STEP_METERS}
-            value={metros}
-            onChange={(event) => aplicar(Number(event.target.value), lluvia)}
+            value={meters}
+            onChange={(event) => apply(Number(event.target.value), rain)}
             className="accent-ink-soft"
           />
           <span className="meta">
-            alerta {alerta.toFixed(2)} · evacuación {evacuacion === null ? "no publicada" : evacuacion.toFixed(2)}
+            alerta {alert.toFixed(2)} · evacuación {evacuation === null ? "no publicada" : evacuation.toFixed(2)}
           </span>
         </label>
 
         <label htmlFor="sim-lluvia" className="flex flex-col gap-2">
           <span className="flex items-baseline justify-between">
             <span className="text-sm text-ink">Lluvia en 2 h</span>
-            <span className="readout text-sm text-ink">{lluvia.toFixed(1)} mm</span>
+            <span className="readout text-sm text-ink">{rain.toFixed(1)} mm</span>
           </span>
           <input
             id="sim-lluvia"
             type="range"
             min={0}
-            max={Math.max(MAX_RAIN_MM, picoActualMm)}
+            max={Math.max(MAX_RAIN_MM, currentPeakMm)}
             step={STEP_MM}
-            value={lluvia}
-            onChange={(event) => aplicar(metros, Number(event.target.value))}
+            value={rain}
+            onChange={(event) => apply(meters, Number(event.target.value))}
             className="accent-ink-soft"
           />
           <span className="meta">
-            atención {RAIN_THRESHOLDS.atencion} · alerta {RAIN_THRESHOLDS.alerta} · crítico {RAIN_THRESHOLDS.critico} mm
+            atención {RAIN_THRESHOLDS.watch} · alerta {RAIN_THRESHOLDS.alert} · crítico {RAIN_THRESHOLDS.critical} mm
           </span>
         </label>
       </div>
@@ -102,21 +102,21 @@ function SimulatorPanel({ metrosActuales, alerta, evacuacion, picoActualMm }: Si
       <div className="flex flex-col gap-2.5">
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <span className="text-ink-soft">Por altura del río</span>
-          <Estado nivel={resultado.rio} />
+          <Status level={result.river} />
         </div>
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <span className="text-ink-soft">Por lluvia concentrada</span>
-          <Estado nivel={resultado.lluvia} />
+          <Status level={result.rain} />
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
         <span className="meta">Zonas oficiales bajo este escenario</span>
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-          {resultado.zonas.map((zona) => (
-            <span key={zona.zona} className="flex items-center gap-1.5 text-xs">
-              <span className="size-1.5 rounded-full" style={{ background: RISK_FILL[zona.nivel] }} aria-hidden="true" />
-              <span className="readout text-ink-soft">Zona {zona.zona}</span>
+          {result.zones.map((zone) => (
+            <span key={zone.zone} className="flex items-center gap-1.5 text-xs">
+              <span className="size-1.5 rounded-full" style={{ background: RISK_FILL[zone.level] }} aria-hidden="true" />
+              <span className="readout text-ink-soft">Zona {zone.zone}</span>
             </span>
           ))}
         </div>
@@ -127,7 +127,6 @@ function SimulatorPanel({ metrosActuales, alerta, evacuacion, picoActualMm }: Si
 
 export function Simulator(props: SimulatorProps) {
   const { version } = useSimulation();
-  // A changed real baseline starts a new scenario and clears the previous map overlay.
-  const baseline = JSON.stringify([version, props.metrosActuales, props.alerta, props.evacuacion, props.picoActualMm]);
+  const baseline = JSON.stringify([version, props.currentMeters, props.alert, props.evacuation, props.currentPeakMm]);
   return <SimulatorPanel key={baseline} {...props} />;
 }

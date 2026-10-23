@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { FloodMap } from "@/components/FloodMap";
-import { PanelSection, ReportesResumen } from "@/components/panel/PanelBlocks";
+import { PanelSection, ReportsSummary } from "@/components/panel/PanelBlocks";
 import { LatestReports, ReportMix } from "@/components/panel/reports";
 import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
 import { PanelShell } from "@/components/shell/PanelShell";
@@ -13,7 +13,7 @@ import { REPORT_TTL_HOURS, type Report } from "@/lib/reportTypes";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Reportes · Operaciones · Cota" };
 
-async function reportesRecientes(): Promise<Report[] | null> {
+async function recentReports(): Promise<Report[] | null> {
   try {
     return await listReports();
   } catch {
@@ -21,39 +21,39 @@ async function reportesRecientes(): Promise<Report[] | null> {
   }
 }
 
-export default async function ReportesPage() {
-  const [{ estado, kpis }, lista] = await Promise.all([loadPanel(), reportesRecientes()]);
-  const { riesgo } = estado;
-  const reportes = kpis.reportes;
-  const viviendas = reportes?.porTipo.find((tipo) => tipo.tipo === "vivienda")?.cantidad ?? null;
+export default async function ReportsPage() {
+  const [{ status, kpis }, list] = await Promise.all([loadPanel(), recentReports()]);
+  const { risk } = status;
+  const reports = kpis.reports;
+  const homes = reports?.byType.find((type) => type.type === "home")?.count ?? null;
 
-  const cifras: HeroFigure[] = reportes
+  const figures: HeroFigure[] = reports
     ? [
-        { etiqueta: `Activos · ${REPORT_TTL_HOURS} h`, valor: reportes.activos, detalle: "cargados por vecinos" },
-        { etiqueta: "Últimas 6 h", valor: reportes.ultimas6h, detalle: "lo más reciente" },
-        { etiqueta: "Agua en viviendas", valor: viviendas, tono: viviendas ? "critico" : "neutro", detalle: "el tipo más grave" },
-        { etiqueta: "Confirmaciones", valor: reportes.confirmaciones, detalle: "otros vecinos que lo vieron" },
+        { label: `Activos · ${REPORT_TTL_HOURS} h`, value: reports.active, detail: "cargados por vecinos" },
+        { label: "Últimas 6 h", value: reports.last6h, detail: "lo más reciente" },
+        { label: "Agua en viviendas", value: homes, tone: homes ? "critical" : "neutral", detail: "el tipo más grave" },
+        { label: "Confirmaciones", value: reports.confirmations, detail: "otros vecinos que lo vieron" },
       ]
     : [];
 
   return (
-    <PanelShell nivel={riesgo.nivel} actualizadoEn={riesgo.evaluadoEn}>
+    <PanelShell level={risk.level} updatedAt={risk.assessedAt}>
       <Workspace
-        lienzo={<FloodMap zonas={riesgo.zonas} reportes />}
+        canvas={<FloodMap zones={risk.zones} reports />}
         rail={
           <div className="flex flex-col">
-            <SectionHero patron="reportes" meta={`Vecinos · últimas ${REPORT_TTL_HOURS} h`} titulo="Reportes" cifras={cifras}>
+            <SectionHero pattern="reports" meta={`Vecinos · últimas ${REPORT_TTL_HOURS} h`} title="Reportes" figures={figures}>
               Lo que cargaron los vecinos, por tipo y por distrito. Son señales para verificar: su ausencia no descarta agua en una zona.
             </SectionHero>
-            <PanelSection titulo="Qué y dónde">
-              {reportes ? reportes.activos ? <ReportMix reportes={reportes} /> : <ReportesResumen reportes={reportes} /> : <SourceDown falla={kpis.fallas.find((falla) => falla.fuente === "reportes")} />}
+            <PanelSection title="Qué y dónde">
+              {reports ? reports.active ? <ReportMix reports={reports} /> : <ReportsSummary reports={reports} /> : <SourceDown failure={kpis.failures.find((failure) => failure.source === "reports")} />}
             </PanelSection>
-            {lista?.length ? (
-              <PanelSection titulo="Los últimos">
-                <LatestReports reportes={lista} />
+            {list?.length ? (
+              <PanelSection title="Los últimos">
+                <LatestReports reports={list} />
               </PanelSection>
             ) : null}
-            <p className="hairline px-5 py-5 text-xs leading-relaxed text-ink-faint sm:px-6">Desde el panel los reportes son de sólo lectura. Los vecinos los cargan desde la pestaña Reportar o el mapa. Datos en <span className="readout">/api/reportes</span>.</p>
+            <p className="hairline px-5 py-5 text-xs leading-relaxed text-ink-faint sm:px-6">Desde el panel los reportes son de sólo lectura. Los vecinos los cargan desde la pestaña Reportar o el mapa. Datos en <span className="readout">/api/reports</span>.</p>
           </div>
         }
       />

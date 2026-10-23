@@ -18,9 +18,9 @@
   --water-deep: #24536a;
 
   --normal: #5c9e7a;
-  --atencion: #d2a13a;
-  --alerta: #db7c45;
-  --critico: #dc5449;
+  --watch: #d2a13a;
+  --alert: #db7c45;
+  --critical: #dc5449;
 }
 
 @theme inline {
@@ -35,9 +35,9 @@
   --color-water: var(--water);
   --color-water-deep: var(--water-deep);
   --color-normal: var(--normal);
-  --color-atencion: var(--atencion);
-  --color-alerta: var(--alerta);
-  --color-critico: var(--critico);
+  --color-watch: var(--watch);
+  --color-alert: var(--alert);
+  --color-critical: var(--critical);
   --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-plex-mono);
 }

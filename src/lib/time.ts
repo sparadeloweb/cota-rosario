@@ -1,7 +1,7 @@
 export const ARGENTINA_TIMEZONE = "America/Argentina/Buenos_Aires";
 
-const horaFormatter = new Intl.DateTimeFormat("es-AR", { timeZone: ARGENTINA_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: false });
-const fechaHoraFormatter = new Intl.DateTimeFormat("es-AR", {
+const timeFormatter = new Intl.DateTimeFormat("es-AR", { timeZone: ARGENTINA_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: false });
+const dateTimeFormatter = new Intl.DateTimeFormat("es-AR", {
   timeZone: ARGENTINA_TIMEZONE,
   day: "2-digit",
   month: "2-digit",
@@ -10,14 +10,14 @@ const fechaHoraFormatter = new Intl.DateTimeFormat("es-AR", {
   hour12: false,
 });
 
-export function horaArgentina(iso: string): string {
-  const fecha = new Date(iso);
-  return Number.isNaN(fecha.getTime()) ? "—" : horaFormatter.format(fecha);
+export function argentinaTime(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? "—" : timeFormatter.format(date);
 }
 
-export function fechaHoraArgentina(iso: string): string {
-  const fecha = new Date(iso);
-  return Number.isNaN(fecha.getTime()) ? "—" : fechaHoraFormatter.format(fecha).replace(",", "");
+export function argentinaDateTime(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? "—" : dateTimeFormatter.format(date).replace(",", "");
 }
 
 export function argentinaDay(now = Date.now()): string {
@@ -30,7 +30,6 @@ export function addCalendarDays(day: string, days: number): string {
   return new Date(Date.parse(`${day}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 }
 
-// The provider returns local ISO strings and an offset separately; never use the server's timezone.
 export function sourceTime(iso: string, utcOffsetSeconds: number): string {
   if (!Number.isInteger(utcOffsetSeconds) || Math.abs(utcOffsetSeconds) > 14 * 3600 || utcOffsetSeconds % 60 !== 0 || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(iso)) throw new Error("La fuente devolvió una fecha o zona horaria inválida.");
   const minutes = Math.abs(utcOffsetSeconds) / 60;

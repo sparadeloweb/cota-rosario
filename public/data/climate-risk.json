@@ -1,0 +1,39 @@
+{
+  "name": "Riesgo de afectación a vivienda y hábitat por precipitaciones torrenciales",
+  "source": "Mapas de Riesgo Climático Rosario 2024 · Municipalidad de Rosario, NAP Global Network y Dirección Nacional de Cambio Climático",
+  "unit": "radio censal",
+  "layer": "riesgo_vivienda_precipita",
+  "endpoint": "https://infomapa.rosario.gob.ar/wms/ambiente?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=riesgo_vivienda_precipita&STYLES=&SRS=EPSG%3A4326&BBOX=-60.8%2C-33.06%2C-60.58%2C-32.83&WIDTH=1958&HEIGHT=2048&FORMAT=image%2Fpng&TRANSPARENT=true",
+  "categories": [
+    "outside",
+    "very low",
+    "low",
+    "medium",
+    "high"
+  ],
+  "grayCategories": [
+    0,
+    51,
+    102,
+    153,
+    204
+  ],
+  "categoriesFile": "climate-risk-categories.png",
+  "bounds": {
+    "west": -60.8,
+    "east": -60.58,
+    "north": -32.83,
+    "south": -33.06
+  },
+  "width": 1958,
+  "height": 2048,
+  "resolutionMeters": 10.5,
+  "cellsByCategory": {
+    "outside": 2629964,
+    "very low": 668698,
+    "low": 263555,
+    "medium": 252319,
+    "high": 195448
+  },
+  "computedAt": "2026-09-23T02:50:06.117Z"
+}

@@ -1,0 +1,819 @@
+{
+  "flooding": {
+    "name": "Anegamientos mensuales atendidos por Defensa Civil en función de la lluvia",
+    "formula": "λ = exp(β0 + β1·total) · días/30,4",
+    "variables": {
+      "max2h": "mayor acumulado en 2 horas del período, mm",
+      "total": "lluvia total del período, mm"
+    },
+    "usedVariables": [
+      "total"
+    ],
+    "candidates": [
+      {
+        "variables": [
+          "total"
+        ],
+        "maeValidation": 32.8,
+        "nonNegativeCoefficients": true
+      },
+      {
+        "variables": [
+          "max2h"
+        ],
+        "maeValidation": 46.1,
+        "nonNegativeCoefficients": true
+      },
+      {
+        "variables": [
+          "max2h",
+          "total"
+        ],
+        "maeValidation": 32.5,
+        "nonNegativeCoefficients": false
+      }
+    ],
+    "coefficients": {
+      "intercept": 2.844036355869722,
+      "max2h": 0,
+      "total": 0.011826119433107806
+    },
+    "n": 36,
+    "nullDeviance": 2148.9,
+    "deviance": 938.6,
+    "pseudoR2": 0.563,
+    "crossValidation": {
+      "maeModel": 32.8,
+      "maeMean": 48.2
+    },
+    "daysPerMonth": 30.4,
+    "districtShare": {
+      "CENTRO": 0.4723,
+      "NOROESTE": 0.1385,
+      "NORTE": 0.1086,
+      "OESTE": 0.1025,
+      "SUDOESTE": 0.0578,
+      "SUR": 0.1202
+    },
+    "training": [
+      {
+        "month": "2021-01",
+        "cases": 307,
+        "total": 179.2,
+        "max2h": 28,
+        "predicted": 143.1
+      },
+      {
+        "month": "2021-02",
+        "cases": 10,
+        "total": 37.5,
+        "max2h": 7.4,
+        "predicted": 26.8
+      },
+      {
+        "month": "2021-03",
+        "cases": 167,
+        "total": 144.8,
+        "max2h": 24.5,
+        "predicted": 95.2
+      },
+      {
+        "month": "2021-04",
+        "cases": 116,
+        "total": 142.1,
+        "max2h": 19.9,
+        "predicted": 92.3
+      },
+      {
+        "month": "2021-05",
+        "cases": 15,
+        "total": 51.4,
+        "max2h": 5.8,
+        "predicted": 31.6
+      },
+      {
+        "month": "2021-06",
+        "cases": 6,
+        "total": 10.1,
+        "max2h": 4.4,
+        "predicted": 19.4
+      },
+      {
+        "month": "2021-07",
+        "cases": 14,
+        "total": 27.6,
+        "max2h": 4.2,
+        "predicted": 23.8
+      },
+      {
+        "month": "2021-08",
+        "cases": 15,
+        "total": 13,
+        "max2h": 4.6,
+        "predicted": 20
+      },
+      {
+        "month": "2021-09",
+        "cases": 60,
+        "total": 91.1,
+        "max2h": 10.6,
+        "predicted": 50.5
+      },
+      {
+        "month": "2021-10",
+        "cases": 77,
+        "total": 42.9,
+        "max2h": 12.4,
+        "predicted": 28.5
+      },
+      {
+        "month": "2021-11",
+        "cases": 45,
+        "total": 100.9,
+        "max2h": 14.2,
+        "predicted": 56.7
+      },
+      {
+        "month": "2021-12",
+        "cases": 10,
+        "total": 26.6,
+        "max2h": 7.6,
+        "predicted": 23.5
+      },
+      {
+        "month": "2022-01",
+        "cases": 4,
+        "total": 159.1,
+        "max2h": 30.5,
+        "predicted": 112.8
+      },
+      {
+        "month": "2022-02",
+        "cases": 8,
+        "total": 70.7,
+        "max2h": 24.5,
+        "predicted": 39.7
+      },
+      {
+        "month": "2022-03",
+        "cases": 99,
+        "total": 172.3,
+        "max2h": 22.4,
+        "predicted": 131.9
+      },
+      {
+        "month": "2022-04",
+        "cases": 40,
+        "total": 52.4,
+        "max2h": 25.7,
+        "predicted": 31.9
+      },
+      {
+        "month": "2022-05",
+        "cases": 14,
+        "total": 16.3,
+        "max2h": 8.5,
+        "predicted": 20.8
+      },
+      {
+        "month": "2022-06",
+        "cases": 16,
+        "total": 12.2,
+        "max2h": 3.8,
+        "predicted": 19.9
+      },
+      {
+        "month": "2022-07",
+        "cases": 4,
+        "total": 16.1,
+        "max2h": 3.8,
+        "predicted": 20.8
+      },
+      {
+        "month": "2022-08",
+        "cases": 8,
+        "total": 20.3,
+        "max2h": 6.3,
+        "predicted": 21.8
+      },
+      {
+        "month": "2022-09",
+        "cases": 9,
+        "total": 14.8,
+        "max2h": 3.7,
+        "predicted": 20.5
+      },
+      {
+        "month": "2022-10",
+        "cases": 19,
+        "total": 55.1,
+        "max2h": 11.6,
+        "predicted": 33
+      },
+      {
+        "month": "2022-11",
+        "cases": 21,
+        "total": 29,
+        "max2h": 9.1,
+        "predicted": 24.2
+      },
+      {
+        "month": "2023-01",
+        "cases": 91,
+        "total": 71.1,
+        "max2h": 11.8,
+        "predicted": 39.8
+      },
+      {
+        "month": "2023-02",
+        "cases": 42,
+        "total": 70.2,
+        "max2h": 11.7,
+        "predicted": 39.4
+      },
+      {
+        "month": "2023-03",
+        "cases": 85,
+        "total": 215.5,
+        "max2h": 41.7,
+        "predicted": 219.8
+      },
+      {
+        "month": "2023-04",
+        "cases": 20,
+        "total": 80.1,
+        "max2h": 27.1,
+        "predicted": 44.3
+      },
+      {
+        "month": "2023-05",
+        "cases": 188,
+        "total": 199.1,
+        "max2h": 28.3,
+        "predicted": 181
+      },
+      {
+        "month": "2023-06",
+        "cases": 21,
+        "total": 12.5,
+        "max2h": 3.1,
+        "predicted": 19.9
+      },
+      {
+        "month": "2023-07",
+        "cases": 30,
+        "total": 45.7,
+        "max2h": 8.2,
+        "predicted": 29.5
+      },
+      {
+        "month": "2023-08",
+        "cases": 10,
+        "total": 28.1,
+        "max2h": 7.2,
+        "predicted": 24
+      },
+      {
+        "month": "2023-09",
+        "cases": 10,
+        "total": 29.6,
+        "max2h": 10.2,
+        "predicted": 24.4
+      },
+      {
+        "month": "2023-10",
+        "cases": 62,
+        "total": 93.7,
+        "max2h": 21.6,
+        "predicted": 52
+      },
+      {
+        "month": "2023-11",
+        "cases": 113,
+        "total": 50.9,
+        "max2h": 11.6,
+        "predicted": 31.4
+      },
+      {
+        "month": "2023-12",
+        "cases": 137,
+        "total": 140.8,
+        "max2h": 18.7,
+        "predicted": 90.8
+      },
+      {
+        "month": "2024-01",
+        "cases": 78,
+        "total": 136.2,
+        "max2h": 27.9,
+        "predicted": 86
+      }
+    ],
+    "rain": {
+      "source": "Open-Meteo archivo histórico (modelo no fijado en el snapshot original), horario",
+      "endpoint": "https://archive-api.open-meteo.com/v1/archive"
+    }
+  },
+  "extremeRain": {
+    "name": "Máximo diario anual de lluvia, distribución de Gumbel",
+    "formula": "F(x) = exp(−exp(−(x − μ)/β)) · μ y β por momentos",
+    "gumbel": {
+      "mu": 61.75,
+      "beta": 13.58,
+      "n": 86
+    },
+    "period": {
+      "from": 1940,
+      "until": 2025
+    },
+    "quantiles": [
+      {
+        "periodYears": 2,
+        "mm": 66.7
+      },
+      {
+        "periodYears": 5,
+        "mm": 82.1
+      },
+      {
+        "periodYears": 10,
+        "mm": 92.3
+      },
+      {
+        "periodYears": 25,
+        "mm": 105.2
+      },
+      {
+        "periodYears": 50,
+        "mm": 114.8
+      },
+      {
+        "periodYears": 100,
+        "mm": 124.2
+      }
+    ],
+    "annualMaxima": [
+      {
+        "year": 1940,
+        "mm": 63.4
+      },
+      {
+        "year": 1941,
+        "mm": 38.2
+      },
+      {
+        "year": 1942,
+        "mm": 70.1
+      },
+      {
+        "year": 1943,
+        "mm": 56.8
+      },
+      {
+        "year": 1944,
+        "mm": 38.1
+      },
+      {
+        "year": 1945,
+        "mm": 67.2
+      },
+      {
+        "year": 1946,
+        "mm": 90.7
+      },
+      {
+        "year": 1947,
+        "mm": 36.5
+      },
+      {
+        "year": 1948,
+        "mm": 69.2
+      },
+      {
+        "year": 1949,
+        "mm": 81.3
+      },
+      {
+        "year": 1950,
+        "mm": 37.8
+      },
+      {
+        "year": 1951,
+        "mm": 71.5
+      },
+      {
+        "year": 1952,
+        "mm": 59.2
+      },
+      {
+        "year": 1953,
+        "mm": 69.6
+      },
+      {
+        "year": 1954,
+        "mm": 48.9
+      },
+      {
+        "year": 1955,
+        "mm": 102.7
+      },
+      {
+        "year": 1956,
+        "mm": 44.2
+      },
+      {
+        "year": 1957,
+        "mm": 86.7
+      },
+      {
+        "year": 1958,
+        "mm": 71.3
+      },
+      {
+        "year": 1959,
+        "mm": 64.3
+      },
+      {
+        "year": 1960,
+        "mm": 56.1
+      },
+      {
+        "year": 1961,
+        "mm": 56.4
+      },
+      {
+        "year": 1962,
+        "mm": 53.8
+      },
+      {
+        "year": 1963,
+        "mm": 69.4
+      },
+      {
+        "year": 1964,
+        "mm": 59.2
+      },
+      {
+        "year": 1965,
+        "mm": 81.1
+      },
+      {
+        "year": 1966,
+        "mm": 94.4
+      },
+      {
+        "year": 1967,
+        "mm": 63.9
+      },
+      {
+        "year": 1968,
+        "mm": 68
+      },
+      {
+        "year": 1969,
+        "mm": 47.3
+      },
+      {
+        "year": 1970,
+        "mm": 50.5
+      },
+      {
+        "year": 1971,
+        "mm": 61.5
+      },
+      {
+        "year": 1972,
+        "mm": 59.9
+      },
+      {
+        "year": 1973,
+        "mm": 55.1
+      },
+      {
+        "year": 1974,
+        "mm": 73.3
+      },
+      {
+        "year": 1975,
+        "mm": 66.4
+      },
+      {
+        "year": 1976,
+        "mm": 72.7
+      },
+      {
+        "year": 1977,
+        "mm": 39.8
+      },
+      {
+        "year": 1978,
+        "mm": 103.8
+      },
+      {
+        "year": 1979,
+        "mm": 67.8
+      },
+      {
+        "year": 1980,
+        "mm": 94.1
+      },
+      {
+        "year": 1981,
+        "mm": 66.7
+      },
+      {
+        "year": 1982,
+        "mm": 71
+      },
+      {
+        "year": 1983,
+        "mm": 77.1
+      },
+      {
+        "year": 1984,
+        "mm": 92.5
+      },
+      {
+        "year": 1985,
+        "mm": 76.7
+      },
+      {
+        "year": 1986,
+        "mm": 81.8
+      },
+      {
+        "year": 1987,
+        "mm": 54.5
+      },
+      {
+        "year": 1988,
+        "mm": 70.2
+      },
+      {
+        "year": 1989,
+        "mm": 68.2
+      },
+      {
+        "year": 1990,
+        "mm": 73.2
+      },
+      {
+        "year": 1991,
+        "mm": 59.4
+      },
+      {
+        "year": 1992,
+        "mm": 80.1
+      },
+      {
+        "year": 1993,
+        "mm": 67.5
+      },
+      {
+        "year": 1994,
+        "mm": 69
+      },
+      {
+        "year": 1995,
+        "mm": 91.6
+      },
+      {
+        "year": 1996,
+        "mm": 62.5
+      },
+      {
+        "year": 1997,
+        "mm": 109.7
+      },
+      {
+        "year": 1998,
+        "mm": 102.1
+      },
+      {
+        "year": 1999,
+        "mm": 58.7
+      },
+      {
+        "year": 2000,
+        "mm": 70.5
+      },
+      {
+        "year": 2001,
+        "mm": 57.5
+      },
+      {
+        "year": 2002,
+        "mm": 107.1
+      },
+      {
+        "year": 2003,
+        "mm": 74
+      },
+      {
+        "year": 2004,
+        "mm": 44.6
+      },
+      {
+        "year": 2005,
+        "mm": 87.2
+      },
+      {
+        "year": 2006,
+        "mm": 63.2
+      },
+      {
+        "year": 2007,
+        "mm": 76.5
+      },
+      {
+        "year": 2008,
+        "mm": 71.3
+      },
+      {
+        "year": 2009,
+        "mm": 113.5
+      },
+      {
+        "year": 2010,
+        "mm": 71.4
+      },
+      {
+        "year": 2011,
+        "mm": 66.4
+      },
+      {
+        "year": 2012,
+        "mm": 72.7
+      },
+      {
+        "year": 2013,
+        "mm": 79
+      },
+      {
+        "year": 2014,
+        "mm": 60.6
+      },
+      {
+        "year": 2015,
+        "mm": 91.1
+      },
+      {
+        "year": 2016,
+        "mm": 66.6
+      },
+      {
+        "year": 2017,
+        "mm": 103
+      },
+      {
+        "year": 2018,
+        "mm": 66.2
+      },
+      {
+        "year": 2019,
+        "mm": 43.2
+      },
+      {
+        "year": 2020,
+        "mm": 44.5
+      },
+      {
+        "year": 2021,
+        "mm": 72.9
+      },
+      {
+        "year": 2022,
+        "mm": 50
+      },
+      {
+        "year": 2023,
+        "mm": 76.7
+      },
+      {
+        "year": 2024,
+        "mm": 77.9
+      },
+      {
+        "year": 2025,
+        "mm": 82.6
+      }
+    ],
+    "dailyThresholds": [
+      20,
+      30,
+      50
+    ],
+    "monthlyClimatology": [
+      {
+        "month": 1,
+        "meanMm": 101.2,
+        "dayProbability": {
+          "20": 0.0488,
+          "30": 0.0266,
+          "50": 0.0098
+        }
+      },
+      {
+        "month": 2,
+        "meanMm": 115.3,
+        "dayProbability": {
+          "20": 0.0621,
+          "30": 0.0325,
+          "50": 0.0128
+        }
+      },
+      {
+        "month": 3,
+        "meanMm": 125.8,
+        "dayProbability": {
+          "20": 0.0705,
+          "30": 0.0383,
+          "50": 0.0143
+        }
+      },
+      {
+        "month": 4,
+        "meanMm": 94.8,
+        "dayProbability": {
+          "20": 0.0488,
+          "30": 0.0252,
+          "50": 0.0081
+        }
+      },
+      {
+        "month": 5,
+        "meanMm": 65.1,
+        "dayProbability": {
+          "20": 0.0311,
+          "30": 0.0154,
+          "50": 0.0064
+        }
+      },
+      {
+        "month": 6,
+        "meanMm": 37.2,
+        "dayProbability": {
+          "20": 0.0109,
+          "30": 0.0054,
+          "50": 0.0004
+        }
+      },
+      {
+        "month": 7,
+        "meanMm": 42.4,
+        "dayProbability": {
+          "20": 0.0165,
+          "30": 0.0075,
+          "50": 0.0008
+        }
+      },
+      {
+        "month": 8,
+        "meanMm": 51.2,
+        "dayProbability": {
+          "20": 0.0244,
+          "30": 0.0113,
+          "50": 0.0019
+        }
+      },
+      {
+        "month": 9,
+        "meanMm": 70.6,
+        "dayProbability": {
+          "20": 0.0353,
+          "30": 0.0163,
+          "50": 0.0039
+        }
+      },
+      {
+        "month": 10,
+        "meanMm": 102.7,
+        "dayProbability": {
+          "20": 0.0533,
+          "30": 0.024,
+          "50": 0.0053
+        }
+      },
+      {
+        "month": 11,
+        "meanMm": 101.5,
+        "dayProbability": {
+          "20": 0.0535,
+          "30": 0.026,
+          "50": 0.0074
+        }
+      },
+      {
+        "month": 12,
+        "meanMm": 90.7,
+        "dayProbability": {
+          "20": 0.045,
+          "30": 0.0203,
+          "50": 0.0038
+        }
+      }
+    ],
+    "source": "Open-Meteo archivo histórico (modelo no fijado en el snapshot original), diario"
+  },
+  "computedAt": "2026-09-23T03:10:53.244Z"
+}

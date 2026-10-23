@@ -1,0 +1,24 @@
+{
+  "name": "Puntos bajos del terreno — modelo de elevación",
+  "method": "Cuánto más bajo está cada punto que la mediana de su entorno de 321 m. La mediana ignora los edificios, que el modelo de superficie mide como terreno. Sólo sobre tierra (5–80 m); el agua queda enmascarada.",
+  "source": "Mapzen Terrain Tiles en AWS (SRTM, GMTED2010, ETOPO1)",
+  "endpoint": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium",
+  "zoom": 13,
+  "resolutionMeters": 16,
+  "windowMeters": 321,
+  "maxScaleMeters": 3,
+  "builtThresholdMeters": 8,
+  "builtMask": "terrain-built.png",
+  "bounds": {
+    "west": -60.8203125,
+    "east": -60.556640625,
+    "north": -32.80574473290686,
+    "south": -33.06392419812064
+  },
+  "width": 1536,
+  "height": 1792,
+  "landCells": 2714729,
+  "sunken1mCells": 744373,
+  "builtCells": 463496,
+  "computedAt": "2026-09-23T00:14:36.822Z"
+}

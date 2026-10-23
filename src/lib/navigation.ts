@@ -1,37 +1,42 @@
-export type NavIcon = "mapa" | "zona" | "reportar" | "mas" | "resumen" | "rio" | "lluvia" | "pronostico" | "reportes" | "simulador";
+export type NavIcon = "map" | "zone" | "report" | "more" | "summary" | "river" | "rain" | "forecast" | "reports" | "simulator";
 
 export interface NavItem {
   href: string;
-  etiqueta: string;
-  icono: NavIcon;
+  label: string;
+  icon: NavIcon;
 }
 
-export const VECINOS_HOME = "/";
+export const RESIDENTS_HOME = "/";
 export const PANEL_HOME = "/operaciones";
 export const HELP_HREF = "/como-funciona";
 export const EMERGENCY_PHONE = "103";
 
-export const VECINOS_TABS: readonly NavItem[] = [
-  { href: VECINOS_HOME, etiqueta: "Mapa", icono: "mapa" },
-  { href: "/zona", etiqueta: "Mi zona", icono: "zona" },
-  { href: "/reportar", etiqueta: "Reportar", icono: "reportar" },
-  { href: "/mas", etiqueta: "Más", icono: "mas" },
+export const RESIDENTS_TABS: readonly NavItem[] = [
+  { href: RESIDENTS_HOME, label: "Mapa", icon: "map" },
+  { href: "/zona", label: "Mi zona", icon: "zone" },
+  { href: "/reportar", label: "Reportar", icon: "report" },
+  { href: "/mas", label: "Más", icon: "more" },
 ];
 
 export const PANEL_SECTIONS: readonly NavItem[] = [
-  { href: PANEL_HOME, etiqueta: "Resumen", icono: "resumen" },
-  { href: "/operaciones/rio", etiqueta: "Río", icono: "rio" },
-  { href: "/operaciones/lluvia", etiqueta: "Lluvia", icono: "lluvia" },
-  { href: "/operaciones/pronostico", etiqueta: "Pronóstico", icono: "pronostico" },
-  { href: "/operaciones/reportes", etiqueta: "Reportes", icono: "reportes" },
-  { href: "/operaciones/simulador", etiqueta: "Simulador", icono: "simulador" },
+  { href: PANEL_HOME, label: "Resumen", icon: "summary" },
+  { href: "/operaciones/rio", label: "Río", icon: "river" },
+  { href: "/operaciones/lluvia", label: "Lluvia", icon: "rain" },
+  { href: "/operaciones/pronostico", label: "Pronóstico", icon: "forecast" },
+  { href: "/operaciones/reportes", label: "Reportes", icon: "reports" },
+  { href: "/operaciones/simulador", label: "Simulador", icon: "simulator" },
 ];
 
 export const LEGACY_REDIRECTS: readonly { source: string; destination: string; permanent: true }[] = [
   { source: "/predicciones", destination: "/operaciones/pronostico", permanent: true },
+  { source: "/api/estado", destination: "/api/status", permanent: true },
+  { source: "/api/predicciones", destination: "/api/predictions", permanent: true },
+  { source: "/api/recomendaciones", destination: "/api/recommendations", permanent: true },
+  { source: "/api/reportes", destination: "/api/reports", permanent: true },
+  { source: "/api/reportes/:id/confirmar", destination: "/api/reports/:id/confirm", permanent: true },
 ];
 
-const SECTION_ROOTS = new Set([VECINOS_HOME, PANEL_HOME]);
+const SECTION_ROOTS = new Set([RESIDENTS_HOME, PANEL_HOME]);
 
 export function isActive(item: NavItem, pathname: string): boolean {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;

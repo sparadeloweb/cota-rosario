@@ -1,8 +1,8 @@
-import distritosGeo from "../../public/data/distritos.json";
-import modelos from "../../public/data/modelos.json";
+import distritosGeo from "../../public/data/districts.json";
+import models from "../../public/data/models.json";
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
-import type { SourceFailure, SourceId } from "@/lib/estado";
-import { loadEstado, type Estado } from "@/lib/estado";
+import type { SourceFailure, SourceId } from "@/lib/status";
+import { loadStatus, type Status } from "@/lib/status";
 import { trendProjection } from "@/lib/forecast/river";
 import { featureAt } from "@/lib/lookup";
 import { fetchMonthToDateRain, fetchRainBalance, type MonthRain, type RainBalance } from "@/lib/rain";
@@ -22,197 +22,197 @@ const PERCENT = 100;
 const CM_PER_M = 100;
 
 export interface RiverKpis {
-  actual: number;
-  fecha: string;
-  variacion24hCm: number | null;
-  variacion7dCm: number | null;
-  margenAlertaM: number | null;
-  diasHastaAlerta: number | null;
-  ritmoCmDia: number | null;
-  percentil210: number;
-  maximo210: RiverReading;
-  minimo210: RiverReading;
+  current: number;
+  date: string;
+  change24hCm: number | null;
+  change7dCm: number | null;
+  alertMarginM: number | null;
+  daysToAlert: number | null;
+  rateCmPerDay: number | null;
+  percentile210: number;
+  max210: RiverReading;
+  min210: RiverReading;
   sparkline: RiverReading[];
 }
 
 export interface UpstreamStation {
-  nombre: string;
-  rio: string;
-  metros: number;
-  alerta: number | null;
-  evacuacion: number | null;
-  tendencia: string;
-  margenAlertaM: number | null;
-  fecha: string;
-  esRosario: boolean;
-  esAguasArriba: boolean;
+  name: string;
+  river: string;
+  meters: number;
+  alert: number | null;
+  evacuation: number | null;
+  trend: string;
+  alertMarginM: number | null;
+  date: string;
+  isRosario: boolean;
+  isUpstream: boolean;
 }
 
 export interface NetworkKpis {
   total: number;
-  conUmbral: number;
-  sobreAlerta: number;
-  sobreEvacuacion: number;
-  creciendo: number;
-  enAlerta: RiverStation[];
+  withThreshold: number;
+  overAlert: number;
+  overEvacuation: number;
+  rising: number;
+  inAlert: RiverStation[];
 }
 
 export interface RainKpis {
   balance: RainBalance;
-  mes: MonthRain | null;
-  mesNormalMm: number | null;
+  month: MonthRain | null;
+  monthNormalMm: number | null;
 }
 
 export interface ReportKpis {
-  activos: number;
-  ultimas6h: number;
-  confirmaciones: number;
-  porTipo: { tipo: ReportType; etiqueta: string; color: string; cantidad: number }[];
-  porDistrito: { distrito: string; cantidad: number }[];
+  active: number;
+  last6h: number;
+  confirmations: number;
+  byType: { type: ReportType; label: string; color: string; count: number }[];
+  byDistrict: { district: string; count: number }[];
 }
 
 export interface Kpis {
-  rio: RiverKpis | null;
-  aguasArriba: UpstreamStation[];
-  red: NetworkKpis | null;
-  lluvia: RainKpis | null;
-  reportes: ReportKpis | null;
-  fallas: SourceFailure[];
-  generadoEn: string;
+  river: RiverKpis | null;
+  upstream: UpstreamStation[];
+  network: NetworkKpis | null;
+  rain: RainKpis | null;
+  reports: ReportKpis | null;
+  failures: SourceFailure[];
+  generatedAt: string;
 }
 
 type Districts = FeatureCollection<Polygon | MultiPolygon, Record<string, string>>;
 
-const distritos = distritosGeo as Districts;
+const districts = distritosGeo as Districts;
 
-function failure(fuente: SourceId, reason: unknown): SourceFailure {
-  return { fuente, mensaje: reason instanceof Error ? reason.message : String(reason), en: new Date().toISOString() };
+function failure(source: SourceId, reason: unknown): SourceFailure {
+  return { source, message: reason instanceof Error ? reason.message : String(reason), at: new Date().toISOString() };
 }
 
-function readingDaysBefore(serie: RiverReading[], ultimo: RiverReading, days: number): RiverReading | undefined {
-  const objetivo = new Date(ultimo.fecha).getTime() - days * MILLIS_PER_DAY;
-  return serie
-    .filter((reading) => new Date(reading.fecha).getTime() <= objetivo)
-    .sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
+function readingDaysBefore(series: RiverReading[], last: RiverReading, days: number): RiverReading | undefined {
+  const target = new Date(last.date).getTime() - days * MILLIS_PER_DAY;
+  return series
+    .filter((reading) => new Date(reading.date).getTime() <= target)
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
 }
 
-function deltaCm(ultimo: RiverReading, anterior: RiverReading | undefined): number | null {
-  return anterior ? Math.round((ultimo.metros - anterior.metros) * CM_PER_M) : null;
+function deltaCm(last: RiverReading, previous: RiverReading | undefined): number | null {
+  return previous ? Math.round((last.meters - previous.meters) * CM_PER_M) : null;
 }
 
-function buildRiver(rio: RiverSnapshot): RiverKpis | null {
-  const historia = mergeRiverHistory(rio.serie).serie;
-  const ultimo = historia[historia.length - 1];
-  if (!ultimo) {
+function buildRiver(river: RiverSnapshot): RiverKpis | null {
+  const history = mergeRiverHistory(river.series).series;
+  const last = history[history.length - 1];
+  if (!last) {
     return null;
   }
-  const ordenados = [...historia].sort((a, b) => a.metros - b.metros);
-  const debajo = ordenados.filter((reading) => reading.metros < ultimo.metros).length;
-  const tendencia = trendProjection(historia, TREND_WINDOW_DAYS, HORIZON_DAYS, { alerta: rio.estacion.alerta });
+  const sorted = [...history].sort((a, b) => a.meters - b.meters);
+  const below = sorted.filter((reading) => reading.meters < last.meters).length;
+  const trend = trendProjection(history, TREND_WINDOW_DAYS, HORIZON_DAYS, { alert: river.station.alert });
   return {
-    actual: ultimo.metros,
-    fecha: ultimo.fecha,
-    variacion24hCm: deltaCm(ultimo, readingDaysBefore(historia, ultimo, 1)),
-    variacion7dCm: deltaCm(ultimo, readingDaysBefore(historia, ultimo, 7)),
-    margenAlertaM: rio.estacion.alerta === null ? null : Number((rio.estacion.alerta - ultimo.metros).toFixed(2)),
-    diasHastaAlerta: tendencia?.diasHasta.alerta ?? null,
-    ritmoCmDia: tendencia ? Number((tendencia.metrosPorDia * CM_PER_M).toFixed(1)) : null,
-    percentil210: Math.round((debajo / historia.length) * PERCENT),
-    maximo210: ordenados[ordenados.length - 1],
-    minimo210: ordenados[0],
-    sparkline: historia.filter((reading) => Date.now() - new Date(reading.fecha).getTime() <= SPARKLINE_DAYS * MILLIS_PER_DAY),
+    current: last.meters,
+    date: last.date,
+    change24hCm: deltaCm(last, readingDaysBefore(history, last, 1)),
+    change7dCm: deltaCm(last, readingDaysBefore(history, last, 7)),
+    alertMarginM: river.station.alert === null ? null : Number((river.station.alert - last.meters).toFixed(2)),
+    daysToAlert: trend?.daysUntil.alert ?? null,
+    rateCmPerDay: trend ? Number((trend.metersPerDay * CM_PER_M).toFixed(1)) : null,
+    percentile210: Math.round((below / history.length) * PERCENT),
+    max210: sorted[sorted.length - 1],
+    min210: sorted[0],
+    sparkline: history.filter((reading) => Date.now() - new Date(reading.date).getTime() <= SPARKLINE_DAYS * MILLIS_PER_DAY),
   };
 }
 
-function fresh(fecha: string): boolean {
-  const age = Date.now() - Date.parse(fecha);
+function fresh(date: string): boolean {
+  const age = Date.now() - Date.parse(date);
   return Number.isFinite(age) && age >= -900_000 && age <= 48 * 3_600_000;
 }
 
-function buildUpstream(red: RiverStation[]): UpstreamStation[] {
-  return UPSTREAM_CHAIN.flatMap((nombre) => {
-    const station = red.find((entry) => entry.nombre === nombre && fresh(entry.fecha));
+function buildUpstream(network: RiverStation[]): UpstreamStation[] {
+  return UPSTREAM_CHAIN.flatMap((name) => {
+    const station = network.find((entry) => entry.name === name && fresh(entry.date));
     if (!station) {
       return [];
     }
     const usable = hasUsableThresholds(station);
     return [
       {
-        nombre: station.nombre,
-        rio: station.rio,
-        metros: station.metros,
-        alerta: usable ? station.alerta : null,
-        evacuacion: usable ? station.evacuacion : null,
-        tendencia: station.tendencia,
-        margenAlertaM: usable && station.alerta ? Number((station.alerta - station.metros).toFixed(2)) : null,
-        fecha: station.fecha,
-        esRosario: station.nombre === "Rosario",
-        esAguasArriba: UPSTREAM_CHAIN.indexOf(nombre) < UPSTREAM_CHAIN.indexOf("Rosario"),
+        name: station.name,
+        river: station.river,
+        meters: station.meters,
+        alert: usable ? station.alert : null,
+        evacuation: usable ? station.evacuation : null,
+        trend: station.trend,
+        alertMarginM: usable && station.alert ? Number((station.alert - station.meters).toFixed(2)) : null,
+        date: station.date,
+        isRosario: station.name === "Rosario",
+        isUpstream: UPSTREAM_CHAIN.indexOf(name) < UPSTREAM_CHAIN.indexOf("Rosario"),
       },
     ];
   });
 }
 
-function buildNetwork(red: RiverStation[]): NetworkKpis {
-  const conUmbral = red.filter((station) => fresh(station.fecha) && hasUsableThresholds(station));
-  const enAlerta = conUmbral.filter((station) => station.alerta !== null && station.metros >= station.alerta);
+function buildNetwork(network: RiverStation[]): NetworkKpis {
+  const withThreshold = network.filter((station) => fresh(station.date) && hasUsableThresholds(station));
+  const inAlert = withThreshold.filter((station) => station.alert !== null && station.meters >= station.alert);
   return {
-    total: red.length,
-    conUmbral: conUmbral.length,
-    sobreAlerta: enAlerta.length,
-    sobreEvacuacion: conUmbral.filter((station) => station.evacuacion !== null && station.evacuacion > 0 && station.metros >= station.evacuacion).length,
-    creciendo: conUmbral.filter((station) => station.tendencia.toLowerCase() === "crece").length,
-    enAlerta: enAlerta.sort((a, b) => (a.alerta! - a.metros) - (b.alerta! - b.metros)),
+    total: network.length,
+    withThreshold: withThreshold.length,
+    overAlert: inAlert.length,
+    overEvacuation: withThreshold.filter((station) => station.evacuation !== null && station.evacuation > 0 && station.meters >= station.evacuation).length,
+    rising: withThreshold.filter((station) => station.trend.toLowerCase() === "crece").length,
+    inAlert: inAlert.sort((a, b) => (a.alert! - a.meters) - (b.alert! - b.meters)),
   };
 }
 
 function buildReports(reports: Report[]): ReportKpis {
-  const limite = Date.now() - RECENT_REPORT_HOURS * 3_600_000;
-  const conteoDistrito = reports.reduce<Record<string, number>>((acc, report) => {
-    const distrito = featureAt(distritos, report.lat, report.lon)?.properties.distrito ?? "fuera de la ciudad";
-    return { ...acc, [distrito]: (acc[distrito] ?? 0) + 1 };
+  const cutoff = Date.now() - RECENT_REPORT_HOURS * 3_600_000;
+  const countByDistrict = reports.reduce<Record<string, number>>((acc, report) => {
+    const district = featureAt(districts, report.lat, report.lon)?.properties.district ?? "fuera de la ciudad";
+    return { ...acc, [district]: (acc[district] ?? 0) + 1 };
   }, {});
   return {
-    activos: reports.length,
-    ultimas6h: reports.filter((report) => new Date(report.creadoEn).getTime() >= limite).length,
-    confirmaciones: reports.reduce((total, report) => total + report.confirmaciones, 0),
-    porTipo: (Object.keys(REPORT_TYPES) as ReportType[]).map((tipo) => ({
-      tipo,
-      etiqueta: REPORT_TYPES[tipo].etiqueta,
-      color: REPORT_TYPES[tipo].color,
-      cantidad: reports.filter((report) => report.tipo === tipo).length,
+    active: reports.length,
+    last6h: reports.filter((report) => new Date(report.createdAt).getTime() >= cutoff).length,
+    confirmations: reports.reduce((total, report) => total + report.confirmations, 0),
+    byType: (Object.keys(REPORT_TYPES) as ReportType[]).map((type) => ({
+      type,
+      label: REPORT_TYPES[type].label,
+      color: REPORT_TYPES[type].color,
+      count: reports.filter((report) => report.type === type).length,
     })),
-    porDistrito: Object.entries(conteoDistrito)
-      .map(([distrito, cantidad]) => ({ distrito, cantidad }))
-      .sort((a, b) => b.cantidad - a.cantidad),
+    byDistrict: Object.entries(countByDistrict)
+      .map(([district, count]) => ({ district, count }))
+      .sort((a, b) => b.count - a.count),
   };
 }
 
-function monthNormal(mes: string): number | null {
-  const numero = Number(mes.slice(5, 7));
-  return modelos.lluviaExtrema.climatologiaMensual.find((entry) => entry.mes === numero)?.mediaMm ?? null;
+function monthNormal(month: string): number | null {
+  const number = Number(month.slice(5, 7));
+  return models.extremeRain.monthlyClimatology.find((entry) => entry.month === number)?.meanMm ?? null;
 }
 
-export async function loadKpis(input?: Estado | Promise<Estado>): Promise<Kpis> {
-  const [estado, [balanceResult, mesResult, reportesResult]] = await Promise.all([input ?? loadEstado(), Promise.allSettled([fetchRainBalance(), fetchMonthToDateRain(), listReports()])]);
-  const fallas: SourceFailure[] = [...estado.fallas];
+export async function loadKpis(input?: Status | Promise<Status>): Promise<Kpis> {
+  const [status, [balanceResult, monthResult, reportsResult]] = await Promise.all([input ?? loadStatus(), Promise.allSettled([fetchRainBalance(), fetchMonthToDateRain(), listReports()])]);
+  const failures: SourceFailure[] = [...status.failures];
   if (balanceResult.status === "rejected") {
-    fallas.push(failure("openMeteo", balanceResult.reason));
+    failures.push(failure("openMeteo", balanceResult.reason));
   }
-  if (mesResult.status === "rejected") fallas.push(failure("openMeteo", mesResult.reason));
-  if (reportesResult.status === "rejected") fallas.push(failure("reportes", reportesResult.reason));
-  const rio = estado.rio;
+  if (monthResult.status === "rejected") failures.push(failure("openMeteo", monthResult.reason));
+  if (reportsResult.status === "rejected") failures.push(failure("reports", reportsResult.reason));
+  const river = status.river;
   const balance = balanceResult.status === "fulfilled" ? balanceResult.value : null;
-  const mes = mesResult.status === "fulfilled" ? mesResult.value : null;
-  const reportes = reportesResult.status === "fulfilled" ? reportesResult.value : null;
+  const month = monthResult.status === "fulfilled" ? monthResult.value : null;
+  const reports = reportsResult.status === "fulfilled" ? reportsResult.value : null;
 
   return {
-    rio: rio ? buildRiver(rio) : null,
-    aguasArriba: rio ? buildUpstream(rio.red) : [],
-    red: rio ? buildNetwork(rio.red) : null,
-    lluvia: balance ? { balance, mes, mesNormalMm: monthNormal(mes?.mes ?? balance.ahoraLocal) } : null,
-    reportes: reportes ? buildReports(reportes) : null,
-    fallas,
-    generadoEn: new Date().toISOString(),
+    river: river ? buildRiver(river) : null,
+    upstream: river ? buildUpstream(river.network) : [],
+    network: river ? buildNetwork(river.network) : null,
+    rain: balance ? { balance, month, monthNormalMm: monthNormal(month?.month ?? balance.localNow) } : null,
+    reports: reports ? buildReports(reports) : null,
+    failures,
+    generatedAt: new Date().toISOString(),
   };
 }

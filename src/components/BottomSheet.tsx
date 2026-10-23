@@ -39,13 +39,21 @@ function peekPx(): number {
   return Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sheet-peek")) || 0;
 }
 
-// Decides the resting state after a drag: a quick flick follows its direction, a slow drag needs a third of the travel.
 function settles(start: Gesture, delta: number): boolean {
   const quick = performance.now() - start.at < FLICK_MS && Math.abs(delta) >= FLICK_PX;
   if (start.open) {
     return !(quick ? delta > 0 : delta > start.travel * SNAP_RATIO);
   }
   return quick ? delta < 0 : -delta > start.travel * SNAP_RATIO;
+}
+
+function startGesture(y: number, fromHandle: boolean, isOpen: boolean, sheetHeight: number): Gesture {
+  return { y, at: performance.now(), open: isOpen, travel: Math.max(0, sheetHeight - peekPx()), dragging: false, fromHandle };
+}
+
+function dragOffset(start: Gesture, y: number): number {
+  const base = start.open ? 0 : start.travel;
+  return Math.min(start.travel, Math.max(0, base + y - start.y));
 }
 
 export function BottomSheet({ children }: BottomSheetProps) {
@@ -64,26 +72,13 @@ export function BottomSheet({ children }: BottomSheetProps) {
     };
   }, [open]);
 
-  const startGesture = (y: number, fromHandle: boolean): Gesture => ({
-    y,
-    at: performance.now(),
-    open,
-    travel: Math.max(0, (sheetRef.current?.offsetHeight ?? 0) - peekPx()),
-    dragging: false,
-    fromHandle,
-  });
-
-  const follow = (start: Gesture, y: number) => {
-    const base = start.open ? 0 : start.travel;
-    setDragPx(Math.min(start.travel, Math.max(0, base + y - start.y)));
-  };
+  const sheetHeight = () => sheetRef.current?.offsetHeight ?? 0;
 
   const finish = (start: Gesture, y: number) => {
     setDragPx(null);
     setOpen(settles(start, y - start.y));
   };
 
-  // Pointer gestures cover the handle and the whole peek while closed; the open sheet scrolls natively.
   const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if (window.matchMedia(DESKTOP_QUERY).matches) {
       return;
@@ -92,7 +87,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
     if (open && !fromHandle) {
       return;
     }
-    gesture.current = startGesture(event.clientY, fromHandle);
+    gesture.current = startGesture(event.clientY, fromHandle, open, sheetHeight());
   };
 
   const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
@@ -107,7 +102,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
       gesture.current = { ...start, dragging: true };
       event.currentTarget.setPointerCapture(event.pointerId);
     }
-    follow(start, event.clientY);
+    setDragPx(dragOffset(start, event.clientY));
   };
 
   const onPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
@@ -137,8 +132,6 @@ export function BottomSheet({ children }: BottomSheetProps) {
     }
   };
 
-  // Pulling down from the top of the open content closes the sheet. Needs a non-passive touch listener so the
-  // pull does not also bounce the scroll container.
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller || !open) {
@@ -146,7 +139,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
     }
     let pull: Gesture | null = null;
     const onTouchStart = (event: TouchEvent) => {
-      pull = scroller.scrollTop <= 0 ? startGesture(event.touches[0].clientY, false) : null;
+      pull = scroller.scrollTop <= 0 ? startGesture(event.touches[0].clientY, false, true, sheetRef.current?.offsetHeight ?? 0) : null;
     };
     const onTouchMove = (event: TouchEvent) => {
       if (!pull) {
@@ -161,12 +154,13 @@ export function BottomSheet({ children }: BottomSheetProps) {
         pull = { ...pull, dragging: true };
       }
       event.preventDefault();
-      follow(pull, y);
+      setDragPx(dragOffset(pull, y));
     };
     const onTouchEnd = (event: TouchEvent) => {
       if (pull?.dragging) {
         suppressClick.current = true;
-        finish(pull, event.changedTouches[0].clientY);
+        setDragPx(null);
+        setOpen(settles(pull, event.changedTouches[0].clientY - pull.y));
       }
       pull = null;
     };
@@ -180,8 +174,6 @@ export function BottomSheet({ children }: BottomSheetProps) {
       scroller.removeEventListener("touchend", onTouchEnd);
       scroller.removeEventListener("touchcancel", onTouchEnd);
     };
-    // startGesture/follow/finish only read refs and stable setters besides `open`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const restingClass = open ? "translate-y-0" : "translate-y-[calc(100%-var(--sheet-peek))]";

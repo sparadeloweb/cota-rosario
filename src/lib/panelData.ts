@@ -1,19 +1,19 @@
-import { loadEstado } from "@/lib/estado";
+import { loadStatus } from "@/lib/status";
 import { loadKpis } from "@/lib/kpis";
-import { loadPredicciones } from "@/lib/predicciones";
-import { buildParte, buildRecomendaciones } from "@/lib/recomendaciones";
+import { loadPredictions } from "@/lib/predictions";
+import { buildSituationReport, buildRecommendations } from "@/lib/recommendations";
 
 export async function loadPanel() {
-  const estadoPromise = loadEstado();
-  const [estado, kpis, predicciones] = await Promise.all([estadoPromise, loadKpis(estadoPromise), loadPredicciones(estadoPromise)]);
-  const fallaDe = (fuente: string) => estado.fallas.find((falla) => falla.fuente === fuente);
+  const statusPromise = loadStatus();
+  const [status, kpis, predictions] = await Promise.all([statusPromise, loadKpis(statusPromise), loadPredictions(statusPromise)]);
+  const failureOf = (source: string) => status.failures.find((failure) => failure.source === source);
   return {
-    estado,
+    status,
     kpis,
-    predicciones,
-    recomendaciones: buildRecomendaciones({ estado, kpis, predicciones }),
-    parte: buildParte({ estado, kpis, predicciones }),
-    fallaDe,
+    predictions,
+    recommendations: buildRecommendations({ status, kpis, predictions }),
+    situationReport: buildSituationReport({ status, kpis, predictions }),
+    failureOf,
   };
 }
 

@@ -1,20 +1,20 @@
 export interface PoissonCandidate {
   variables: string[];
-  maeValidacion: number;
-  coeficientesNoNegativos: boolean;
+  maeValidation: number;
+  nonNegativeCoefficients: boolean;
 }
 
 export interface PoissonModel {
   formula: string;
-  variablesUsadas: string[];
-  candidatos: PoissonCandidate[];
-  coeficientes: { intercepto: number; max2h: number; total: number };
+  usedVariables: string[];
+  candidates: PoissonCandidate[];
+  coefficients: { intercept: number; max2h: number; total: number };
   n: number;
   pseudoR2: number;
-  validacionCruzada: { maeModelo: number; maeMedia: number };
-  diasPorMes: number;
-  participacionDistrito: Record<string, number>;
-  entrenamiento: { mes: string; casos: number; max2h: number; total: number; predicho: number }[];
+  crossValidation: { maeModel: number; maeMean: number };
+  daysPerMonth: number;
+  districtShare: Record<string, number>;
+  training: { month: string; cases: number; max2h: number; total: number; predicted: number }[];
 }
 
 export interface RainFeatures {
@@ -23,39 +23,38 @@ export interface RainFeatures {
 }
 
 export interface DistrictExpectation {
-  distrito: string;
-  esperados: number;
-  probabilidadAlMenosUno: number | null;
+  district: string;
+  expected: number;
+  probabilityAtLeastOne: number | null;
 }
 
 const ROUNDING = 10;
 
-export function expectedCases(model: PoissonModel, lluvia: RainFeatures, dias: number): number {
-  if (![lluvia.max2h, lluvia.total, dias].every((value) => Number.isFinite(value) && value >= 0) || !(model.diasPorMes > 0)) throw new Error("Entradas inválidas para el escenario.");
-  const { intercepto, max2h, total } = model.coeficientes;
-  const monthly = Math.exp(intercepto + max2h * lluvia.max2h + total * lluvia.total);
-  const units = Math.round(monthly * (dias / model.diasPorMes) * ROUNDING);
+export function expectedCases(model: PoissonModel, rain: RainFeatures, days: number): number {
+  if (![rain.max2h, rain.total, days].every((value) => Number.isFinite(value) && value >= 0) || !(model.daysPerMonth > 0)) throw new Error("Entradas inválidas para el escenario.");
+  const { intercept, max2h, total } = model.coefficients;
+  const monthly = Math.exp(intercept + max2h * rain.max2h + total * rain.total);
+  const units = Math.round(monthly * (days / model.daysPerMonth) * ROUNDING);
   if (!Number.isSafeInteger(units)) throw new Error("El escenario está fuera del rango numérico del modelo.");
   return units / ROUNDING;
 }
 
-export function splitByDay(model: PoissonModel, total: number, dias: RainFeatures[]): number[] {
-  const { max2h, total: totalCoef } = model.coeficientes;
-  const scores = dias.map((dia) => max2h * dia.max2h + totalCoef * dia.total);
+export function splitByDay(model: PoissonModel, total: number, days: RainFeatures[]): number[] {
+  const { max2h, total: totalCoef } = model.coefficients;
+  const scores = days.map((day) => max2h * day.max2h + totalCoef * day.total);
   const max = Math.max(...scores);
   return allocate(total, scores.map((score) => Math.exp(score - max)));
 }
 
-export function districtExpectations(model: PoissonModel, ciudad: number): DistrictExpectation[] {
-  const entries = Object.entries(model.participacionDistrito);
-  const amounts = allocate(ciudad, entries.map(([, weight]) => weight));
+export function districtExpectations(model: PoissonModel, city: number): DistrictExpectation[] {
+  const entries = Object.entries(model.districtShare);
+  const amounts = allocate(city, entries.map(([, weight]) => weight));
   return entries
-    .map(([distrito], i) => {
-      const esperados = amounts[i];
-      // Monthly validation does not calibrate weekly probabilities by district.
-      return { distrito, esperados, probabilidadAlMenosUno: null };
+    .map(([district], i) => {
+      const expected = amounts[i];
+      return { district, expected, probabilityAtLeastOne: null };
     })
-    .sort((a, b) => b.esperados - a.esperados);
+    .sort((a, b) => b.expected - a.expected);
 }
 
 function allocate(total: number, weights: number[]): number[] {

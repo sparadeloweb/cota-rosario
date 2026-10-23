@@ -9,8 +9,8 @@ import { ReportPanel } from "@/components/reports/ReportPanel";
 import { useReports } from "@/components/reports/useReports";
 import { useSimulation } from "@/components/SimulationContext";
 import { RISK_FILL, riskColor } from "@/components/status";
-import type { ClimaMeta, Hallazgo, TerrainMeta } from "@/lib/lookup";
-import { createPlaceReader, geocodificar, type PlaceReader } from "@/lib/placeReader";
+import type { ClimateMeta, Finding, TerrainMeta } from "@/lib/lookup";
+import { createPlaceReader, geocode, type PlaceReader } from "@/lib/placeReader";
 import { RISK_LABEL, riskLabel, type RiskLevel } from "@/lib/risk";
 
 const CENTER: [number, number] = [-32.955, -60.66];
@@ -20,37 +20,37 @@ const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const TERRAIN_OPACITY = 0.8;
 const TERRAIN_COLOR = "#d6a04a";
-const CLIMA_OPACITY = 0.75;
-const CLIMA_COLOR = "#d65c54";
+const CLIMATE_OPACITY = 0.75;
+const CLIMATE_COLOR = "#d65c54";
 const ZONE_FILL_OPACITY = 0.18;
 const ZONE_FILL_OPACITY_SIMULATED = 0.32;
 const DATA = {
-  areas: "/data/areas-inundables.json",
-  terreno: "/data/terreno.json",
-  terrenoPng: "/data/terreno.png",
-  clima: "/data/riesgo-clima.json",
-  climaPng: "/data/riesgo-clima.png",
+  floodZones: "/data/flood-zones.json",
+  terrain: "/data/terrain.json",
+  terrainPng: "/data/terrain.png",
+  climateRisk: "/data/climate-risk.json",
+  climatePng: "/data/climate-risk.png",
 } as const;
 
-type Areas = FeatureCollection<Polygon | MultiPolygon, Record<string, string>>;
-type ZoneFeature = Feature<Polygon, { zona: string; sector: string }>;
+type FloodZones = FeatureCollection<Polygon | MultiPolygon, Record<string, string>>;
+type ZoneFeature = Feature<Polygon, { zone: string; sector: string }>;
 
 interface FloodMapProps {
-  zonas: { zona: string; nivel: RiskLevel | null }[];
-  buscador?: boolean;
-  reportes?: boolean;
-  reportar?: boolean;
-  esquina?: ReactNode;
+  zones: { zone: string; level: RiskLevel | null }[];
+  searcher?: boolean;
+  reports?: boolean;
+  report?: boolean;
+  corner?: ReactNode;
 }
 
-const CLIMA_MUESTRAS = [
-  { etiqueta: "bajo", opacidad: 0.25 },
-  { etiqueta: "medio", opacidad: 0.55 },
-  { etiqueta: "alto", opacidad: 0.9 },
+const CLIMATE_SWATCHES = [
+  { label: "bajo", opacity: 0.25 },
+  { label: "medio", opacity: 0.55 },
+  { label: "alto", opacity: 0.9 },
 ];
-const TERRENO_MUESTRAS = [
-  { etiqueta: "1 m bajo el entorno", opacidad: 0.35 },
-  { etiqueta: "3 m o más", opacidad: 1 },
+const TERRAIN_SWATCHES = [
+  { label: "1 m bajo el entorno", opacity: 0.35 },
+  { label: "3 m o más", opacity: 1 },
 ];
 
 async function fetchJson<T>(url: string): Promise<T | null> {
@@ -62,56 +62,60 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
-export function FloodMap({ zonas, buscador = false, reportes = false, reportar = false, esquina }: FloodMapProps) {
+export function FloodMap({ zones, searcher = false, reports = false, report = false, corner }: FloodMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const zonesLayerRef = useRef<import("leaflet").GeoJSON | null>(null);
   const markerRef = useRef<import("leaflet").CircleMarker | null>(null);
   const terrainLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
-  const climaLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
-  const lectorRef = useRef<PlaceReader>(createPlaceReader());
-  const { escenario, reset } = useSimulation();
-  const [collection, setCollection] = useState<Areas | null>(null);
+  const climateLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
+  const readerRef = useRef<PlaceReader>(createPlaceReader());
+  const { scenario, reset } = useSimulation();
+  const [collection, setCollection] = useState<FloodZones | null>(null);
   const [terrain, setTerrain] = useState<TerrainMeta | null>(null);
-  const [clima, setClima] = useState<ClimaMeta | null>(null);
+  const [climateRisk, setClimateRisk] = useState<ClimateMeta | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const [mostrarTerreno, setMostrarTerreno] = useState(false);
-  const [mostrarClima, setMostrarClima] = useState(false);
-  const [consulta, setConsulta] = useState("");
-  const [buscando, setBuscando] = useState(false);
-  const [hallazgo, setHallazgo] = useState<Hallazgo | null>(null);
+  const [showTerrain, setShowTerrain] = useState(false);
+  const [showClimate, setShowClimate] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [finding, setFinding] = useState<Finding | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reportesMovilAbiertos, setReportesMovilAbiertos] = useState(false);
-  const estadoReportes = useReports(mapRef, mapReady && reportes);
-  const alternarReportesMovil = () => {
-    if (reportesMovilAbiertos && estadoReportes.colocando) {
-      estadoReportes.cancelar();
+  const [isMobileReportsOpen, setMobileReportsOpen] = useState(false);
+  const reportsState = useReports(mapRef, mapReady && reports);
+  const toggleMobileReports = () => {
+    if (isMobileReportsOpen && reportsState.placing) {
+      reportsState.cancel();
     }
-    setReportesMovilAbiertos(!reportesMovilAbiertos);
+    setMobileReportsOpen(!isMobileReportsOpen);
   };
 
-  const zonasEfectivas = escenario?.zonas ?? zonas;
-  const nivelDeZona = useCallback(
-    (zona: string): RiskLevel | null => zonasEfectivas.find((entry) => entry.zona === zona.trim())?.nivel ?? null,
-    [zonasEfectivas],
+  const effectiveZones = scenario?.zones ?? zones;
+  const zoneLevel = useCallback(
+    (zone: string): RiskLevel | null => effectiveZones.find((entry) => entry.zone === zone.trim())?.level ?? null,
+    [effectiveZones],
   );
-  const nivelRef = useRef(nivelDeZona);
+  const levelRef = useRef(zoneLevel);
   useEffect(() => {
-    nivelRef.current = nivelDeZona;
-  }, [nivelDeZona]);
+    levelRef.current = zoneLevel;
+  }, [zoneLevel]);
 
-  const estiloDeZona = useCallback(
+  const zoneStyle = useCallback(
     (feature: ZoneFeature | undefined) => {
-      const level = nivelDeZona(feature?.properties?.zona ?? "");
+      const level = zoneLevel(feature?.properties?.zone ?? "");
       const fill = riskColor(level);
-      return { color: fill, weight: 1, fillColor: fill, fillOpacity: escenario ? ZONE_FILL_OPACITY_SIMULATED : ZONE_FILL_OPACITY, dashArray: level === null ? "4 4" : undefined };
+      return { color: fill, weight: 1, fillColor: fill, fillOpacity: scenario ? ZONE_FILL_OPACITY_SIMULATED : ZONE_FILL_OPACITY, dashArray: level === null ? "4 4" : undefined };
     },
-    [escenario, nivelDeZona],
+    [scenario, zoneLevel],
   );
+  const zoneStyleRef = useRef(zoneStyle);
+  useEffect(() => {
+    zoneStyleRef.current = zoneStyle;
+  }, [zoneStyle]);
 
   useEffect(() => {
     let cancelled = false;
-    fetchJson<Areas>(DATA.areas).then((data) => {
+    fetchJson<FloodZones>(DATA.floodZones).then((data) => {
       if (cancelled) {
         return;
       }
@@ -121,8 +125,8 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
         setError("No se pudieron cargar las áreas inundables.");
       }
     });
-    fetchJson<TerrainMeta>(DATA.terreno).then((data) => !cancelled && data && setTerrain(data));
-    fetchJson<ClimaMeta>(DATA.clima).then((data) => !cancelled && data && setClima(data));
+    fetchJson<TerrainMeta>(DATA.terrain).then((data) => !cancelled && data && setTerrain(data));
+    fetchJson<ClimateMeta>(DATA.climateRisk).then((data) => !cancelled && data && setClimateRisk(data));
     return () => {
       cancelled = true;
     };
@@ -143,10 +147,10 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
       L.control.zoom({ position: "bottomright" }).addTo(map);
       L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 18 }).addTo(map);
       zonesLayerRef.current = L.geoJSON(collection, {
-        style: (feature) => estiloDeZona(feature as ZoneFeature | undefined),
+        style: (feature) => zoneStyleRef.current(feature as ZoneFeature | undefined),
         onEachFeature: (feature, layer) => {
           const properties = (feature as ZoneFeature).properties;
-          layer.bindPopup(() => `Zona ${properties?.zona ?? "?"} · sector ${properties?.sector || "—"}<br/>${riskLabel(nivelRef.current(properties?.zona ?? ""))}`);
+          layer.bindPopup(() => `Zona ${properties?.zone ?? "?"} · sector ${properties?.sector || "—"}<br/>${riskLabel(levelRef.current(properties?.zone ?? ""))}`);
         },
       }).addTo(map);
       setMapReady(true);
@@ -159,16 +163,14 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
       zonesLayerRef.current = null;
       markerRef.current = null;
       terrainLayerRef.current = null;
-      climaLayerRef.current = null;
+      climateLayerRef.current = null;
       setMapReady(false);
     };
-    // estiloDeZona sólo se usa para el estilo inicial; los cambios posteriores los aplica el efecto de abajo sin recrear el mapa.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collection]);
 
   useEffect(() => {
-    zonesLayerRef.current?.setStyle((feature) => estiloDeZona(feature as ZoneFeature | undefined));
-  }, [estiloDeZona, mapReady]);
+    zonesLayerRef.current?.setStyle((feature) => zoneStyle(feature as ZoneFeature | undefined));
+  }, [zoneStyle, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -176,9 +178,9 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
       return;
     }
     import("leaflet").then((L) => {
-      const overlays: [typeof terrainLayerRef, TerrainMeta | ClimaMeta | null, string, number, boolean][] = [
-        [terrainLayerRef, terrain, DATA.terrenoPng, TERRAIN_OPACITY, mostrarTerreno],
-        [climaLayerRef, clima, DATA.climaPng, CLIMA_OPACITY, mostrarClima],
+      const overlays: [typeof terrainLayerRef, TerrainMeta | ClimateMeta | null, string, number, boolean][] = [
+        [terrainLayerRef, terrain, DATA.terrainPng, TERRAIN_OPACITY, showTerrain],
+        [climateLayerRef, climateRisk, DATA.climatePng, CLIMATE_OPACITY, showClimate],
       ];
       for (const [ref, meta, src, opacity, visible] of overlays) {
         if (!meta) {
@@ -202,25 +204,25 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
         }
       }
     });
-  }, [mapReady, terrain, clima, mostrarTerreno, mostrarClima]);
+  }, [mapReady, terrain, climateRisk, showTerrain, showClimate]);
 
-  const buscar = async (event: React.FormEvent) => {
+  const search = async (event: React.FormEvent) => {
     event.preventDefault();
-    const termino = consulta.trim();
-    if (!termino) {
+    const term = searchText.trim();
+    if (!term) {
       return;
     }
-    setBuscando(true);
+    setSearching(true);
     setError(null);
-    setHallazgo(null);
+    setFinding(null);
     try {
-      const encontrado = await geocodificar(termino);
-      if (!encontrado) {
+      const found = await geocode(term);
+      if (!found) {
         setError("No encontramos esa dirección dentro de Rosario.");
         return;
       }
-      const { lat, lon } = encontrado;
-      const lectura = await lectorRef.current.leer(lat, lon);
+      const { lat, lon } = found;
+      const reading = await readerRef.current.read(lat, lon);
 
       const map = mapRef.current;
       if (map) {
@@ -230,44 +232,44 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
           radius: 7,
           color: "#ececee",
           weight: 2,
-          fillColor: riskColor(lectura.zona ? nivelDeZona(lectura.zona) : null),
+          fillColor: riskColor(reading.zone ? zoneLevel(reading.zone) : null),
           fillOpacity: 1,
         }).addTo(map);
         map.setView([lat, lon], FOUND_ZOOM);
       }
 
-      setHallazgo({ ...lectura, etiqueta: encontrado.etiqueta, nivel: lectura.zona ? nivelDeZona(lectura.zona) : undefined });
+      setFinding({ ...reading, label: found.label, level: reading.zone ? zoneLevel(reading.zone) : undefined });
     } catch {
       setError("El buscador de direcciones no respondió. Probá de nuevo en un momento.");
     } finally {
-      setBuscando(false);
+      setSearching(false);
     }
   };
 
   const overlays: LegendOverlay[] = [
-    ...(clima
+    ...(climateRisk
       ? [
           {
-            clave: "clima",
-            etiqueta: "Riesgo por lluvias torrenciales · mapa municipal",
-            color: CLIMA_COLOR,
-            visible: mostrarClima,
-            onToggle: () => setMostrarClima((current) => !current),
-            muestras: CLIMA_MUESTRAS,
-            nota: "Cuánto se vería afectada la vivienda por una lluvia extrema, por radio censal. No cambia con el pronóstico.",
+            id: "climateRisk",
+            label: "Riesgo por lluvias torrenciales · mapa municipal",
+            color: CLIMATE_COLOR,
+            visible: showClimate,
+            onToggle: () => setShowClimate((current) => !current),
+            swatches: CLIMATE_SWATCHES,
+            note: "Cuánto se vería afectada la vivienda por una lluvia extrema, por radio censal. No cambia con el pronóstico.",
           },
         ]
       : []),
     ...(terrain
       ? [
           {
-            clave: "terreno",
-            etiqueta: "Puntos bajos del terreno · modelo",
+            id: "terreno",
+            label: "Puntos bajos del terreno · modelo",
             color: TERRAIN_COLOR,
-            visible: mostrarTerreno,
-            onToggle: () => setMostrarTerreno((current) => !current),
-            muestras: TERRENO_MUESTRAS,
-            nota: "Dónde el suelo está más hundido que su entorno y el agua tiende a juntarse. Sin lectura en manzanas densas.",
+            visible: showTerrain,
+            onToggle: () => setShowTerrain((current) => !current),
+            swatches: TERRAIN_SWATCHES,
+            note: "Dónde el suelo está más hundido que su entorno y el agua tiende a juntarse. Sin lectura en manzanas densas.",
           },
         ]
       : []),
@@ -279,49 +281,49 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3 sm:p-4">
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">
-          {buscador ? (
+          {searcher ? (
             <div className="pointer-events-auto flex w-full max-w-lg flex-col overflow-hidden rounded-md border border-rule bg-panel shadow-xl">
-              <form onSubmit={buscar} className="flex items-center">
+              <form onSubmit={search} className="flex items-center">
                 <input
                   id="direccion"
-                  value={consulta}
-                  onChange={(event) => setConsulta(event.target.value)}
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
                   placeholder="Buscá tu dirección"
                   aria-label="Dirección a consultar"
                   className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-ink-faint"
                 />
                 <button
                   type="submit"
-                  disabled={buscando}
+                  disabled={searching}
                   className="shrink-0 px-4 py-3 text-sm text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
                 >
-                  {buscando ? "Buscando" : "Consultar"}
+                  {searching ? "Buscando" : "Consultar"}
                 </button>
               </form>
-              {hallazgo ? <LookupResult hallazgo={hallazgo} terrain={terrain} /> : null}
-              {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alerta">{error}</p> : null}
+              {finding ? <LookupResult finding={finding} terrain={terrain} /> : null}
+              {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alert">{error}</p> : null}
             </div>
-          ) : reportes ? (
+          ) : reports ? (
             <div className="hidden w-full max-w-xs lg:block">
-              <ReportPanel estado={estadoReportes} soloLectura={!reportar} />
+              <ReportPanel status={reportsState} readOnly={!report} />
             </div>
           ) : (
             <div className="flex-1" />
           )}
-          {esquina ? <div className="hidden shrink-0 justify-end lg:ml-auto lg:flex">{esquina}</div> : null}
+          {corner ? <div className="hidden shrink-0 justify-end lg:ml-auto lg:flex">{corner}</div> : null}
         </div>
 
         <div className="flex flex-col items-start gap-2 sm:flex-row">
-          {buscador && reportes ? (
+          {searcher && reports ? (
             <div className="hidden w-full max-w-xs lg:block">
-              <ReportPanel estado={estadoReportes} soloLectura={!reportar} />
+              <ReportPanel status={reportsState} readOnly={!report} />
             </div>
           ) : null}
-          {escenario ? (
-            <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-atencion/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur sm:mx-auto">
-              <span className="size-2 rounded-full" style={{ background: RISK_FILL[escenario.nivel] }} aria-hidden="true" />
+          {scenario ? (
+            <div className="pointer-events-auto flex items-center gap-3 rounded-md border border-watch/60 bg-panel/95 px-3 py-2 text-xs shadow-xl backdrop-blur sm:mx-auto">
+              <span className="size-2 rounded-full" style={{ background: RISK_FILL[scenario.level] }} aria-hidden="true" />
               <span className="text-ink">
-                Escenario simulado · <span className="text-ink-soft">{RISK_LABEL[escenario.nivel]}</span>
+                Escenario simulado · <span className="text-ink-soft">{RISK_LABEL[scenario.level]}</span>
               </span>
               <button type="button" onClick={reset} className="border-l border-rule pl-3 text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink">
                 Restablecer
@@ -335,13 +337,12 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
         data-map-legend
         className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--sheet-peek)+0.75rem)] z-[600] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
       >
-        {/* Below lg the open report panel takes the legend's slot, left of the button, so neither pushes the other. */}
         <div className="flex items-end gap-3">
-          <div className={`min-w-0 flex-1 lg:flex-none ${reportesMovilAbiertos ? "max-lg:hidden" : ""}`}>
-            <MapLegend zonasOficiales={collection?.features.length ?? 0} overlays={overlays} conReportes={reportes} />
+          <div className={`min-w-0 flex-1 lg:flex-none ${isMobileReportsOpen ? "max-lg:hidden" : ""}`}>
+            <MapLegend officialZones={collection?.features.length ?? 0} overlays={overlays} withReports={reports} />
           </div>
-          {reportes && reportesMovilAbiertos ? <MobileReportPanel estado={estadoReportes} soloLectura={!reportar} /> : null}
-          {reportes ? <ReportFab estado={estadoReportes} soloLectura={!reportar} abierto={reportesMovilAbiertos} onToggle={alternarReportesMovil} /> : null}
+          {reports && isMobileReportsOpen ? <MobileReportPanel status={reportsState} readOnly={!report} /> : null}
+          {reports ? <ReportFab status={reportsState} readOnly={!report} open={isMobileReportsOpen} onToggle={toggleMobileReports} /> : null}
         </div>
       </div>
     </div>

@@ -1,72 +1,72 @@
-import { formatoDistancia, type CategoriaClima, type Hallazgo, type TerrainMeta } from "@/lib/lookup";
+import { CLIMATE_CATEGORY_LABEL, formatDistance, type ClimateCategory, type Finding, type TerrainMeta } from "@/lib/lookup";
 import type { RiskLevel } from "@/lib/risk";
 
-export type FactKey = "oficial" | "clima" | "relieve" | "historial";
-export type FactTone = "neutro" | "atencion" | "alerta" | "critico";
+export type FactKey = "official" | "climateRisk" | "relief" | "history";
+export type FactTone = "neutral" | "watch" | "alert" | "critical";
 
 export interface PlaceFact {
-  clave: FactKey;
-  titulo: string;
-  veredicto: string;
-  tono: FactTone;
-  detalle: string;
+  id: FactKey;
+  title: string;
+  verdict: string;
+  tone: FactTone;
+  detail: string;
 }
 
-const CLIMA_TONE: Record<CategoriaClima, FactTone> = { "muy bajo": "neutro", bajo: "neutro", medio: "atencion", alto: "alerta" };
-const LEVEL_TONE: Record<RiskLevel, FactTone> = { normal: "atencion", atencion: "atencion", alerta: "alerta", critico: "critico" };
+const CLIMATE_TONE: Record<ClimateCategory, FactTone> = { "very low": "neutral", "low": "neutral", "medium": "watch", "high": "alert" };
+const LEVEL_TONE: Record<RiskLevel, FactTone> = { normal: "watch", watch: "watch", alert: "alert", critical: "critical" };
 const TERRAIN_DECIMALS = 1;
 
-function capitalizar(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function hechoOficial(hallazgo: Hallazgo): PlaceFact {
-  if (hallazgo.dentro) {
+function officialMapFact(finding: Finding): PlaceFact {
+  if (finding.inside) {
     return {
-      clave: "oficial",
-      titulo: "Mapa oficial",
-      veredicto: `Zona ${hallazgo.zona ?? "—"}`,
-      tono: hallazgo.nivel ? LEVEL_TONE[hallazgo.nivel] : "atencion",
-      detalle: "Dentro del área inundable del Ludueña o el Saladillo.",
+      id: "official",
+      title: "Mapa oficial",
+      verdict: `Zona ${finding.zone ?? "—"}`,
+      tone: finding.level ? LEVEL_TONE[finding.level] : "watch",
+      detail: "Dentro del área inundable del Ludueña o el Saladillo.",
     };
   }
   return {
-    clave: "oficial",
-    titulo: "Mapa oficial",
-    veredicto: "Fuera",
-    tono: "neutro",
-    detalle: hallazgo.cercano ? `Zona oficial más cercana: ${hallazgo.cercano.zona}, a ${formatoDistancia(hallazgo.cercano.metros)}.` : "Lejos de las áreas inundables oficiales.",
+    id: "official",
+    title: "Mapa oficial",
+    verdict: "Fuera",
+    tone: "neutral",
+    detail: finding.nearest ? `Zona oficial más cercana: ${finding.nearest.zone}, a ${formatDistance(finding.nearest.meters)}.` : "Lejos de las áreas inundables oficiales.",
   };
 }
 
-function hechoRelieve(terreno: NonNullable<Hallazgo["terreno"]>, meta: TerrainMeta | null): PlaceFact {
-  const ventana = meta ? ` en ${meta.ventanaMetros} m a la redonda` : "";
-  if (terreno.estado === "bajo") {
-    const metros = meta && terreno.metros >= meta.escalaMaximaMetros ? `más de ${meta.escalaMaximaMetros} m` : `${terreno.metros.toFixed(TERRAIN_DECIMALS)} m`;
-    return { clave: "relieve", titulo: "Relieve", veredicto: `${metros} abajo`, tono: "atencion", detalle: `Más bajo que la mediana del entorno${ventana}: ahí el agua tiende a juntarse.` };
+function reliefFact(terrain: NonNullable<Finding["terrain"]>, meta: TerrainMeta | null): PlaceFact {
+  const surroundings = meta ? ` en ${meta.windowMeters} m a la redonda` : "";
+  if (terrain.status === "low") {
+    const meters = meta && terrain.meters >= meta.maxScaleMeters ? `más de ${meta.maxScaleMeters} m` : `${terrain.meters.toFixed(TERRAIN_DECIMALS)} m`;
+    return { id: "relief", title: "Relieve", verdict: `${meters} abajo`, tone: "watch", detail: `Más bajo que la mediana del entorno${surroundings}: ahí el agua tiende a juntarse.` };
   }
-  if (terreno.estado === "plano") {
-    return { clave: "relieve", titulo: "Relieve", veredicto: "No es un bajo", tono: "neutro", detalle: `A la altura de su entorno${ventana}.` };
+  if (terrain.status === "flat") {
+    return { id: "relief", title: "Relieve", verdict: "No es un bajo", tone: "neutral", detail: `A la altura de su entorno${surroundings}.` };
   }
-  return { clave: "relieve", titulo: "Relieve", veredicto: "Sin lectura", tono: "neutro", detalle: "En manzanas densas el modelo de terreno no aporta una lectura." };
+  return { id: "relief", title: "Relieve", verdict: "Sin lectura", tone: "neutral", detail: "En manzanas densas el modelo de terreno no aporta una lectura." };
 }
 
-export function hechosDelLugar(hallazgo: Hallazgo, meta: TerrainMeta | null): PlaceFact[] {
-  const hechos: (PlaceFact | null)[] = [
-    hechoOficial(hallazgo),
-    hallazgo.clima
-      ? { clave: "clima", titulo: "Lluvias torrenciales", veredicto: capitalizar(hallazgo.clima), tono: CLIMA_TONE[hallazgo.clima], detalle: "Mapa municipal de riesgo climático 2024." }
+export function placeFacts(finding: Finding, meta: TerrainMeta | null): PlaceFact[] {
+  const facts: (PlaceFact | null)[] = [
+    officialMapFact(finding),
+    finding.climateRisk
+      ? { id: "climateRisk", title: "Lluvias torrenciales", verdict: capitalize(CLIMATE_CATEGORY_LABEL[finding.climateRisk]), tone: CLIMATE_TONE[finding.climateRisk], detail: "Mapa municipal de riesgo climático 2024." }
       : null,
-    hallazgo.terreno ? hechoRelieve(hallazgo.terreno, meta) : null,
-    hallazgo.distrito
+    finding.terrain ? reliefFact(finding.terrain, meta) : null,
+    finding.district
       ? {
-          clave: "historial",
-          titulo: "Historial del distrito",
-          veredicto: `${hallazgo.distrito.participacion} %`,
-          tono: "neutro",
-          detalle: `de las intervenciones por anegamientos registradas 2021–2024${hallazgo.distrito.mesPico ? `; su peor mes tuvo ${hallazgo.distrito.mesPico.casos} casos` : ""}. No es el riesgo de esta dirección.`,
+          id: "history",
+          title: "Historial del distrito",
+          verdict: `${finding.district.share} %`,
+          tone: "neutral",
+          detail: `de las intervenciones por anegamientos registradas 2021–2024${finding.district.peakMonth ? `; su peor mes tuvo ${finding.district.peakMonth.cases} casos` : ""}. No es el riesgo de esta dirección.`,
         }
       : null,
   ];
-  return hechos.filter((hecho): hecho is PlaceFact => hecho !== null);
+  return facts.filter((fact): fact is PlaceFact => fact !== null);
 }

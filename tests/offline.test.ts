@@ -2,53 +2,53 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import manifest from "../src/app/manifest";
-import { SIN_LECTURA, antiguedad, avisoDesdeCache, avisoSinConexion } from "../src/lib/offline";
+import { NO_READING, describeAge, cachedCopyNotice, offlineNotice } from "../src/lib/offline";
 
 const require = createRequire(import.meta.url);
 const { strategyFor } = require("../public/sw-strategy.js") as { strategyFor: (request: { method: string; mode: string; pathname: string; sameOrigin: boolean }) => string };
 
-const AHORA = Date.parse("2026-10-23T15:00:00Z");
+const NOW = Date.parse("2026-10-23T15:00:00Z");
 const get = (pathname: string, mode = "cors") => ({ method: "GET", mode, pathname, sameOrigin: true });
 
-test("la antigüedad de la última lectura se dice en minutos, horas o con fecha", () => {
-  assert.equal(antiguedad("2026-10-23T14:59:30Z", AHORA), "hace instantes");
-  assert.equal(antiguedad("2026-10-23T14:20:00Z", AHORA), "hace 40 min");
-  assert.equal(antiguedad("2026-10-23T12:00:00Z", AHORA), "hace 3 h");
-  assert.equal(antiguedad("2026-10-21T15:00:00Z", AHORA), "del 21/10 12:00");
+test("the age of the last reading is told in minutes, hours or with a date", () => {
+  assert.equal(describeAge("2026-10-23T14:59:30Z", NOW), "hace instantes");
+  assert.equal(describeAge("2026-10-23T14:20:00Z", NOW), "hace 40 min");
+  assert.equal(describeAge("2026-10-23T12:00:00Z", NOW), "hace 3 h");
+  assert.equal(describeAge("2026-10-21T15:00:00Z", NOW), "del 21/10 12:00");
 });
 
-test("sin fecha válida nunca se presenta como lectura actual", () => {
-  assert.equal(antiguedad(undefined, AHORA), SIN_LECTURA);
-  assert.equal(antiguedad("no es fecha", AHORA), SIN_LECTURA);
-  assert.equal(antiguedad("2026-10-24T15:00:00Z", AHORA), SIN_LECTURA);
-  assert.equal(avisoSinConexion(undefined, AHORA), "Sin conexión · no hay una lectura guardada");
-  const aviso = avisoSinConexion("2026-10-23T12:00:00Z", AHORA);
-  assert.match(aviso, /hace 3 h \(09:00\)/);
-  assert.match(aviso, /No es el estado actual/);
+test("without a valid date it is never presented as a current reading", () => {
+  assert.equal(describeAge(undefined, NOW), NO_READING);
+  assert.equal(describeAge("no es fecha", NOW), NO_READING);
+  assert.equal(describeAge("2026-10-24T15:00:00Z", NOW), NO_READING);
+  assert.equal(offlineNotice(undefined, NOW), "Sin conexión · no hay una lectura guardada");
+  const notice = offlineNotice("2026-10-23T12:00:00Z", NOW);
+  assert.match(notice, /hace 3 h \(09:00\)/);
+  assert.match(notice, /No es el estado actual/);
 });
 
-test("el manifiesto declara una app instalable con íconos normales y maskable", () => {
-  const datos = manifest();
-  assert.equal(datos.start_url, "/");
-  assert.equal(datos.display, "standalone");
-  assert.equal(datos.short_name, "Cota");
-  const tamanos = (datos.icons ?? []).map((icono) => icono.sizes);
-  assert.ok(tamanos.includes("192x192") && tamanos.includes("512x512"));
-  assert.ok((datos.icons ?? []).some((icono) => icono.purpose === "maskable"));
+test("the manifest declares an installable app with regular and maskable icons", () => {
+  const data = manifest();
+  assert.equal(data.start_url, "/");
+  assert.equal(data.display, "standalone");
+  assert.equal(data.short_name, "Cota");
+  const sizes = (data.icons ?? []).map((icon) => icon.sizes);
+  assert.ok(sizes.includes("192x192") && sizes.includes("512x512"));
+  assert.ok((data.icons ?? []).some((icon) => icon.purpose === "maskable"));
 });
 
-test("el service worker nunca cachea envíos y prioriza la red para datos y páginas", () => {
-  assert.equal(strategyFor(get("/api/estado")), "network-first");
+test("the service worker never caches submissions and prefers the network for data and pages", () => {
+  assert.equal(strategyFor(get("/api/status")), "network-first");
   assert.equal(strategyFor(get("/", "navigate")), "network-first");
-  assert.equal(strategyFor({ ...get("/api/reportes"), method: "POST" }), "network-only");
-  assert.equal(strategyFor(get("/api/reportes/abc/confirmar")), "network-only");
+  assert.equal(strategyFor({ ...get("/api/reports"), method: "POST" }), "network-only");
+  assert.equal(strategyFor(get("/api/reports/abc/confirm")), "network-only");
   assert.equal(strategyFor(get("/_next/static/chunks/app.js")), "cache-first");
-  assert.equal(strategyFor(get("/data/terreno.png")), "stale-while-revalidate");
+  assert.equal(strategyFor(get("/data/terrain.png")), "stale-while-revalidate");
   assert.equal(strategyFor({ ...get("/tiles/1/2/3.png"), sameOrigin: false }), "network-only");
 });
 
-test("una copia guardada siempre se anuncia como copia, con o sin red", () => {
-  assert.match(avisoDesdeCache("2026-10-23T12:00:00Z", AHORA, true), /^No pudimos actualizar con el servidor · mostrando la copia guardada de esta pantalla, hace 3 h \(09:00\)\. No es el estado actual\.$/);
-  assert.match(avisoDesdeCache("2026-10-23T12:00:00Z", AHORA, false), /^Sin conexión · /);
-  assert.match(avisoDesdeCache(undefined, AHORA, true), /sin hora de lectura/);
+test("a cached copy is always announced as a copy, online or offline", () => {
+  assert.match(cachedCopyNotice("2026-10-23T12:00:00Z", NOW, true), /^No pudimos actualizar con el servidor · mostrando la copia guardada de esta pantalla, hace 3 h \(09:00\)\. No es el estado actual\.$/);
+  assert.match(cachedCopyNotice("2026-10-23T12:00:00Z", NOW, false), /^Sin conexión · /);
+  assert.match(cachedCopyNotice(undefined, NOW, true), /sin hora de lectura/);
 });

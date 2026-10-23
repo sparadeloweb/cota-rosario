@@ -21,11 +21,11 @@ interface MotionProps {
   className?: string;
 }
 
-function formatearCifra(valor: number, decimales: number): string {
-  return valor.toFixed(decimales);
+function formatFigure(value: number, decimals: number): string {
+  return value.toFixed(decimals);
 }
 
-function animar(scope: HTMLElement) {
+function animate(scope: HTMLElement) {
   const timeline = gsap.timeline({ paused: true, defaults: { ease: EASE } });
   const reveal = scope.querySelectorAll<HTMLElement>("[data-reveal]");
   if (reveal.length) {
@@ -43,26 +43,26 @@ function animar(scope: HTMLElement) {
   if (draw.length) {
     timeline.fromTo(draw, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: DRAW_S, ease: "power2.inOut" }, 0.05);
   }
-  scope.querySelectorAll<HTMLElement>("[data-count]").forEach((elemento) => {
-    const destino = Number(elemento.dataset.count);
-    const decimales = Number(elemento.dataset.decimals ?? 0);
-    if (!Number.isFinite(destino)) {
-      gsap.set(elemento, { opacity: 1 });
+  scope.querySelectorAll<HTMLElement>("[data-count]").forEach((element) => {
+    const target = Number(element.dataset.count);
+    const decimals = Number(element.dataset.decimals ?? 0);
+    if (!Number.isFinite(target)) {
+      gsap.set(element, { opacity: 1 });
       return;
     }
-    const estado = { valor: 0 };
-    timeline.fromTo(elemento, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+    const status = { value: 0 };
+    timeline.fromTo(element, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
     timeline.to(
-      estado,
+      status,
       {
-        valor: destino,
+        value: target,
         duration: COUNT_S,
         ease: "power2.out",
         onUpdate: () => {
-          elemento.textContent = formatearCifra(estado.valor, decimales);
+          element.textContent = formatFigure(status.value, decimals);
         },
         onComplete: () => {
-          elemento.textContent = formatearCifra(destino, decimales);
+          element.textContent = formatFigure(target, decimals);
         },
       },
       0,
@@ -76,25 +76,25 @@ export function Motion({ children, className }: MotionProps) {
 
   useGSAP(
     () => {
-      const raiz = scope.current;
+      const root = scope.current;
       (window as unknown as Record<string, boolean>)[MOTION_READY_FLAG] = true;
-      if (!raiz || document.documentElement.dataset.motion !== "on") {
+      if (!root || document.documentElement.dataset.motion !== "on") {
         return;
       }
-      const timeline = animar(raiz);
+      const timeline = animate(root);
       const observer = new IntersectionObserver(
-        (entradas) => {
-          if (entradas.some((entrada) => entrada.isIntersecting)) {
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
             observer.disconnect();
             requestAnimationFrame(() => {
-              raiz.dataset.motionDone = "true";
+              root.dataset.motionDone = "true";
               timeline.play();
             });
           }
         },
         { threshold: VISIBLE_THRESHOLD },
       );
-      observer.observe(raiz);
+      observer.observe(root);
       return () => observer.disconnect();
     },
     { scope },

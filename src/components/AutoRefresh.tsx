@@ -9,8 +9,6 @@ export function AutoRefresh() {
   const router = useRouter();
 
   useEffect(() => {
-    // Cached source responses expire well before the next tick, so a plain refresh already brings
-    // fresh data without clearing the shared server cache for every open tab.
     const refresh = () => {
       if (document.visibilityState === "visible") {
         router.refresh();
