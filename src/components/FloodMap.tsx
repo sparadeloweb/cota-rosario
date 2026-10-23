@@ -9,18 +9,8 @@ import { ReportPanel } from "@/components/reports/ReportPanel";
 import { useReports } from "@/components/reports/useReports";
 import { useSimulation } from "@/components/SimulationContext";
 import { RISK_FILL, riskColor } from "@/components/status";
-import {
-  categoriaDesdeGris,
-  featureAt,
-  lecturaDistrito,
-  nearestFeature,
-  type ClimaMeta,
-  type DefensaCivil,
-  type Hallazgo,
-  type LecturaTerreno,
-  type TerrainMeta,
-} from "@/lib/lookup";
-import { loadPixels, rasterOffset } from "@/lib/rasters";
+import type { ClimaMeta, Hallazgo, TerrainMeta } from "@/lib/lookup";
+import { createPlaceReader, geocodificar, type PlaceReader } from "@/lib/placeReader";
 import { RISK_LABEL, riskLabel, type RiskLevel } from "@/lib/risk";
 
 const CENTER: [number, number] = [-32.955, -60.66];
@@ -28,14 +18,10 @@ const ZOOM = 12;
 const FOUND_ZOOM = 15;
 const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-const NOMINATIM = "https://nominatim.openstreetmap.org/search";
-const ROSARIO_VIEWBOX = "-60.79,-32.83,-60.58,-33.06";
 const TERRAIN_OPACITY = 0.8;
 const TERRAIN_COLOR = "#d6a04a";
 const CLIMA_OPACITY = 0.75;
 const CLIMA_COLOR = "#d65c54";
-const LOW_POINT_MIN_M = 1;
-const MASK_THRESHOLD = 127;
 const ZONE_FILL_OPACITY = 0.18;
 const ZONE_FILL_OPACITY_SIMULATED = 0.32;
 const DATA = {
@@ -44,9 +30,6 @@ const DATA = {
   terrenoPng: "/data/terreno.png",
   clima: "/data/riesgo-clima.json",
   climaPng: "/data/riesgo-clima.png",
-  defensaCivil: "/data/defensa-civil.json",
-  distritos: "/data/distritos.json",
-  barrios: "/data/barrios.json",
 } as const;
 
 type Areas = FeatureCollection<Polygon | MultiPolygon, Record<string, string>>;
@@ -86,16 +69,11 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
   const markerRef = useRef<import("leaflet").CircleMarker | null>(null);
   const terrainLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
   const climaLayerRef = useRef<import("leaflet").ImageOverlay | null>(null);
-  const terrainPixelsRef = useRef<Uint8ClampedArray | null>(null);
-  const maskPixelsRef = useRef<Uint8ClampedArray | null>(null);
-  const climaPixelsRef = useRef<Uint8ClampedArray | null>(null);
+  const lectorRef = useRef<PlaceReader>(createPlaceReader());
   const { escenario, reset } = useSimulation();
   const [collection, setCollection] = useState<Areas | null>(null);
   const [terrain, setTerrain] = useState<TerrainMeta | null>(null);
   const [clima, setClima] = useState<ClimaMeta | null>(null);
-  const [defensaCivil, setDefensaCivil] = useState<DefensaCivil | null>(null);
-  const [distritos, setDistritos] = useState<Areas | null>(null);
-  const [barrios, setBarrios] = useState<Areas | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mostrarTerreno, setMostrarTerreno] = useState(false);
   const [mostrarClima, setMostrarClima] = useState(false);
@@ -145,9 +123,6 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
     });
     fetchJson<TerrainMeta>(DATA.terreno).then((data) => !cancelled && data && setTerrain(data));
     fetchJson<ClimaMeta>(DATA.clima).then((data) => !cancelled && data && setClima(data));
-    fetchJson<DefensaCivil>(DATA.defensaCivil).then((data) => !cancelled && data && setDefensaCivil(data));
-    fetchJson<Areas>(DATA.distritos).then((data) => !cancelled && data && setDistritos(data));
-    fetchJson<Areas>(DATA.barrios).then((data) => !cancelled && data && setBarrios(data));
     return () => {
       cancelled = true;
     };
@@ -229,68 +204,23 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
     });
   }, [mapReady, terrain, clima, mostrarTerreno, mostrarClima]);
 
-  const lecturaTerrenoEn = async (lat: number, lon: number): Promise<LecturaTerreno> => {
-    if (!terrain) {
-      return null;
-    }
-    if (!terrainPixelsRef.current || !maskPixelsRef.current) {
-      [terrainPixelsRef.current, maskPixelsRef.current] = await Promise.all([
-        loadPixels(DATA.terrenoPng, terrain),
-        loadPixels(`/data/${terrain.mascaraEdificado}`, terrain),
-      ]);
-    }
-    const offset = rasterOffset(terrain, lat, lon);
-    if (offset === null) {
-      return null;
-    }
-    if (maskPixelsRef.current[offset] > MASK_THRESHOLD) {
-      return { estado: "edificado", metros: 0 };
-    }
-    const metros = (terrainPixelsRef.current[offset + 3] / 255) * terrain.escalaMaximaMetros;
-    return { estado: metros >= LOW_POINT_MIN_M ? "bajo" : "plano", metros };
-  };
-
-  const lecturaClimaEn = async (lat: number, lon: number) => {
-    if (!clima) {
-      return null;
-    }
-    if (!climaPixelsRef.current) {
-      climaPixelsRef.current = await loadPixels(`/data/${clima.archivoCategorias}`, clima);
-    }
-    const offset = rasterOffset(clima, lat, lon);
-    return offset === null ? null : categoriaDesdeGris(clima, climaPixelsRef.current[offset]);
-  };
-
   const buscar = async (event: React.FormEvent) => {
     event.preventDefault();
     const termino = consulta.trim();
-    if (!termino || !collection) {
+    if (!termino) {
       return;
     }
     setBuscando(true);
     setError(null);
     setHallazgo(null);
     try {
-      const params = new URLSearchParams({
-        q: `${termino}, Rosario, Santa Fe, Argentina`,
-        format: "json",
-        limit: "1",
-        viewbox: ROSARIO_VIEWBOX,
-        bounded: "1",
-      });
-      const response = await fetch(`${NOMINATIM}?${params}`, { headers: { accept: "application/json" } });
-      const results = (await response.json()) as { lat: string; lon: string; display_name: string }[];
-      if (results.length === 0) {
+      const encontrado = await geocodificar(termino);
+      if (!encontrado) {
         setError("No encontramos esa dirección dentro de Rosario.");
         return;
       }
-      const lat = Number(results[0].lat);
-      const lon = Number(results[0].lon);
-      const match = featureAt(collection, lat, lon);
-      const zona = match?.properties.zona?.trim();
-      const cercano = match ? null : nearestFeature(collection, lat, lon);
-      const distrito = distritos ? featureAt(distritos, lat, lon)?.properties.distrito : undefined;
-      const [terreno, categoriaClima] = await Promise.all([lecturaTerrenoEn(lat, lon).catch(() => null), lecturaClimaEn(lat, lon).catch(() => null)]);
+      const { lat, lon } = encontrado;
+      const lectura = await lectorRef.current.leer(lat, lon);
 
       const map = mapRef.current;
       if (map) {
@@ -300,23 +230,13 @@ export function FloodMap({ zonas, buscador = false, reportes = false, reportar =
           radius: 7,
           color: "#ececee",
           weight: 2,
-          fillColor: riskColor(zona ? nivelDeZona(zona) : null),
+          fillColor: riskColor(lectura.zona ? nivelDeZona(lectura.zona) : null),
           fillOpacity: 1,
         }).addTo(map);
         map.setView([lat, lon], FOUND_ZOOM);
       }
 
-      setHallazgo({
-        etiqueta: results[0].display_name.split(",").slice(0, 3).join(", "),
-        zona,
-        nivel: zona ? nivelDeZona(zona) : undefined,
-        dentro: Boolean(match),
-        cercano: cercano ? { zona: cercano.feature.properties.zona?.trim() ?? "?", metros: cercano.metros } : null,
-        terreno,
-        clima: categoriaClima,
-        distrito: defensaCivil && distrito ? lecturaDistrito(defensaCivil, distrito) : null,
-        barrio: barrios ? (featureAt(barrios, lat, lon)?.properties.barrio ?? null) : null,
-      });
+      setHallazgo({ ...lectura, etiqueta: encontrado.etiqueta, nivel: lectura.zona ? nivelDeZona(lectura.zona) : undefined });
     } catch {
       setError("El buscador de direcciones no respondió. Probá de nuevo en un momento.");
     } finally {
