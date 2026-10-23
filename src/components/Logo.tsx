@@ -1,28 +1,40 @@
-interface LogoProps {
+import { useId } from "react";
+
+interface LogoMarkProps {
   size?: number;
   className?: string;
 }
 
-const DEFAULT_SIZE = 28;
+const DEFAULT_SIZE = 30;
 
-export function LogoMark({ size = DEFAULT_SIZE, className = "" }: LogoProps) {
+export function LogoMark({ size = DEFAULT_SIZE, className = "" }: LogoMarkProps) {
+  const gradientId = useId();
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} className={className} role="img" aria-label="Cota" fill="none">
-      <rect x="1" y="1" width="30" height="30" rx="9" fill="var(--panel-soft)" stroke="var(--rule)" />
-      <path d="M9 7v11" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
-      <path d="M6.5 9h2.5M6.5 12.5h2.5M6.5 16h2.5" stroke="var(--ink)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M12.5 11.25 16 13.5l-3.5 2.25Z" fill="var(--atencion)" />
-      <path d="M11 20.5c2 0 2-1.6 4-1.6s2 1.6 4 1.6 2-1.6 4-1.6" stroke="var(--water)" strokeWidth="2" strokeLinecap="round" />
-      <path d="M11 25c2 0 2-1.6 4-1.6s2 1.6 4 1.6 2-1.6 4-1.6" stroke="var(--water)" strokeWidth="2" strokeLinecap="round" opacity="0.45" />
+      <defs>
+        <linearGradient id={gradientId} x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#3f7f9e" />
+          <stop offset="1" stopColor="#173c4e" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="8" fill={`url(#${gradientId})`} />
+      <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="#ffffff" strokeOpacity="0.14" />
+      <path d="M10.5 8.5h11L16 16.5Z" fill="#f4f6f8" />
+      <path d="M7 19h18" stroke="#f4f6f8" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M8 24c2.67 0 2.67-1.75 5.33-1.75S16 24 18.67 24s2.66-1.75 5.33-1.75" stroke="#f4f6f8" strokeOpacity="0.62" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
 
 export function Wordmark() {
   return (
-    <span className="flex flex-col leading-none">
-      <span className="hidden text-base font-semibold tracking-tight text-ink sm:block">Cota</span>
-      <span className="meta hidden text-[10px] sm:block">riesgo hídrico · Rosario</span>
+    <span className="flex items-center gap-3">
+      <span className="text-[17px] font-semibold leading-none tracking-[-0.02em] text-ink">Cota</span>
+      <span className="h-6 w-px bg-rule max-sm:hidden" aria-hidden="true" />
+      <span className="flex flex-col gap-1 leading-none max-sm:hidden">
+        <span className="text-[11px] font-medium text-ink-soft">Riesgo hídrico</span>
+        <span className="readout text-[10px] uppercase tracking-[0.14em] text-ink-faint">Rosario · AR</span>
+      </span>
     </span>
   );
 }

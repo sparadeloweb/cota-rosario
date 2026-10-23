@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Deck, type DeckSlide } from "@/components/deck/Deck";
 import { RISK_FILL } from "@/components/status";
 import { TopBar } from "@/components/TopBar";
-import { PANEL_HOME, VECINOS_HOME } from "@/lib/navigation";
+import { VECINOS_HOME } from "@/lib/navigation";
 import { conceptos, HERRAMIENTAS, PREGUNTAS, PROCESO, QUE_ES, SEMAFORO, type Concepto } from "@/content/comoFunciona";
 import { DemoNotice } from "@/components/DemoNotice";
 import { RISK_ORDER } from "@/lib/risk";
@@ -285,12 +285,7 @@ export default async function ComoFuncionaPage() {
     <div className="flex h-full flex-col">
       <TopBar
         inicio={VECINOS_HOME}
-        acciones={
-          <>
-            <Link href={VECINOS_HOME} className="rounded-md border border-rule px-2.5 py-1.5 text-xs text-ink-soft hover:text-ink">Vecinos</Link>
-            <Link href={PANEL_HOME} className="rounded-md border border-rule px-2.5 py-1.5 text-xs text-ink-soft hover:text-ink">Operaciones</Link>
-          </>
-        }
+        espacio={null}
       />
       <DemoNotice />
       <div className="min-h-0 flex-1">

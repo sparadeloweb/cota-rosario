@@ -31,3 +31,12 @@ test("la navegación entre pasos no se sale de los extremos", () => {
   assert.equal(pasoAnterior("tipo"), "tipo");
   assert.equal(pasoAnterior("detalle"), "lugar");
 });
+
+test("las frases rápidas se suman a la descripción sin repetirse ni pasarse del máximo", async () => {
+  const { agregarFrase } = await import("../src/lib/reportFlow");
+  assert.equal(agregarFrase("", "llega al cordón"), "llega al cordón");
+  assert.equal(agregarFrase("llega al cordón", "no pasan autos"), "llega al cordón, no pasan autos");
+  assert.equal(agregarFrase("Llega al cordón", "llega al cordón"), "Llega al cordón");
+  const largo = "x".repeat(DESCRIPTION_MAX_CHARS - 3);
+  assert.equal(agregarFrase(largo, "no pasan autos"), largo);
+});
