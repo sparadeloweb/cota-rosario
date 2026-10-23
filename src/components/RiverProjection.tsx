@@ -80,7 +80,7 @@ export function RiverProjection({ river }: RiverProjectionProps) {
           </text>
         ))}
       </svg>
-      <figcaption className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-ink-soft">
+      <figcaption className="flex flex-wrap gap-x-5 gap-y-1 text-[0.6875rem] text-ink-soft">
         <span className="flex items-center gap-2">
           <span className="h-0 w-4 border-t" style={{ borderColor: "var(--water)" }} aria-hidden="true" />
           medido y proyección por caudal GloFAS

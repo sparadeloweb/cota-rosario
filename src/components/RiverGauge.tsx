@@ -52,8 +52,8 @@ export function RiverGauge({ river }: RiverGaugeProps) {
             aria-hidden="true"
           />
         ))}
-        <span className="readout absolute left-2 top-2 text-[10px] text-ink-faint">{ceiling.toFixed(1)} m</span>
-        <span className="readout absolute bottom-1.5 left-2 text-[10px] text-ink-faint">0 m</span>
+        <span className="readout absolute left-2 top-2 text-[0.625rem] text-ink-faint">{ceiling.toFixed(1)} m</span>
+        <span className="readout absolute bottom-1.5 left-2 text-[0.625rem] text-ink-faint">0 m</span>
       </div>
 
       <ul className="flex flex-wrap gap-x-5 gap-y-1.5">

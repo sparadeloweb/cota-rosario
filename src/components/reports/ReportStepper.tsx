@@ -11,7 +11,7 @@ export function ReportStepper({ step }: { step: ReportStep }) {
           <span className="h-1 overflow-hidden rounded-full bg-rule">
             <span className={`block h-full origin-left rounded-full bg-ink transition-transform duration-500 ease-out ${index <= current ? "scale-x-100" : "scale-x-0"}`} />
           </span>
-          <span className={`text-[11px] ${index === current ? "text-ink" : index < current ? "text-ink-soft" : "text-ink-faint"}`}>{LABELS[stepId]}</span>
+          <span className={`text-[0.6875rem] ${index === current ? "text-ink" : index < current ? "text-ink-soft" : "text-ink-faint"}`}>{LABELS[stepId]}</span>
         </li>
       ))}
     </ol>

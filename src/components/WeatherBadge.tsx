@@ -36,7 +36,7 @@ export function WeatherLine({ weather }: WeatherBadgeProps) {
       <WeatherIconSvg icon={weather.icon} className="size-6 shrink-0 text-ink-soft" />
       <span className="readout text-lg leading-none text-ink">{weather.temperature}°</span>
       <span className="min-w-0 flex-1 truncate text-xs text-ink-soft">{weather.description}</span>
-      <dl className="readout flex shrink-0 gap-3 text-[11px] text-ink-soft">
+      <dl className="readout flex shrink-0 gap-3 text-[0.6875rem] text-ink-soft">
         <div className="flex flex-col items-end leading-tight">
           <dt className="text-ink-faint">humedad</dt>
           <dd className="text-ink">{weather.humidity} %</dd>
@@ -65,7 +65,7 @@ export function WeatherBadge({ weather }: WeatherBadgeProps) {
           <span className="readout text-lg text-ink">{weather.temperature}°</span>
           <span className="text-xs text-ink-soft">{weather.description}</span>
         </span>
-        <span className="readout text-[11px] text-ink-faint">
+        <span className="readout text-[0.6875rem] text-ink-faint">
           <span className="hidden sm:inline">
             humedad {weather.humidity} % · {weather.pressure} hPa ·{" "}
           </span>

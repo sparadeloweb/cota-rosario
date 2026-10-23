@@ -94,22 +94,25 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
   const full = places.length >= MAX_PLACES;
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col pb-8">
-      <SectionHero pattern="zone" meta={`Mis lugares · ${ready ? places.length : 0} de ${MAX_PLACES}`} title="Mi zona">
-        Guardá tu casa, el trabajo o la escuela y mirá qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.
-      </SectionHero>
-
-      <div className="flex flex-col gap-4 px-4 pt-5 sm:px-6">
-        {!available ? (
+    <div className="mx-auto w-full max-w-page pb-8 lg:grid lg:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] lg:gap-x-8 lg:px-6">
+      <div className="flex flex-col lg:sticky lg:top-0 lg:self-start">
+        <SectionHero pattern="zone" meta={`Mis lugares · ${ready ? places.length : 0} de ${MAX_PLACES}`} title="Mi zona">
+          Guardá tu casa, el trabajo o la escuela y mirá qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.
+        </SectionHero>
+        <div className="px-4 pt-5 sm:px-6 lg:px-0">
+          {!available ? (
           <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (
-          <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} />
-        )}
+            <PlaceForm address={address} name={name} busy={busy} full={full} message={message} fullNotice={ADD_ERROR.full} onAddress={setAddress} onName={setName} onSearch={addAddress} onLocate={addCurrentLocation} />
+          )}
+        </div>
+      </div>
 
+      <div className="px-4 pt-4 sm:px-6 lg:px-0 lg:pt-7">
         {ready ? (
           places.length ? (
             <Motion>
-              <ul className="flex flex-col gap-3">
+              <ul className="grid gap-3 xl:grid-cols-2 min-[2000px]:grid-cols-3">
                 {places.map((place) => (
                   <PlaceCard key={place.id} place={place} reader={reader} terrain={terrain} zoneLevel={zoneLevel} onRemove={() => save(removePlace(places, place.id))} />
                 ))}

@@ -29,11 +29,11 @@ export function LogoMark({ size = DEFAULT_SIZE, className = "" }: LogoMarkProps)
 export function Wordmark() {
   return (
     <span className="flex items-center gap-3">
-      <span className="text-[17px] font-semibold leading-none tracking-[-0.02em] text-ink">Cota</span>
+      <span className="text-[1.0625rem] font-semibold leading-none tracking-[-0.02em] text-ink">Cota</span>
       <span className="h-6 w-px bg-rule max-sm:hidden" aria-hidden="true" />
       <span className="flex flex-col gap-1 leading-none max-sm:hidden">
-        <span className="text-[11px] font-medium text-ink-soft">Riesgo hídrico</span>
-        <span className="readout text-[10px] uppercase tracking-[0.14em] text-ink-faint">Rosario · AR</span>
+        <span className="text-[0.6875rem] font-medium text-ink-soft">Riesgo hídrico</span>
+        <span className="readout text-[0.625rem] uppercase tracking-[0.14em] text-ink-faint">Rosario · AR</span>
       </span>
     </span>
   );

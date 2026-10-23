@@ -20,9 +20,9 @@ export function Provenance({ stamps }: ProvenanceProps) {
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <h3 className="text-sm font-medium text-ink">{source.agency}</h3>
               {failure ? (
-                <span className="readout text-[11px] text-alert">sin respuesta {argentinaTime(failure.at)}</span>
+                <span className="readout text-[0.6875rem] text-alert">sin respuesta {argentinaTime(failure.at)}</span>
               ) : fetched ? (
-                <span className="readout text-[11px] text-ink-faint">consultado {argentinaDateTime(fetched)}</span>
+                <span className="readout text-[0.6875rem] text-ink-faint">consultado {argentinaDateTime(fetched)}</span>
               ) : null}
             </div>
             <p className="text-xs text-ink-soft">{source.description}</p>
@@ -30,7 +30,7 @@ export function Provenance({ stamps }: ProvenanceProps) {
               href={source.endpoint}
               target="_blank"
               rel="noopener noreferrer"
-              className="readout break-all text-[11px] text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink"
+              className="readout break-all text-[0.6875rem] text-ink-soft underline decoration-rule underline-offset-4 hover:text-ink"
             >
               {source.endpoint}
             </a>

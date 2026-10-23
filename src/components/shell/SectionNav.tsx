@@ -22,7 +22,7 @@ export function SectionNav({ items, label }: SectionNavProps) {
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] transition-colors ${active ? "border-ink text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
+                className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-[0.8125rem] transition-colors ${active ? "border-ink text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
               >
                 <NavGlyph icon={item.icon} className="size-4" />
                 {item.label}

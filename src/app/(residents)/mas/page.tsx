@@ -23,13 +23,13 @@ export default function MorePage() {
   return (
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-xl flex-col pb-8">
+        <div className="mx-auto flex w-full max-w-page flex-col pb-8">
           <SectionHero pattern="summary" meta="Cota · Rosario" title="Más">
             Emergencias, instalar la app, cómo funciona Cota y los datos abiertos.
           </SectionHero>
 
-          <Motion className="flex flex-col gap-4 px-4 pt-5 sm:px-6">
-            <a href={`tel:${EMERGENCY_PHONE}`} className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-critical/40 bg-critical/10 p-4 transition-colors hover:border-critical/70" data-reveal>
+          <Motion className="grid gap-4 px-4 pt-5 sm:px-6 lg:grid-cols-2 lg:items-start">
+            <a href={`tel:${EMERGENCY_PHONE}`} className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-critical/40 bg-critical/10 p-4 transition-colors hover:border-critical/70 lg:min-h-full lg:p-6" data-reveal>
               <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-critical text-ground">
                 <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" />
@@ -66,9 +66,9 @@ export default function MorePage() {
               </div>
             </section>
 
-            <nav aria-label="Más secciones" className="overflow-hidden rounded-xl border border-rule" data-reveal>
+            <nav aria-label="Más secciones" className="grid overflow-hidden rounded-xl border border-rule lg:col-span-2 lg:grid-cols-3" data-reveal>
               {LINKS.map((link) => (
-                <Link key={link.href} href={link.href} className="group flex items-center gap-3.5 border-t border-rule-soft px-4 py-3.5 transition-colors first:border-t-0 hover:bg-panel-soft">
+                <Link key={link.href} href={link.href} className="group flex items-center gap-3.5 border-t border-rule-soft px-4 py-3.5 transition-colors first:border-t-0 hover:bg-panel-soft lg:border-l lg:border-t-0 lg:first:border-l-0">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-rule text-ink-soft group-hover:text-ink">
                     <NavGlyph icon={link.icon} className="size-4" />
                   </span>
@@ -81,13 +81,13 @@ export default function MorePage() {
               ))}
             </nav>
 
-            <section className="rounded-xl border border-dashed border-rule p-4" data-reveal>
+            <section className="rounded-xl border border-dashed border-rule p-4 lg:col-span-2" data-reveal>
               <h2 className="meta">Datos abiertos</h2>
               <p className="mt-1.5 text-xs text-ink-faint">Todo lo que muestra Cota, en JSON y sin registro.</p>
               <ul className="mt-3 flex flex-wrap gap-1.5">
                 {OPEN_DATA.map((route) => (
                   <li key={route}>
-                    <a href={route} className="readout inline-block rounded-md border border-rule bg-ground px-2 py-1 text-[11px] text-ink-soft hover:border-ink-soft hover:text-ink">
+                    <a href={route} className="readout inline-block rounded-md border border-rule bg-ground px-2 py-1 text-[0.6875rem] text-ink-soft hover:border-ink-soft hover:text-ink">
                       {route}
                     </a>
                   </li>

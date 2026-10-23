@@ -21,7 +21,7 @@ export function TabBar({ items }: TabBarProps) {
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-full flex-col items-center justify-center gap-1 text-[11px] transition-colors ${active ? "text-ink" : "text-ink-faint hover:text-ink-soft"}`}
+                className={`flex h-full flex-col items-center justify-center gap-1 text-[0.6875rem] transition-colors ${active ? "text-ink" : "text-ink-faint hover:text-ink-soft"}`}
               >
                 <NavGlyph icon={item.icon} />
                 <span>{item.label}</span>

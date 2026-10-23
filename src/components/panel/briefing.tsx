@@ -30,7 +30,7 @@ export function Briefing({ recommendations, situationReport }: BriefingProps) {
                 <span className="absolute inset-y-0 left-0 w-[3px] origin-top" style={{ background: priorityColor(item.priority) }} aria-hidden="true" data-grow-y />
                 <p className="text-sm font-medium text-ink">{item.title}</p>
                 <p className="mt-1 text-sm leading-relaxed text-ink-soft">{item.action}</p>
-                <p className="mt-2 border-t border-rule-soft pt-2 text-[11px] leading-relaxed text-ink-faint">
+                <p className="mt-2 border-t border-rule-soft pt-2 text-[0.6875rem] leading-relaxed text-ink-faint">
                   <span className="meta mr-1.5">dato</span>
                   {item.why}
                 </p>

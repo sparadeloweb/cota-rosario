@@ -53,8 +53,8 @@ export function StatusPill({ level, updatedAt }: { level: RiskLevel | null; upda
           {level && level !== "normal" ? <span className="absolute inset-0 animate-ping rounded-full opacity-60 motion-reduce:hidden" style={{ background: riskColor(level) }} /> : null}
           <span className="relative size-2 rounded-full" style={{ background: riskColor(level) }} />
         </span>
-        <span className="text-[13px] text-ink max-md:hidden">{riskLabel(level)}</span>
-        {updatedAt ? <span className="readout text-[11px] text-ink-faint max-sm:hidden">{argentinaTime(updatedAt)}</span> : null}
+        <span className="text-[0.8125rem] text-ink max-md:hidden">{riskLabel(level)}</span>
+        {updatedAt ? <span className="readout text-[0.6875rem] text-ink-faint max-sm:hidden">{argentinaTime(updatedAt)}</span> : null}
       </span>
       {updatedAt ? (
         <span className="border-l border-rule pl-0.5">
@@ -71,7 +71,7 @@ export function StatusPillPending() {
   return (
     <div className="flex h-8 items-center gap-2 rounded-full border border-rule bg-ground/60 px-3" role="status" aria-label="Consultando el estado">
       <span className="size-2 animate-pulse rounded-full bg-ink-faint" aria-hidden="true" />
-      <span className="text-[13px] text-ink-faint max-md:hidden">Consultando…</span>
+      <span className="text-[0.8125rem] text-ink-faint max-md:hidden">Consultando…</span>
     </div>
   );
 }

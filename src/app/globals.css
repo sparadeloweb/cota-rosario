@@ -24,6 +24,7 @@
 }
 
 @theme inline {
+  --container-page: 96rem;
   --color-ground: var(--ground);
   --color-panel: var(--panel);
   --color-panel-soft: var(--panel-soft);
@@ -44,6 +45,18 @@
 
 html {
   color-scheme: dark;
+}
+
+@media (min-width: 1800px) {
+  html {
+    font-size: 112.5%;
+  }
+}
+
+@media (min-width: 2300px) {
+  html {
+    font-size: 125%;
+  }
 }
 
 @media (max-width: 1023px) {

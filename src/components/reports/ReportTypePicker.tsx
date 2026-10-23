@@ -15,7 +15,7 @@ interface ReportTypePickerProps {
 
 export function ReportTypePicker({ selected, onSelect }: ReportTypePickerProps) {
   return (
-    <fieldset className="grid grid-cols-2 gap-2.5">
+    <fieldset className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
       <legend className="sr-only">Tipo de reporte</legend>
       {(Object.entries(REPORT_TYPES) as [ReportType, (typeof REPORT_TYPES)[ReportType]][]).map(([id, type]) => {
         const active = selected === id;
@@ -32,7 +32,7 @@ export function ReportTypePicker({ selected, onSelect }: ReportTypePickerProps) 
             </span>
             <span className="relative">
               <span className="block text-sm font-medium text-ink">{type.label}</span>
-              <span className="mt-0.5 block text-[11px] leading-snug text-ink-faint">{HINTS[id]}</span>
+              <span className="mt-0.5 block text-[0.6875rem] leading-snug text-ink-faint">{HINTS[id]}</span>
             </span>
             {active ? (
               <span className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full text-ground" style={{ background: type.color }} aria-hidden="true">

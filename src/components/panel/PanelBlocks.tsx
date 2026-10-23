@@ -15,7 +15,7 @@ export function PanelSection({ title, note, children, className = "" }: { title:
 export function PanelPage({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-6xl pb-10">{children}</div>
+      <div className="mx-auto w-full max-w-page pb-10">{children}</div>
     </div>
   );
 }
