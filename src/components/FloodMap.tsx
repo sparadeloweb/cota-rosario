@@ -1,5 +1,6 @@
 "use client";
 
+import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { LookupResult } from "@/components/LookupResult";
@@ -12,6 +13,8 @@ import { RISK_FILL, riskColor } from "@/components/status";
 import type { ClimateMeta, Finding, TerrainMeta } from "@/lib/lookup";
 import { createPlaceReader, geocode, type PlaceReader } from "@/lib/placeReader";
 import { RISK_LABEL, riskLabel, type RiskLevel } from "@/lib/risk";
+import { escapeHtml } from "@/lib/html";
+import { loadLeaflet } from "@/lib/leaflet";
 
 const CENTER: [number, number] = [-32.955, -60.66];
 const ZOOM = 12;
@@ -115,6 +118,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
 
   useEffect(() => {
     let cancelled = false;
+    loadLeaflet().catch(() => !cancelled && setError("No se pudo cargar el mapa."));
     fetchJson<FloodZones>(DATA.floodZones).then((data) => {
       if (cancelled) {
         return;
@@ -138,7 +142,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
     }
     let cancelled = false;
 
-    import("leaflet").then((L) => {
+    loadLeaflet().then((L) => {
       if (cancelled || !container.current) {
         return;
       }
@@ -150,7 +154,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
         style: (feature) => zoneStyleRef.current(feature as ZoneFeature | undefined),
         onEachFeature: (feature, layer) => {
           const properties = (feature as ZoneFeature).properties;
-          layer.bindPopup(() => `Zona ${properties?.zone ?? "?"} · sector ${properties?.sector || "—"}<br/>${riskLabel(levelRef.current(properties?.zone ?? ""))}`);
+          layer.bindPopup(() => `Zona ${escapeHtml(properties?.zone ?? "?")} · sector ${escapeHtml(properties?.sector || "—")}<br/>${escapeHtml(riskLabel(levelRef.current(properties?.zone ?? "")))}`);
         },
       }).addTo(map);
       setMapReady(true);
@@ -177,7 +181,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
     if (!mapReady || !map) {
       return;
     }
-    import("leaflet").then((L) => {
+    loadLeaflet().then((L) => {
       const overlays: [typeof terrainLayerRef, TerrainMeta | ClimateMeta | null, string, number, boolean][] = [
         [terrainLayerRef, terrain, DATA.terrainPng, TERRAIN_OPACITY, showTerrain],
         [climateLayerRef, climateRisk, DATA.climatePng, CLIMATE_OPACITY, showClimate],
@@ -226,7 +230,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
 
       const map = mapRef.current;
       if (map) {
-        const L = await import("leaflet");
+        const L = await loadLeaflet();
         markerRef.current?.remove();
         markerRef.current = L.circleMarker([lat, lon], {
           radius: 7,

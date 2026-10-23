@@ -8,7 +8,6 @@ import { PanelSection } from "@/components/panel/PanelBlocks";
 import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
 import { rainTiles, networkAndReportTiles, riverTiles } from "@/components/panel/tiles";
 import { Provenance } from "@/components/Provenance";
-import { PanelShell } from "@/components/shell/PanelShell";
 import { Workspace } from "@/components/shell/Workspace";
 import { WeatherBadge, WeatherLine } from "@/components/WeatherBadge";
 import { loadPanel } from "@/lib/panelData";
@@ -36,7 +35,7 @@ export default async function SummaryPage() {
   ];
 
   return (
-    <PanelShell level={risk.level} updatedAt={risk.assessedAt}>
+
       <Workspace
         canvas={<FloodMap zones={risk.zones} reports corner={<WeatherBadge weather={weather} />} />}
         rail={
@@ -114,6 +113,5 @@ export default async function SummaryPage() {
           </div>
         }
       />
-    </PanelShell>
   );
 }

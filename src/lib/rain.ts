@@ -1,7 +1,7 @@
 import { PARANA_GLOFAS_CELL, ROSARIO } from "@/lib/sources";
 import { addCalendarDays, argentinaDay, sourceTime } from "@/lib/time";
 import { nonNegative, probability } from "@/lib/dataChecks";
-import { readLiveSource } from "@/lib/liveSources";
+import { FRESHNESS, readLiveSource } from "@/lib/liveSources";
 
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 const FLOOD_URL = "https://flood-api.open-meteo.com/v1/flood";
@@ -78,7 +78,7 @@ export function rainFromResponse(data: ForecastResponse, now = Date.now()): Rain
 }
 
 export async function fetchRain(): Promise<RainSnapshot> {
-  return readLiveSource("lluvia:48h", fetchRainUncached);
+  return readLiveSource("rain:48h", FRESHNESS.hourlyRain, fetchRainUncached);
 }
 
 async function fetchRainUncached(): Promise<RainSnapshot> {
@@ -87,7 +87,7 @@ async function fetchRainUncached(): Promise<RainSnapshot> {
 }
 
 export async function fetchDischarge(pastDays = 0): Promise<DischargeSnapshot> {
-  return readLiveSource(`glofas:${pastDays}`, () => fetchDischargeUncached(pastDays));
+  return readLiveSource(`glofas:${pastDays}`, FRESHNESS.discharge, () => fetchDischargeUncached(pastDays));
 }
 
 async function fetchDischargeUncached(pastDays: number): Promise<DischargeSnapshot> {
@@ -124,7 +124,7 @@ export function outlookFromResponse(data: ForecastResponse, now = Date.now()): R
 }
 
 export async function fetchRainOutlook(): Promise<RainOutlook> {
-  return readLiveSource("lluvia:7d", fetchRainOutlookUncached);
+  return readLiveSource("rain:7d", FRESHNESS.hourlyRain, fetchRainOutlookUncached);
 }
 
 async function fetchRainOutlookUncached(): Promise<RainOutlook> {
@@ -154,7 +154,7 @@ export interface RainBalance {
 export interface MonthRain { month: string; accumulatedMm: number; daysWithData: number; until: string | null; complete: boolean; fetchedAt: string }
 
 export async function fetchRainBalance(): Promise<RainBalance> {
-  return readLiveSource("lluvia:balance", fetchRainBalanceUncached);
+  return readLiveSource("rain:balance", FRESHNESS.hourlyRain, fetchRainBalanceUncached);
 }
 
 async function fetchRainBalanceUncached(): Promise<RainBalance> {
@@ -176,7 +176,7 @@ async function fetchRainBalanceUncached(): Promise<RainBalance> {
 }
 
 export async function fetchMonthToDateRain(): Promise<MonthRain> {
-  return readLiveSource("lluvia:mes", fetchMonthToDateRainUncached);
+  return readLiveSource("rain:month", FRESHNESS.hourlyRain, fetchMonthToDateRainUncached);
 }
 
 async function fetchMonthToDateRainUncached(): Promise<MonthRain> {

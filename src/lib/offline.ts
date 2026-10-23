@@ -6,6 +6,7 @@ const DAY_MS = 24 * HOUR_MS;
 const JUST_NOW_MS = 2 * MINUTE_MS;
 
 export const NO_READING = "sin lectura";
+export const FROM_CACHE_FLAG = "__cotaFromCache";
 
 export function describeAge(iso: string | undefined, now: number): string {
   const instant = iso ? Date.parse(iso) : Number.NaN;

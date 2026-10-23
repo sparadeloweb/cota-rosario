@@ -2,8 +2,10 @@ importScripts("/sw-strategy.js");
 
 var VERSION = new URL(self.location.href).searchParams.get("v") || "dev";
 var CACHE = "cota-" + VERSION;
-var CACHE_MARK = "<script>window.__cotaDesdeCache=location.href</script>";
-var SHELL = ["/", "/zona", "/reportar", "/mas", "/operaciones", "/manifest.webmanifest", "/icons/icon-192.png"];
+var CACHE_MARK = "<script>window.__cotaFromCache=location.href</script>";
+var SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png"];
+var PAGE_COPY_MAX_AGE_MS = 10 * 60 * 1000;
+var NAVIGATION_TIMEOUT_MS = 4000;
 
 self.addEventListener("install", function (event) {
   event.waitUntil(
@@ -77,12 +79,28 @@ function offlinePage() {
   return new Response(OFFLINE_HTML, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
+function isRecentCopy(response) {
+  var stamped = response ? Date.parse(response.headers.get("Date") || "") : NaN;
+  return Number.isFinite(stamped) && Date.now() - stamped < PAGE_COPY_MAX_AGE_MS;
+}
+
 function cachePage(href) {
   var url = new URL(href, self.location.origin);
   if (url.origin !== self.location.origin) {
     return Promise.resolve();
   }
   url.hash = "";
+  return caches
+    .match(url.href, { ignoreSearch: true })
+    .then(function (existing) {
+      if (isRecentCopy(existing)) {
+        return undefined;
+      }
+      return fetchPageCopy(url);
+    });
+}
+
+function fetchPageCopy(url) {
   return fetch(url.href, { credentials: "same-origin", headers: { Accept: "text/html" } })
     .then(function (response) {
       if (isCacheable(response) && (response.headers.get("Content-Type") || "").indexOf("text/html") === 0) {
@@ -106,23 +124,46 @@ function markFromCache(response) {
   });
 }
 
-function networkFirst(request) {
+function fromCacheOrOffline(request, navigation) {
+  return caches.match(request, { ignoreSearch: navigation }).then(function (cached) {
+    if (cached) {
+      return navigation ? markFromCache(cached) : cached;
+    }
+    if (!navigation) {
+      return Response.error();
+    }
+    return offlinePage();
+  });
+}
+
+function networkFirst(request, event) {
   var navigation = request.mode === "navigate";
-  return fetch(request)
-    .then(function (response) {
-      return store(request, response);
-    })
-    .catch(function () {
-      return caches.match(request, { ignoreSearch: navigation }).then(function (cached) {
-        if (cached) {
-          return navigation ? markFromCache(cached) : cached;
-        }
-        if (!navigation) {
-          return Response.error();
-        }
-        return offlinePage();
-      });
+  var network = fetch(request).then(function (response) {
+    return store(request, response);
+  });
+  if (!navigation) {
+    return network.catch(function () {
+      return fromCacheOrOffline(request, false);
     });
+  }
+  event.waitUntil(network.catch(function () {
+    return undefined;
+  }));
+  var slowNetwork = new Promise(function (resolve) {
+    setTimeout(function () {
+      caches.match(request, { ignoreSearch: true }).then(function (cached) {
+        if (cached) {
+          resolve(markFromCache(cached));
+        }
+      });
+    }, NAVIGATION_TIMEOUT_MS);
+  });
+  return Promise.race([
+    network.catch(function () {
+      return fromCacheOrOffline(request, true);
+    }),
+    slowNetwork,
+  ]);
 }
 
 function cacheFirst(request) {
@@ -158,7 +199,7 @@ self.addEventListener("fetch", function (event) {
     : self.cotaStrategyFor({ method: request.method, mode: request.mode, pathname: url.pathname, sameOrigin: url.origin === self.location.origin });
 
   if (strategy === "network-first") {
-    event.respondWith(networkFirst(request));
+    event.respondWith(networkFirst(request, event));
   } else if (strategy === "cache-first") {
     event.respondWith(cacheFirst(request));
   } else if (strategy === "stale-while-revalidate") {

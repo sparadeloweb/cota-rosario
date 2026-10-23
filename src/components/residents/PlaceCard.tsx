@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { riskColor } from "@/components/status";
 import type { Finding, TerrainMeta } from "@/lib/lookup";
 import { placeFacts, type FactKey, type FactTone } from "@/lib/placeFacts";
-import type { PlaceReader } from "@/lib/placeReader";
+import type { PlaceReader, PlaceReading } from "@/lib/placeReader";
 import type { Place } from "@/lib/places";
 import { riskLabel, type RiskLevel } from "@/lib/risk";
 
@@ -31,19 +31,22 @@ function title(text: string): string {
 }
 
 export function PlaceCard({ place, reader, terrain, zoneLevel, onRemove }: PlaceCardProps) {
-  const [finding, setFinding] = useState<Finding | null>(null);
+  const [reading, setReading] = useState<PlaceReading | null>(null);
   const [failed, setFailed] = useState(false);
+  const { lat, lon } = place;
 
   useEffect(() => {
     let isCurrent = true;
     reader
-      .read(place.lat, place.lon)
-      .then((reading) => isCurrent && setFinding({ ...reading, label: place.name, level: reading.zone ? zoneLevel(reading.zone) : undefined }))
+      .read(lat, lon)
+      .then((result) => isCurrent && setReading(result))
       .catch(() => isCurrent && setFailed(true));
     return () => {
       isCurrent = false;
     };
-  }, [reader, place, zoneLevel]);
+  }, [reader, lat, lon]);
+
+  const finding: Finding | null = reading ? { ...reading, label: place.name, level: reading.zone ? zoneLevel(reading.zone) : undefined } : null;
 
   const level = finding?.inside ? (finding.level ?? null) : null;
   const accent = finding?.inside ? riskColor(level) : "var(--rule)";

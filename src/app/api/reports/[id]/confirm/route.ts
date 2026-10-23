@@ -1,4 +1,5 @@
 import { confirmReport, ReportError } from "@/lib/reports";
+import { clientIp } from "@/lib/requestGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!ID_PATTERN.test(id)) {
     return Response.json({ ok: false, error: "Identificador inválido." }, { status: 400 });
   }
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "local";
+  const ip = clientIp(request.headers);
   try {
     const report = await confirmReport(id, ip);
     return Response.json({ ok: true, report });

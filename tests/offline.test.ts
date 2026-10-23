@@ -52,3 +52,10 @@ test("a cached copy is always announced as a copy, online or offline", () => {
   assert.match(cachedCopyNotice("2026-10-23T12:00:00Z", NOW, false), /^Sin conexión · /);
   assert.match(cachedCopyNotice(undefined, NOW, true), /sin hora de lectura/);
 });
+
+test("the service worker marks cached copies with the flag the banner reads", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { FROM_CACHE_FLAG } = await import("../src/lib/offline");
+  const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  assert.ok(worker.includes(`window.${FROM_CACHE_FLAG}=location.href`));
+});

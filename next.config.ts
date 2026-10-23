@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { LEGACY_REDIRECTS } from "./src/lib/navigation";
+import { securityHeaders } from "./src/lib/securityHeaders";
 
 const BUILD_ID = process.env.COTA_BUILD_ID ?? String(Date.now());
 
@@ -11,6 +12,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      { source: "/:path*", headers: securityHeaders(process.env.NODE_ENV !== "production") },
       {
         source: "/sw.js",
         headers: [

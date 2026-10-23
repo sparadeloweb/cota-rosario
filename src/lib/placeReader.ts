@@ -71,11 +71,21 @@ export async function geocode(term: string): Promise<GeocodedPlace | null> {
   if (!response.ok) {
     throw new Error("El buscador de direcciones no respondió.");
   }
-  const results = (await response.json()) as { lat: string; lon: string; display_name: string }[];
-  if (!results.length) {
+  return parseGeocoderResult(await response.json());
+}
+
+export function parseGeocoderResult(payload: unknown): GeocodedPlace | null {
+  const first: unknown = Array.isArray(payload) ? payload[0] : undefined;
+  if (!first || typeof first !== "object") {
     return null;
   }
-  return { lat: Number(results[0].lat), lon: Number(results[0].lon), label: results[0].display_name.split(",").slice(0, ADDRESS_PARTS).join(", ") };
+  const { lat, lon, display_name: displayName } = first as Record<string, unknown>;
+  const latitude = Number(lat);
+  const longitude = Number(lon);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || typeof displayName !== "string") {
+    return null;
+  }
+  return { lat: latitude, lon: longitude, label: displayName.split(",").map((part) => part.trim()).filter(Boolean).slice(0, ADDRESS_PARTS).join(", ") };
 }
 
 export function createPlaceReader() {

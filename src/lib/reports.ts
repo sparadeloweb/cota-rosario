@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile, rename, unlink } from "node:fs/promises";
+import { cache } from "react";
+import { mkdir, readFile, writeFile, rename, stat, unlink } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import districts from "../../public/data/districts.json";
@@ -21,6 +22,8 @@ const BOUNDS = { south: -33.1, north: -32.8, west: -60.85, east: -60.55 };
 const MAX_ACTIVE_REPORTS = 500;
 const REPORTS_PER_IP_PER_HOUR = 5;
 const CONFIRMATIONS_PER_IP_PER_HOUR = 20;
+const MAX_CONFIRMATIONS_PER_REPORT = 100;
+const LIST_CACHE_MS = 5_000;
 const MILLIS_PER_HOUR = 3_600_000;
 const DATA_DIR = process.env.COTA_DATA_DIR ?? "data";
 const STORE_FILE = path.join(DATA_DIR, "reports.json");
@@ -31,6 +34,7 @@ const ipActivity = new Map<string, { reports: number[]; confirmations: number[] 
 interface StoredReport extends Report { confirmationsBy: string[] }
 const city = districts as FeatureCollection<Polygon | MultiPolygon, Record<string, string>>;
 let queue: Promise<unknown> = Promise.resolve();
+let listCache: { at: number; version: string; reports: Report[] } | null = null;
 
 export class ReportError extends Error {
   status: number;
@@ -100,6 +104,7 @@ async function readStore(): Promise<StoredReport[]> {
 }
 
 async function writeStore(reports: StoredReport[]): Promise<void> {
+  listCache = null;
   await mkdir(DATA_DIR, { recursive: true });
   const temporary = `${STORE_FILE}.${randomUUID()}.tmp`;
   try {
@@ -186,12 +191,28 @@ export function validateReport(input: NewReportInput): Pick<Report, "lat" | "lon
   };
 }
 
+async function storeVersion(): Promise<string> {
+  try {
+    const { mtimeMs, size } = await stat(STORE_FILE);
+    return `${mtimeMs}:${size}`;
+  } catch {
+    return "missing";
+  }
+}
+
 export async function listReports(): Promise<Report[]> {
+  const cached = listCache;
+  if (cached && Date.now() - cached.at < LIST_CACHE_MS && (await storeVersion()) === cached.version) {
+    return cached.reports;
+  }
   return serialized(async () => {
     const reports = await readStore();
-    const active = reports.filter((report) => isActive(report, Date.now()));
+    const now = Date.now();
+    const active = reports.filter((report) => isActive(report, now));
     if (active.length !== reports.length) await writeStore(active);
-    return active.map(publicReport).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const visible = active.map(publicReport).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    listCache = { at: now, version: await storeVersion(), reports: visible };
+    return visible;
   });
 }
 
@@ -199,11 +220,11 @@ export function createReport(input: NewReportInput, ip: string): Promise<Report>
   return serialized(async () => {
     const now = Date.now();
     const data = validateReport(input);
-    enforceRate(ip, "reports", REPORTS_PER_IP_PER_HOUR, now);
     const active = (await readStore()).filter((report) => isActive(report, now));
     if (active.length >= MAX_ACTIVE_REPORTS) {
       throw new ReportError("Hay demasiados reportes activos ahora mismo.", 503);
     }
+    enforceRate(ip, "reports", REPORTS_PER_IP_PER_HOUR, now);
     const report: StoredReport = { id: randomUUID(), ...data, createdAt: new Date(now).toISOString(), confirmations: 0, confirmationsBy: [] };
     await writeStore([...active, report]);
     return publicReport(report);
@@ -219,10 +240,12 @@ export function confirmReport(id: string, ip: string): Promise<Report> {
       throw new ReportError("Ese reporte ya no está activo.", 404);
     }
     const observer = createHash("sha256").update(`${id}:${ip}`).digest("hex");
-    if (target.confirmationsBy.includes(observer)) return publicReport(target);
+    if (target.confirmationsBy.includes(observer) || target.confirmationsBy.length >= MAX_CONFIRMATIONS_PER_REPORT) return publicReport(target);
     enforceRate(ip, "confirmations", CONFIRMATIONS_PER_IP_PER_HOUR, now);
     const updated = { ...target, confirmations: target.confirmations + 1, confirmationsBy: [...target.confirmationsBy, observer] };
     await writeStore(active.map((report) => (report.id === id ? updated : report)));
     return publicReport(updated);
   });
 }
+
+export const listReportsForRequest = cache(listReports);

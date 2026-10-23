@@ -3,11 +3,11 @@ import { FloodMap } from "@/components/FloodMap";
 import { PanelSection, ReportsSummary } from "@/components/panel/PanelBlocks";
 import { LatestReports, ReportMix } from "@/components/panel/reports";
 import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
-import { PanelShell } from "@/components/shell/PanelShell";
 import { Workspace } from "@/components/shell/Workspace";
 import { SourceDown } from "@/components/SourceDown";
-import { loadPanel } from "@/lib/panelData";
-import { listReports } from "@/lib/reports";
+import { loadKpis } from "@/lib/kpis";
+import { listReportsForRequest } from "@/lib/reports";
+import { loadStatus } from "@/lib/status";
 import { REPORT_TTL_HOURS, type Report } from "@/lib/reportTypes";
 
 export const dynamic = "force-dynamic";
@@ -15,14 +15,15 @@ export const metadata: Metadata = { title: "Reportes · Operaciones · Cota" };
 
 async function recentReports(): Promise<Report[] | null> {
   try {
-    return await listReports();
-  } catch {
+    return await listReportsForRequest();
+  } catch (error: unknown) {
+    console.warn("Latest reports unavailable:", error instanceof Error ? error.message : error);
     return null;
   }
 }
 
 export default async function ReportsPage() {
-  const [{ status, kpis }, list] = await Promise.all([loadPanel(), recentReports()]);
+  const [status, kpis, list] = await Promise.all([loadStatus(), loadKpis(), recentReports()]);
   const { risk } = status;
   const reports = kpis.reports;
   const homes = reports?.byType.find((type) => type.type === "home")?.count ?? null;
@@ -37,7 +38,7 @@ export default async function ReportsPage() {
     : [];
 
   return (
-    <PanelShell level={risk.level} updatedAt={risk.assessedAt}>
+
       <Workspace
         canvas={<FloodMap zones={risk.zones} reports />}
         rail={
@@ -57,6 +58,5 @@ export default async function ReportsPage() {
           </div>
         }
       />
-    </PanelShell>
   );
 }
