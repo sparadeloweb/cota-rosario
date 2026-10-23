@@ -169,6 +169,32 @@ body {
   }
 }
 
+html[data-motion="on"] [data-motion-scope]:not([data-motion-done]) [data-reveal],
+html[data-motion="on"] [data-motion-scope]:not([data-motion-done]) [data-count] {
+  opacity: 0;
+}
+
+html[data-motion="on"] [data-motion-scope]:not([data-motion-done]) [data-grow-x] {
+  transform: scaleX(0);
+}
+
+html[data-motion="on"] [data-motion-scope]:not([data-motion-done]) [data-grow-y] {
+  transform: scaleY(0);
+}
+
+html[data-motion="on"] [data-motion-scope]:not([data-motion-done]) [data-draw] {
+  stroke-dashoffset: 1;
+}
+
+[data-grow-x] {
+  transform-origin: left center;
+}
+
+[data-grow-y] {
+  transform-origin: center bottom;
+  transform-box: fill-box;
+}
+
 .district-label {
   display: flex;
   flex-direction: column;

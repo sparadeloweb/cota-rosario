@@ -10,6 +10,7 @@ import { ModelNotes } from "@/components/ModelNotes";
 import { Provenance } from "@/components/Provenance";
 import { RainOutlook } from "@/components/RainOutlook";
 import { RiverProjection } from "@/components/RiverProjection";
+import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
 import { SourceDown } from "@/components/SourceDown";
 import { TrainingTable } from "@/components/TrainingTable";
 import { WeatherBadge } from "@/components/WeatherBadge";
@@ -36,6 +37,15 @@ export default async function PrediccionesPage() {
   const entrenamiento = (modelos.anegamientos as PoissonModel).entrenamiento;
   const ventanaDias = anegamientos?.ventanaDias ?? DEFAULT_WINDOW_DAYS;
   const curvaDebil = rio?.curva ? rio.curva.r2 < WEAK_FIT_R2 : false;
+  const rioAlFinal = rio?.tendencia?.proyeccion.at(-1)?.metros ?? null;
+  const diaPico = lluvia?.maximoDia ?? null;
+
+  const cifras: HeroFigure[] = [
+    { etiqueta: "Anegamientos esperados", valor: anegamientos?.esperadosCiudad ?? null, decimales: anegamientos && anegamientos.esperadosCiudad < 10 ? 1 : 0, detalle: `en ${ventanaDias} días · escenario exploratorio`, tono: anegamientos && anegamientos.esperadosCiudad >= 10 ? "atencion" : "neutro" },
+    { etiqueta: "Lluvia de la semana", valor: anegamientos?.lluvia.total ?? null, decimales: 1, unidad: "mm", detalle: diaPico ? `el día más lluvioso: ${diaPico.fecha.slice(8, 10)}/${diaPico.fecha.slice(5, 7)} con ${diaPico.milimetros.toFixed(0)} mm` : "pronóstico no disponible" },
+    { etiqueta: `Río en ${ventanaDias} días`, valor: rioAlFinal, decimales: 2, unidad: "m", detalle: "si sigue el ritmo actual · no es pronóstico oficial" },
+    { etiqueta: "Período de retorno", valor: lluvia?.periodoRetornoAnios ?? null, decimales: 1, unidad: "años", detalle: "del día más lluvioso previsto" },
+  ];
 
   return (
     <PanelShell nivel={estado.riesgo.nivel} actualizadoEn={predicciones.generadoEn}>
@@ -53,13 +63,9 @@ export default async function PrediccionesPage() {
       }
       rail={
         <div className="flex flex-col">
-          <section className="px-5 py-6 sm:px-6">
-            <p className="meta">Próximos {ventanaDias} días{fallas.length ? " · evaluación parcial" : ""}</p>
-            <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">La semana que viene</h1>
-            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              Lluvia prevista, tendencias del Paraná y escenarios de anegamiento para consultar los próximos siete días.
-            </p>
-          </section>
+          <SectionHero patron="pronostico" meta={`Próximos ${ventanaDias} días${fallas.length ? " · evaluación parcial" : ""}`} titulo="La semana que viene" cifras={cifras}>
+            Lluvia prevista, tendencias del Paraná y escenarios de anegamiento para consultar los próximos siete días.
+          </SectionHero>
 
           <DataStatus estado={estado} />
 
@@ -68,14 +74,10 @@ export default async function PrediccionesPage() {
             <div className="mt-4">{anegamientos ? <FloodingOutlook anegamientos={anegamientos} /> : <SourceDown falla={fallaDe("modelos") ?? fallaDe("openMeteo")} />}</div>
           </section>
 
-
-
           <section className="hairline px-5 py-6 sm:px-6">
             <h2 className="meta">La lluvia que viene</h2>
             <div className="mt-4">{lluvia ? <RainOutlook lluvia={lluvia} /> : <SourceDown falla={fallaDe("openMeteo")!} />}</div>
           </section>
-
-
 
           <section className="hairline px-5 py-6 sm:px-6">
             <h2 className="meta">A dónde va el río</h2>

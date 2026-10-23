@@ -1,20 +1,6 @@
 import type { ReactNode } from "react";
-import { SourceDown } from "@/components/SourceDown";
-import type { Estado, SourceFailure } from "@/lib/estado";
 import type { Kpis } from "@/lib/kpis";
 
-const CAUDAL_DECIMALS = 0;
-const PERCENT = 100;
-
-export function PanelHeader({ meta, titulo, children }: { meta: string; titulo: string; children?: ReactNode }) {
-  return (
-    <section className="px-5 py-6 sm:px-6">
-      <p className="meta">{meta}</p>
-      <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">{titulo}</h1>
-      {children ? <p className="mt-2 text-sm leading-relaxed text-ink-soft">{children}</p> : null}
-    </section>
-  );
-}
 
 export function PanelSection({ titulo, nota, children, className = "" }: { titulo: string; nota?: ReactNode; children: ReactNode; className?: string }) {
   return (
@@ -31,33 +17,6 @@ export function PanelPage({ children }: { children: ReactNode }) {
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-6xl pb-10">{children}</div>
     </div>
-  );
-}
-
-export function CaudalBlock({ caudal, falla }: { caudal: Estado["caudal"]; falla?: SourceFailure }) {
-  if (!caudal) {
-    return <SourceDown falla={falla} />;
-  }
-  const maximo = Math.max(...caudal.dias.map((dia) => dia.caudal), 1);
-  return (
-    <>
-      <div className="flex items-baseline gap-2.5">
-        <span className="readout text-3xl font-medium text-ink">{caudal.actual === null ? "—" : caudal.actual.toFixed(CAUDAL_DECIMALS)}</span>
-        <span className="text-sm text-ink-soft">m³/s</span>
-        <span className="meta ml-auto">próximos 7 días</span>
-      </div>
-      <ul className="mt-4 flex flex-col gap-2">
-        {caudal.dias.map((dia) => (
-          <li key={dia.fecha} className="flex items-center gap-3 text-xs">
-            <span className="readout w-20 shrink-0 text-ink-faint">{dia.fecha.slice(5)}</span>
-            <span className="h-1 flex-1 overflow-hidden rounded-full bg-rule-soft">
-              <span className="block h-full rounded-full bg-ink-faint" style={{ width: `${(dia.caudal / maximo) * PERCENT}%` }} />
-            </span>
-            <span className="readout w-16 shrink-0 text-right text-ink">{dia.caudal.toFixed(CAUDAL_DECIMALS)}</span>
-          </li>
-        ))}
-      </ul>
-    </>
   );
 }
 
