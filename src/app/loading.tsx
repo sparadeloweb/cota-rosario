@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { TopBar } from "@/components/TopBar";
 import { PANEL_HOME, VECINOS_HOME } from "@/lib/navigation";
 
-const TITLES: Record<string, string> = { "/": "el mapa", "/mas": "el menú", "/operaciones": "el panel", "/operaciones/pronostico": "el pronóstico" };
+const TITLES: Record<string, string> = { "/": "el mapa", "/zona": "tus lugares", "/reportar": "el reporte", "/mas": "el menú", "/operaciones": "el panel", "/operaciones/pronostico": "el pronóstico" };
 
 export default function Loading() {
   const path = usePathname();

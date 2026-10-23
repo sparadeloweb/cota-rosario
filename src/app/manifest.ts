@@ -21,6 +21,8 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
+      { name: "Mi zona", url: "/zona", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Reportar agua", url: "/reportar", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Panel de operaciones", url: "/operaciones", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Pronóstico a 7 días", url: "/operaciones/pronostico", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { VecinosShell } from "@/components/shell/VecinosShell";
 import { Workspace } from "@/components/shell/Workspace";
 import { HELP_HREF } from "@/lib/navigation";
+import { consejosPara, tituloEstado } from "@/lib/vecinos";
+import { QuickActions } from "@/components/vecinos/QuickActions";
 import { Docs, DocsSection } from "@/components/Docs";
 import { FloodMap } from "@/components/FloodMap";
 import { Provenance } from "@/components/Provenance";
@@ -16,43 +18,12 @@ import { riskLabel } from "@/lib/risk";
 
 export const dynamic = "force-dynamic";
 
-const CONSEJOS: Record<string, string[]> = {
-  normal: [
-    "Los datos consultados no superan los umbrales orientativos. Revisá las condiciones de tu cuadra y las comunicaciones oficiales.",
-    "Si vivís sobre zona marcada, revisá que la rejilla de tu frente no esté tapada.",
-  ],
-  atencion: [
-    "Sacá el auto de la vereda si vivís sobre una zona marcada.",
-    "Revisá que las rejillas y los desagües de tu frente estén despejados.",
-    "Evitá programar viajes por las avenidas que cruzan el Ludueña o el Saladillo en las próximas horas.",
-  ],
-  alerta: [
-    "No cruces calles anegadas ni en auto ni a pie: no se ve el cordón ni las bocas de tormenta abiertas.",
-    "Levantá lo que tengas a nivel de piso en cocheras y patios.",
-    "Si estás sobre zona marcada, tené documentación y medicación en algo impermeable.",
-  ],
-  critico: [
-    "Seguí las indicaciones de Defensa Civil: 103.",
-    "Cortá la luz del sector si el agua entra a la vivienda.",
-    "No vuelvas a una zona anegada a buscar cosas hasta que baje.",
-  ],
-};
-
-const CONSEJOS_INCOMPLETO = [
-  "La evaluación está incompleta: consultá las fuentes disponibles y las comunicaciones oficiales.",
-  "Los aportes de vecinos son señales para verificar; su ausencia no descarta agua en la zona.",
-];
-
 export default async function VecinosPage() {
   const estado = await loadEstado();
   const { riesgo, rio, lluvia, clima, fallas } = estado;
-  const consejos = riesgo.nivel === null ? CONSEJOS_INCOMPLETO : riesgo.incompleto ? [...CONSEJOS[riesgo.nivel], CONSEJOS_INCOMPLETO[0]] : CONSEJOS[riesgo.nivel];
+  const consejos = consejosPara(riesgo);
   const fallaDe = (fuente: string) => fallas.find((falla) => falla.fuente === fuente);
-  const titulo = riesgo.nivel === null
-    ? "Faltan datos para una evaluación completa"
-    : riesgo.nivel === "normal"
-      ? "Sin señales elevadas en los datos consultados"
-      : `Nivel ${riskLabel(riesgo.nivel).toLowerCase()} en los datos consultados`;
+  const titulo = tituloEstado(riesgo.nivel);
 
   return (
     <VecinosShell nivel={riesgo.nivel} actualizadoEn={riesgo.evaluadoEn}>
@@ -72,6 +43,7 @@ export default async function VecinosPage() {
               <span>{titulo}</span>
             </h1>
             <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{riesgo.motivo}</p>
+            <QuickActions />
           </section>
 
           <DataStatus estado={estado} />
