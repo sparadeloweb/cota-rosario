@@ -202,7 +202,7 @@ export function ReportFlow() {
                 </svg>
                 {searching ? "Buscando tu ubicación…" : "Usar mi ubicación actual"}
               </button>
-              <form onSubmit={searchAddress} className="flex gap-2">
+              <form onSubmit={searchAddress} className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <AddressSearch
                     id="report-address"
@@ -212,6 +212,7 @@ export function ReportFlow() {
                       setAddress(suggestion.label);
                       placeAt(suggestion.lat, suggestion.lon, `${suggestion.label}, ${suggestion.detail}`, true);
                     }}
+                    inline
                     label="Dirección"
                     placeholder="O escribí la dirección"
                     inputClassName="w-full rounded-lg border border-rule bg-ground px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none"

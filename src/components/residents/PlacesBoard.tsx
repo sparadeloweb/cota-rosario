@@ -127,7 +127,7 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
         <p className="mt-2 text-sm leading-relaxed text-ink-soft max-lg:line-clamp-2">Tu casa, el trabajo o la escuela: qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.</p>
       </header>
 
-      <div className="px-5 pb-6">
+      <div className="px-5 pb-8">
         {!available ? (
           <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (

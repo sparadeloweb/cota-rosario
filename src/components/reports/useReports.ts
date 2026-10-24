@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { REPORT_TYPES, type Report, type ReportType } from "@/lib/reportTypes";
 import { escapeHtml } from "@/lib/html";
+import { loadLeaflet } from "@/lib/leaflet";
 
 const API = "/api/reports";
 const REFRESH_MS = 60_000;
@@ -99,7 +100,7 @@ export function useReports(mapRef: RefObject<import("leaflet").Map | null>, mapR
     if (!mapReady || !map) {
       return;
     }
-    import("leaflet").then((L) => {
+    loadLeaflet().then((L) => {
       if (!layerRef.current) {
         layerRef.current = L.layerGroup().addTo(map);
       }
@@ -125,7 +126,7 @@ export function useReports(mapRef: RefObject<import("leaflet").Map | null>, mapR
     const onClick = (event: import("leaflet").LeafletMouseEvent) => {
       const { lat, lng } = event.latlng;
       setDraft((current) => ({ lat, lon: lng, type: current?.type ?? "street", description: current?.description ?? "" }));
-      import("leaflet").then((L) => {
+      loadLeaflet().then((L) => {
         draftMarkerRef.current?.remove();
         draftMarkerRef.current = L.circleMarker([lat, lng], { radius: 9, color: "#eceef1", weight: 2, fillColor: "#5f9bb8", fillOpacity: 0.9 }).addTo(map);
       });
