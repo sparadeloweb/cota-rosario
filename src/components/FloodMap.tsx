@@ -249,6 +249,15 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
     }
   };
 
+  const clearSearch = () => {
+    markerRef.current?.remove();
+    markerRef.current = null;
+    setFinding(null);
+    setSearchedPoint(null);
+    setSearchText("");
+    setError(null);
+  };
+
   const search = (event: React.FormEvent) => {
     event.preventDefault();
     const term = searchText.trim();
@@ -302,7 +311,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3 sm:p-4">
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">
           {searcher ? (
-            <div className="pointer-events-auto flex w-full max-w-lg flex-col rounded-md border border-rule bg-panel shadow-xl">
+            <div className="pointer-events-auto flex max-h-[calc(100dvh-var(--sheet-peek)-10rem)] w-full max-w-lg flex-col overflow-y-auto overscroll-contain rounded-md border border-rule bg-panel shadow-xl lg:max-h-[calc(100dvh-12rem)]">
               <form onSubmit={search} className="flex items-center">
                 <div className="min-w-0 flex-1">
                   <AddressSearch
@@ -315,6 +324,13 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
                     inputClassName="w-full bg-transparent px-4 py-3 text-sm outline-none placeholder:text-ink-faint"
                   />
                 </div>
+                {finding ? (
+                  <button type="button" onClick={clearSearch} aria-label="Cerrar la consulta" className="flex size-10 shrink-0 items-center justify-center text-ink-faint transition-colors hover:text-ink">
+                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6 6 18" />
+                    </svg>
+                  </button>
+                ) : null}
                 <button
                   type="submit"
                   disabled={searching}
@@ -362,11 +378,11 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
         className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--sheet-peek)+0.75rem)] z-[600] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
       >
         <div className="flex items-end gap-3">
-          <div className={`min-w-0 flex-1 lg:flex-none ${isMobileReportsOpen ? "max-lg:hidden" : ""}`}>
+          <div className={`min-w-0 flex-1 lg:flex-none ${isMobileReportsOpen || finding ? "max-lg:hidden" : ""}`}>
             <MapLegend officialZones={collection?.features.length ?? 0} overlays={overlays} withReports={reports} />
           </div>
-          {reports && isMobileReportsOpen ? <MobileReportPanel status={reportsState} readOnly={!report || finding !== null} /> : null}
-          {reports ? <ReportFab status={reportsState} readOnly={!report} open={isMobileReportsOpen} onToggle={toggleMobileReports} /> : null}
+          {reports && isMobileReportsOpen && !finding ? <MobileReportPanel status={reportsState} readOnly={!report || finding !== null} /> : null}
+          {reports && !finding ? <ReportFab status={reportsState} readOnly={!report} open={isMobileReportsOpen} onToggle={toggleMobileReports} /> : null}
         </div>
       </div>
     </div>
