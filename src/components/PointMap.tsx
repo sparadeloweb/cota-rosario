@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { escapeHtml } from "@/lib/html";
 import { loadLeaflet } from "@/lib/leaflet";
+import { RainLayer } from "@/components/rain/RainLayer";
 
 type Leaflet = typeof import("leaflet");
 
@@ -178,6 +179,7 @@ export function PointMap({ points, pin, focus, fitPoints = false, onMapClick, on
   return (
     <div className={`absolute inset-0 isolate ${crosshair ? "[&_.leaflet-grab]:cursor-crosshair [&_.leaflet-interactive]:cursor-pointer" : ""}`}>
       <div ref={container} className="absolute inset-0" />
+      <RainLayer />
       {failed ? <p className="absolute inset-x-4 top-4 z-[500] rounded-lg border border-rule bg-panel px-4 py-3 text-sm text-ink-soft">No se pudo cargar el mapa. Podés seguir usando el buscador.</p> : null}
       {overlay ? <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex justify-center p-3 sm:p-4">{overlay}</div> : null}
     </div>

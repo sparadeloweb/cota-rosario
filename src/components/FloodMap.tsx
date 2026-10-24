@@ -17,6 +17,7 @@ import type { AddressSuggestion } from "@/lib/addressSuggestions";
 import { RISK_LABEL, riskLabel, type RiskLevel } from "@/lib/risk";
 import { escapeHtml } from "@/lib/html";
 import { loadLeaflet } from "@/lib/leaflet";
+import { RainLayer } from "@/components/rain/RainLayer";
 
 const CENTER: [number, number] = [-32.955, -60.66];
 const ZOOM = 12;
@@ -289,6 +290,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
   return (
     <div className="relative isolate h-full w-full">
       <div ref={container} className="absolute inset-0" />
+      <RainLayer />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3 sm:p-4">
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">

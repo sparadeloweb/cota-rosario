@@ -6,6 +6,7 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson"
 import type { DistrictExpectation } from "@/lib/forecast/poisson";
 import { escapeHtml } from "@/lib/html";
 import { loadLeaflet } from "@/lib/leaflet";
+import { RainLayer } from "@/components/rain/RainLayer";
 
 const CENTER: [number, number] = [-32.955, -60.66];
 const ZOOM = 12;
@@ -95,6 +96,7 @@ export function ForecastMap({ districts, windowDays, corner }: ForecastMapProps)
   return (
     <div className="relative isolate h-full w-full">
       <div ref={container} className="absolute inset-0" />
+      <RainLayer />
       {corner ? <div className="pointer-events-none absolute right-0 top-0 z-[500] flex justify-end p-3 sm:p-4">{corner}</div> : null}
       <div data-map-legend className="pointer-events-none absolute bottom-[calc(var(--sheet-peek)+0.75rem)] left-0 right-14 z-[500] p-3 sm:p-4 lg:bottom-0 lg:right-auto">
         <div className="pointer-events-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md border border-rule bg-panel/95 px-3 py-2 backdrop-blur">
