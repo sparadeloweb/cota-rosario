@@ -15,6 +15,7 @@ interface AddressSearchProps {
   inputClassName: string;
   leading?: ReactNode;
   id?: string;
+  inline?: boolean;
 }
 
 interface Results {
@@ -24,7 +25,7 @@ interface Results {
 
 const EMPTY_RESULTS: Results = { query: "", items: [] };
 
-export function AddressSearch({ value, onValueChange, onPick, placeholder, label, disabled = false, inputClassName, leading, id }: AddressSearchProps) {
+export function AddressSearch({ value, onValueChange, onPick, placeholder, label, disabled = false, inputClassName, leading, id, inline = false }: AddressSearchProps) {
   const generatedId = useId();
   const inputId = id ?? `${generatedId}-input`;
   const listId = `${generatedId}-list`;
@@ -87,30 +88,32 @@ export function AddressSearch({ value, onValueChange, onPick, placeholder, label
       <label htmlFor={inputId} className="sr-only">
         {label}
       </label>
-      {leading}
-      <input
-        id={inputId}
-        value={value}
-        onChange={(event) => {
-          setActiveIndex(-1);
-          setDismissedFor(null);
-          onValueChange(event.target.value);
-        }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        onKeyDown={onKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
-        autoComplete="off"
-        role="combobox"
-        aria-expanded={open}
-        aria-controls={listId}
-        aria-autocomplete="list"
-        aria-activedescendant={activeOption >= 0 ? `${listId}-${activeOption}` : undefined}
-        className={inputClassName}
-      />
+      <div className="relative">
+        {leading}
+        <input
+          id={inputId}
+          value={value}
+          onChange={(event) => {
+            setActiveIndex(-1);
+            setDismissedFor(null);
+            onValueChange(event.target.value);
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          autoComplete="off"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={activeOption >= 0 ? `${listId}-${activeOption}` : undefined}
+          className={inputClassName}
+        />
+      </div>
       {open ? (
-        <div className="absolute inset-x-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-rule bg-panel shadow-[0_18px_40px_-12px_rgb(0_0_0/0.7)]">
+        <div className={inline ? "mt-2 overflow-hidden rounded-lg border border-rule-soft bg-ground" : "absolute inset-x-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-rule bg-panel shadow-[0_18px_40px_-12px_rgb(0_0_0/0.7)]"}>
           <ul id={listId} role="listbox" aria-label="Direcciones sugeridas" className="max-h-72 overflow-y-auto py-1">
             {suggestions.map((suggestion, index) => (
               <li

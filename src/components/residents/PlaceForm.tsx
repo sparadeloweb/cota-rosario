@@ -45,6 +45,7 @@ export function PlaceForm({ address, name, busy, full, message, fullNotice, onAd
         value={address}
         onValueChange={onAddress}
         onPick={onPick}
+        inline
         label="Dirección"
         placeholder="Calle y número, ej.: Córdoba 1500"
         disabled={locked}
