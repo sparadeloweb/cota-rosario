@@ -9,7 +9,7 @@ import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
 import { rainTiles, networkAndReportTiles, riverTiles } from "@/components/panel/tiles";
 import { Provenance } from "@/components/Provenance";
 import { Workspace } from "@/components/shell/Workspace";
-import { WeatherBadge, WeatherLine } from "@/components/WeatherBadge";
+import { WeatherLine } from "@/components/WeatherBadge";
 import { loadPanel } from "@/lib/panelData";
 import { riskLabel } from "@/lib/risk";
 import { statusTitle } from "@/lib/residents";
@@ -36,7 +36,7 @@ export default async function SummaryPage() {
 
   return (
     <Workspace
-      canvas={<FloodMap zones={risk.zones} reports corner={<WeatherBadge weather={weather} />} />}
+      canvas={<FloodMap zones={risk.zones} reports />}
       rail={
         <div className="flex flex-col">
           <WeatherLine weather={weather} />

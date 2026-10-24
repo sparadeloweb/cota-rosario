@@ -12,7 +12,6 @@ import { RiverProjection } from "@/components/RiverProjection";
 import { SectionHero, type HeroFigure } from "@/components/panel/SectionHero";
 import { SourceDown } from "@/components/SourceDown";
 import { TrainingTable } from "@/components/TrainingTable";
-import { WeatherBadge } from "@/components/WeatherBadge";
 import type { PoissonModel } from "@/lib/forecast/poisson";
 import { loadStatus } from "@/lib/status";
 import { loadPredictions } from "@/lib/predictions";
@@ -48,7 +47,7 @@ export default async function ForecastPage() {
 
   return (
     <Workspace
-    canvas={<ForecastMap districts={flooding?.byDistrict ?? []} windowDays={windowDays} corner={<WeatherBadge weather={status.weather} />} />}
+    canvas={<ForecastMap districts={flooding?.byDistrict ?? []} windowDays={windowDays} />}
     lowerCanvas={
       byDay.length ? (
         <>

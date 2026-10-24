@@ -6,6 +6,7 @@ import { PointMap, type MapPoint } from "@/components/PointMap";
 import { ReportGlyph } from "@/components/reports/ReportGlyph";
 import { ReportSent } from "@/components/reports/ReportSent";
 import { ReportStepper } from "@/components/reports/ReportStepper";
+import { useNearestAddress } from "@/components/reports/useNearestAddress";
 import { ReportTypePicker } from "@/components/reports/ReportTypePicker";
 import { fetchReports, howLongAgo } from "@/components/reports/useReports";
 import { Workspace } from "@/components/shell/Workspace";
@@ -17,7 +18,8 @@ import { DESCRIPTION_MAX_CHARS, REPORT_TTL_HOURS, REPORT_TYPES, type Report } fr
 
 const API = "/api/reports";
 const GEOLOCATION_TIMEOUT_MS = 10_000;
-const COORD_DECIMALS = 4;
+const CURRENT_LOCATION_LABEL = "Tu ubicación actual";
+const MAP_POINT_LABEL = "Punto marcado en el mapa";
 const PERCENT = 100;
 const NEUTRAL_PIN = "#eceef1";
 
@@ -68,6 +70,9 @@ export function ReportFlow() {
   const selectedType = draft.type ? REPORT_TYPES[draft.type] : null;
   const hasPlace = draft.lat !== null && draft.lon !== null;
   const isPlaceValid = canAdvance("place", draft);
+  const isApproximatePlace = draft.placeLabel === CURRENT_LOCATION_LABEL || draft.placeLabel === MAP_POINT_LABEL;
+  const nearest = useNearestAddress(draft.lat, draft.lon, isApproximatePlace);
+  const placeTitle = isApproximatePlace && nearest ? `Cerca de ${nearest.label}` : draft.placeLabel;
 
   const placeAt = (lat: number, lon: number, placeLabel: string, moveMap: boolean) => {
     setPlaceNotice(isInsideRosario(lat, lon) ? null : "Ese punto queda fuera de Rosario.");
@@ -87,7 +92,7 @@ export function ReportFlow() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setSearching(false);
-        placeAt(position.coords.latitude, position.coords.longitude, "Tu ubicación actual", true);
+        placeAt(position.coords.latitude, position.coords.longitude, CURRENT_LOCATION_LABEL, true);
       },
       () => {
         setSearching(false);
@@ -228,9 +233,9 @@ export function ReportFlow() {
                     {isPlaceValid ? "✓" : "!"}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm text-ink">{draft.placeLabel}</span>
-                    <span className="readout block text-[0.6875rem] text-ink-faint">
-                      {draft.lat?.toFixed(COORD_DECIMALS)}, {draft.lon?.toFixed(COORD_DECIMALS)} · arrastrá el pin para ajustar
+                    <span className="block text-sm text-ink">{placeTitle}</span>
+                    <span className="block text-[0.6875rem] text-ink-faint">
+                      {isApproximatePlace ? `${draft.placeLabel}${nearest ? ` · ${nearest.detail}` : nearest === undefined ? " · buscando la dirección…" : ""}` : "Dirección buscada"} · arrastrá el pin para ajustar
                     </span>
                   </span>
                 </div>
@@ -256,7 +261,7 @@ export function ReportFlow() {
                   </div>
                 ) : null}
                 <div className="flex items-start justify-between gap-3 px-4 py-3">
-                  <span className="min-w-0 text-sm text-ink-soft">{draft.placeLabel || "Sin ubicación"}</span>
+                  <span className="min-w-0 text-sm text-ink-soft">{placeTitle || "Sin ubicación"}</span>
                   <ChangeLink onClick={() => setStep("place")} />
                 </div>
               </article>
@@ -313,15 +318,17 @@ export function ReportFlow() {
         </section>
 
         <div className="sticky bottom-0 flex items-center gap-3 border-t border-rule-soft bg-ground/95 px-5 py-3 backdrop-blur">
-          <button type="button" onClick={() => setStep(previousStep(step))} disabled={step === "type"} className="rounded-lg px-3 py-2.5 text-sm text-ink-soft hover:text-ink disabled:invisible">
-            Atrás
-          </button>
+          {step !== "type" ? (
+            <button type="button" onClick={() => setStep(previousStep(step))} className="shrink-0 rounded-xl border border-rule px-4 py-3 text-sm text-ink-soft transition-colors hover:border-ink-soft hover:text-ink">
+              Atrás
+            </button>
+          ) : null}
           {step === "detail" ? (
-            <button type="button" onClick={submit} disabled={!isComplete(draft) || submission.status === "sending"} className="ml-auto flex-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-ground hover:opacity-90 disabled:opacity-30">
+            <button type="button" onClick={submit} disabled={!isComplete(draft) || submission.status === "sending"} className="w-full flex-1 rounded-xl bg-ink px-5 py-3 text-sm font-medium text-ground transition-opacity hover:opacity-90 disabled:opacity-30">
               {submission.status === "sending" ? "Enviando…" : "Enviar reporte"}
             </button>
           ) : (
-            <button type="button" onClick={() => goTo(nextStep(step))} disabled={!canAdvance(step, draft)} className="ml-auto flex-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-ground hover:opacity-90 disabled:opacity-30">
+            <button type="button" onClick={() => goTo(nextStep(step))} disabled={!canAdvance(step, draft)} className="w-full flex-1 rounded-xl bg-ink px-5 py-3 text-sm font-medium text-ground transition-opacity hover:opacity-90 disabled:opacity-30">
               Siguiente
             </button>
           )}
@@ -339,8 +346,8 @@ export function ReportFlow() {
             points={points}
             pin={pin}
             focus={focus}
-            onMapClick={canPlace ? (lat, lon) => placeAt(lat, lon, "Punto marcado en el mapa", false) : undefined}
-            onPinMove={(lat, lon) => placeAt(lat, lon, "Punto marcado en el mapa", false)}
+            onMapClick={canPlace ? (lat, lon) => placeAt(lat, lon, MAP_POINT_LABEL, false) : undefined}
+            onPinMove={(lat, lon) => placeAt(lat, lon, MAP_POINT_LABEL, false)}
             crosshair={canPlace}
             overlay={mapOverlay}
           />

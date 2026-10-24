@@ -5,7 +5,7 @@ import { CLIMATE_CATEGORY_LABEL, type Finding, type TerrainMeta } from "@/lib/lo
 import type { Place } from "@/lib/places";
 import { riskLabel, type RiskLevel } from "@/lib/risk";
 
-const OUTSIDE_COLOR = "var(--ink-soft)";
+const OUTSIDE_COLOR = "#74ACDF";
 const LOADING_COLOR = "var(--ink-faint)";
 
 export function titleCase(text: string): string {
@@ -53,9 +53,9 @@ export function PlaceRow({ place, state, finding, terrain, selected, onSelect, o
   const color = placeColor(finding);
   const location = [finding?.neighbourhood ? titleCase(finding.neighbourhood) : null, finding?.district ? `distrito ${titleCase(finding.district.district)}` : null].filter(Boolean).join(" · ");
   return (
-    <li className={`relative border-b border-rule-soft transition-colors ${selected ? "bg-panel-soft/70" : "hover:bg-panel-soft/40"}`}>
+    <li className={`relative border-b border-rule-soft transition-colors last:border-b-0 ${selected ? "bg-panel-soft/70" : "hover:bg-panel-soft/40"}`}>
       <span className={`absolute inset-y-0 left-0 w-[3px] transition-opacity ${selected ? "opacity-100" : "opacity-0"}`} style={{ background: color }} aria-hidden="true" />
-      <button type="button" onClick={onSelect} aria-expanded={selected} className="flex w-full items-start gap-3 px-5 py-4 text-left">
+      <button type="button" onClick={onSelect} aria-expanded={selected} className="flex w-full items-start gap-3 px-4 py-4 text-left">
         <span className="mt-1.5 size-3 shrink-0 rounded-full ring-2 ring-ground" style={{ background: color }} aria-hidden="true" />
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-3">
@@ -66,7 +66,7 @@ export function PlaceRow({ place, state, finding, terrain, selected, onSelect, o
         </span>
       </button>
       {selected ? (
-        <div className="flex flex-col gap-3 px-5 pb-4">
+        <div className="flex flex-col gap-3 px-4 pb-4">
           {finding ? <PlaceFactsGrid finding={finding} terrain={terrain} /> : null}
           <button type="button" onClick={onRemove} className="self-end rounded-md px-2 py-1 text-xs text-ink-faint underline decoration-rule underline-offset-4 hover:text-ink">
             Quitar {place.name}

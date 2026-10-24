@@ -70,3 +70,47 @@ export function parseSuggestions(payload: unknown): AddressSuggestion[] {
     })
     .slice(0, SHOWN_SUGGESTIONS);
 }
+
+const NEAREST_LIMIT = 5;
+const NEAREST_RADIUS_KM = 0.2;
+
+export interface NearestAddress {
+  label: string;
+  detail: string;
+}
+
+export function nearestAddressUrl(lat: number, lon: number): string {
+  const params = new URLSearchParams({ lat: String(lat), lon: String(lon), limit: String(NEAREST_LIMIT), radius: String(NEAREST_RADIUS_KM) });
+  return `${SUGGESTION_ORIGIN}/reverse?${params}`;
+}
+
+function nearestCandidate(feature: unknown): (NearestAddress & { rank: number }) | null {
+  if (!feature || typeof feature !== "object") {
+    return null;
+  }
+  const { geometry, properties } = feature as { geometry?: { coordinates?: unknown }; properties?: Record<string, unknown> };
+  const coordinates = Array.isArray(geometry?.coordinates) ? geometry.coordinates : [];
+  if (!properties || text(properties.city) !== CITY || !isInsideRosario(Number(coordinates[1]), Number(coordinates[0]))) {
+    return null;
+  }
+  const street = text(properties.street);
+  const number = text(properties.housenumber);
+  const name = text(properties.name);
+  const detail = text(properties.district) || CITY;
+  if (street && number) {
+    return { label: `${street} ${number}`, detail, rank: 0 };
+  }
+  if (street) {
+    return { label: street, detail, rank: 1 };
+  }
+  return name ? { label: name, detail, rank: 2 } : null;
+}
+
+export function parseNearestAddress(payload: unknown): NearestAddress | null {
+  const features: unknown[] = payload && typeof payload === "object" && Array.isArray((payload as { features?: unknown }).features) ? (payload as { features: unknown[] }).features : [];
+  const best = features
+    .map(nearestCandidate)
+    .filter((candidate): candidate is NearestAddress & { rank: number } => candidate !== null)
+    .reduce<(NearestAddress & { rank: number }) | null>((current, candidate) => (!current || candidate.rank < current.rank ? candidate : current), null);
+  return best ? { label: best.label, detail: best.detail } : null;
+}

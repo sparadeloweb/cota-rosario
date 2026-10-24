@@ -119,15 +119,15 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
 
   const rail = (
     <div className="flex flex-col">
-      <header className="px-5 pb-6 pt-2 lg:pt-6">
+      <header className="px-5 pb-7 pt-2 lg:pt-7">
         <div className="flex items-baseline justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Mi zona</h1>
           <p className="meta shrink-0">{ready ? places.length : 0} de {MAX_PLACES} lugares</p>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft max-lg:line-clamp-2">Tu casa, el trabajo o la escuela: qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.</p>
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-soft max-lg:line-clamp-2">Tu casa, el trabajo o la escuela: qué dicen el mapa oficial, el relieve y el historial de cada lugar. Se guardan sólo en este dispositivo.</p>
       </header>
 
-      <div className="px-5 pb-8">
+      <div className="px-5 pb-10">
         {!available ? (
           <p className="rounded-xl border border-rule px-4 py-4 text-sm text-ink-soft">Este navegador no permite guardar datos (modo privado o almacenamiento bloqueado). Podés consultar direcciones desde el mapa.</p>
         ) : (
@@ -147,9 +147,9 @@ export function PlacesBoard({ zones }: PlacesBoardProps) {
 
       {ready ? (
         places.length ? (
-          <section aria-labelledby="saved-places" className="pb-6">
-          <h2 id="saved-places" className="meta px-5 pb-3">Tus lugares</h2>
-          <ul className="border-t border-rule-soft">
+          <section aria-labelledby="saved-places" className="px-5 pb-8">
+          <h2 id="saved-places" className="meta pb-3">Tus lugares</h2>
+          <ul className="overflow-hidden rounded-xl border border-rule bg-panel/40">
             {findings.map(({ place, state, finding }) => (
               <PlaceRow
                 key={place.id}
