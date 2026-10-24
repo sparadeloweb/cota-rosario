@@ -88,12 +88,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
   const [error, setError] = useState<string | null>(null);
   const [isMobileReportsOpen, setMobileReportsOpen] = useState(false);
   const reportsState = useReports(mapRef, mapReady && reports);
-  const toggleMobileReports = () => {
-    if (isMobileReportsOpen && reportsState.placing) {
-      reportsState.cancel();
-    }
-    setMobileReportsOpen(!isMobileReportsOpen);
-  };
+  const toggleMobileReports = () => setMobileReportsOpen(!isMobileReportsOpen);
 
   const effectiveZones = scenario?.zones ?? zones;
   const zoneLevel = useCallback(

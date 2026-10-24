@@ -9,26 +9,12 @@ const API = "/api/reports";
 const REFRESH_MS = 60_000;
 const MARKER_SIZE = 26;
 
-export interface ReportDraft {
-  lat: number;
-  lon: number;
-  type: ReportType;
-  description: string;
-}
-
 export interface ReportsState {
   reports: Report[];
-  placing: boolean;
-  draft: ReportDraft | null;
-  sending: boolean;
   error: string | null;
   available: boolean | null;
   confirmed: string[];
   confirming: string | null;
-  startPlacing: () => void;
-  cancel: () => void;
-  updateDraft: (changes: Partial<ReportDraft>) => void;
-  submit: () => Promise<void>;
   confirm: (id: string) => Promise<void>;
 }
 
@@ -58,11 +44,7 @@ function markerHtml(type: ReportType): string {
 
 export function useReports(mapRef: RefObject<import("leaflet").Map | null>, mapReady: boolean): ReportsState {
   const layerRef = useRef<import("leaflet").LayerGroup | null>(null);
-  const draftMarkerRef = useRef<import("leaflet").CircleMarker | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
-  const [placing, setPlacing] = useState(false);
-  const [draft, setDraft] = useState<ReportDraft | null>(null);
-  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [confirmed, setConfirmed] = useState<string[]>([]);
@@ -116,71 +98,6 @@ export function useReports(mapRef: RefObject<import("leaflet").Map | null>, mapR
     });
   }, [mapRef, mapReady, reports]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!mapReady || !map || !placing) {
-      return undefined;
-    }
-    const container = map.getContainer();
-    container.style.cursor = "crosshair";
-    const onClick = (event: import("leaflet").LeafletMouseEvent) => {
-      const { lat, lng } = event.latlng;
-      setDraft((current) => ({ lat, lon: lng, type: current?.type ?? "street", description: current?.description ?? "" }));
-      loadLeaflet().then((L) => {
-        draftMarkerRef.current?.remove();
-        draftMarkerRef.current = L.circleMarker([lat, lng], { radius: 9, color: "#eceef1", weight: 2, fillColor: "#5f9bb8", fillOpacity: 0.9 }).addTo(map);
-      });
-    };
-    map.on("click", onClick);
-    return () => {
-      map.off("click", onClick);
-      container.style.cursor = "";
-    };
-  }, [mapRef, mapReady, placing]);
-
-  const clearDraft = useCallback(() => {
-    draftMarkerRef.current?.remove();
-    draftMarkerRef.current = null;
-    setDraft(null);
-  }, []);
-
-  const startPlacing = useCallback(() => {
-    setError(null);
-    setPlacing(true);
-  }, []);
-
-  const cancel = useCallback(() => {
-    setPlacing(false);
-    clearDraft();
-  }, [clearDraft]);
-
-  const updateDraft = useCallback((changes: Partial<ReportDraft>) => {
-    setDraft((current) => (current ? { ...current, ...changes } : current));
-  }, []);
-
-  const submit = useCallback(async () => {
-    if (!draft) {
-      return;
-    }
-    setSending(true);
-    setError(null);
-    try {
-      const response = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...draft, web: "" }) });
-      const data = (await response.json()) as { ok: boolean; error?: string; report?: Report };
-      if (!data.ok || !data.report) {
-        setError(data.error ?? "No se pudo enviar el reporte.");
-        return;
-      }
-      setReports((current) => [data.report as Report, ...current]);
-      setPlacing(false);
-      clearDraft();
-    } catch {
-      setError("No se pudo enviar el reporte. Probá de nuevo.");
-    } finally {
-      setSending(false);
-    }
-  }, [draft, clearDraft]);
-
   const confirm = useCallback(async (id: string) => {
     if (confirmationPending.current || confirmed.includes(id)) return;
     confirmationPending.current = true;
@@ -202,5 +119,5 @@ export function useReports(mapRef: RefObject<import("leaflet").Map | null>, mapR
     }
   }, [confirmed]);
 
-  return { reports, placing, draft, sending, error, available, confirmed, confirming, startPlacing, cancel, updateDraft, submit, confirm };
+  return { reports, error, available, confirmed, confirming, confirm };
 }
