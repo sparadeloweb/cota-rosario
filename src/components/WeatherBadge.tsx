@@ -65,7 +65,7 @@ export function HeaderWeather({ weather }: WeatherBadgeProps) {
         <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
           <path d="M12 3c3.2 4.1 5.8 7.4 5.8 10.7a5.8 5.8 0 1 1-11.6 0C6.2 10.4 8.8 7.1 12 3Z" />
         </svg>
-        {weather.windowHours} h <span className="text-ink-soft">{rainChance(weather)}</span>
+        <span className="text-ink-soft">{rainChance(weather)}</span> en {weather.windowHours} h
       </span>
     </div>
   );
