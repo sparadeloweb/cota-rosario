@@ -313,15 +313,17 @@ export function ReportFlow() {
         </section>
 
         <div className="sticky bottom-0 flex items-center gap-3 border-t border-rule-soft bg-ground/95 px-5 py-3 backdrop-blur">
-          <button type="button" onClick={() => setStep(previousStep(step))} disabled={step === "type"} className="rounded-lg px-3 py-2.5 text-sm text-ink-soft hover:text-ink disabled:invisible">
-            Atrás
-          </button>
+          {step !== "type" ? (
+            <button type="button" onClick={() => setStep(previousStep(step))} className="shrink-0 rounded-xl border border-rule px-4 py-3 text-sm text-ink-soft transition-colors hover:border-ink-soft hover:text-ink">
+              Atrás
+            </button>
+          ) : null}
           {step === "detail" ? (
-            <button type="button" onClick={submit} disabled={!isComplete(draft) || submission.status === "sending"} className="ml-auto flex-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-ground hover:opacity-90 disabled:opacity-30">
+            <button type="button" onClick={submit} disabled={!isComplete(draft) || submission.status === "sending"} className="w-full flex-1 rounded-xl bg-ink px-5 py-3 text-sm font-medium text-ground transition-opacity hover:opacity-90 disabled:opacity-30">
               {submission.status === "sending" ? "Enviando…" : "Enviar reporte"}
             </button>
           ) : (
-            <button type="button" onClick={() => goTo(nextStep(step))} disabled={!canAdvance(step, draft)} className="ml-auto flex-1 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-ground hover:opacity-90 disabled:opacity-30">
+            <button type="button" onClick={() => goTo(nextStep(step))} disabled={!canAdvance(step, draft)} className="w-full flex-1 rounded-xl bg-ink px-5 py-3 text-sm font-medium text-ground transition-opacity hover:opacity-90 disabled:opacity-30">
               Siguiente
             </button>
           )}
