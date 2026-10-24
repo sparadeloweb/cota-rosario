@@ -7,6 +7,7 @@ import { LookupResult } from "@/components/LookupResult";
 import { AddressSearch } from "@/components/AddressSearch";
 import { MapLegend, type LegendOverlay } from "@/components/MapLegend";
 import { MobileReportPanel, ReportFab } from "@/components/reports/MobileReports";
+import { NearbyReports } from "@/components/reports/NearbyReports";
 import { ReportPanel } from "@/components/reports/ReportPanel";
 import { useReports } from "@/components/reports/useReports";
 import { useSimulation } from "@/components/SimulationContext";
@@ -17,6 +18,7 @@ import type { AddressSuggestion } from "@/lib/addressSuggestions";
 import { RISK_LABEL, riskLabel, type RiskLevel } from "@/lib/risk";
 import { escapeHtml } from "@/lib/html";
 import { loadLeaflet } from "@/lib/leaflet";
+import { RainLayer } from "@/components/rain/RainLayer";
 
 const CENTER: [number, number] = [-32.955, -60.66];
 const ZOOM = 12;
@@ -85,15 +87,11 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
   const [searchText, setSearchText] = useState("");
   const [searching, setSearching] = useState(false);
   const [finding, setFinding] = useState<Finding | null>(null);
+  const [searchedPoint, setSearchedPoint] = useState<GeocodedPlace | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMobileReportsOpen, setMobileReportsOpen] = useState(false);
   const reportsState = useReports(mapRef, mapReady && reports);
-  const toggleMobileReports = () => {
-    if (isMobileReportsOpen && reportsState.placing) {
-      reportsState.cancel();
-    }
-    setMobileReportsOpen(!isMobileReportsOpen);
-  };
+  const toggleMobileReports = () => setMobileReportsOpen(!isMobileReportsOpen);
 
   const effectiveZones = scenario?.zones ?? zones;
   const zoneLevel = useCallback(
@@ -229,12 +227,14 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
       map.setView([lat, lon], FOUND_ZOOM);
     }
     setFinding({ ...reading, label: place.label, level: reading.zone ? zoneLevel(reading.zone) : undefined });
+    setSearchedPoint(place);
   };
 
   const locate = async (findPlace: () => Promise<GeocodedPlace | null>) => {
     setSearching(true);
     setError(null);
     setFinding(null);
+    setSearchedPoint(null);
     try {
       const found = await findPlace();
       if (!found) {
@@ -249,11 +249,23 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
     }
   };
 
+  const clearSearch = () => {
+    markerRef.current?.remove();
+    markerRef.current = null;
+    setFinding(null);
+    setSearchedPoint(null);
+    setSearchText("");
+    setError(null);
+  };
+
   const search = (event: React.FormEvent) => {
     event.preventDefault();
     const term = searchText.trim();
     if (term) {
-      void locate(() => geocode(term));
+      void locate(async () => {
+        const found = await geocode(term);
+        return found ? { ...found, label: term } : null;
+      });
     }
   };
 
@@ -294,11 +306,12 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
   return (
     <div className="relative isolate h-full w-full">
       <div ref={container} className="absolute inset-0" />
+      <RainLayer />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-2 p-3 sm:p-4">
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">
           {searcher ? (
-            <div className="pointer-events-auto flex w-full max-w-lg flex-col rounded-md border border-rule bg-panel shadow-xl">
+            <div className="pointer-events-auto flex max-h-[calc(100dvh-var(--sheet-peek)-10rem)] w-full max-w-lg flex-col overflow-y-auto overscroll-contain rounded-md border border-rule bg-panel shadow-xl lg:max-h-[calc(100dvh-12rem)]">
               <form onSubmit={search} className="flex items-center">
                 <div className="min-w-0 flex-1">
                   <AddressSearch
@@ -311,6 +324,13 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
                     inputClassName="w-full bg-transparent px-4 py-3 text-sm outline-none placeholder:text-ink-faint"
                   />
                 </div>
+                {finding ? (
+                  <button type="button" onClick={clearSearch} aria-label="Cerrar la consulta" className="flex size-10 shrink-0 items-center justify-center text-ink-faint transition-colors hover:text-ink">
+                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6 6 18" />
+                    </svg>
+                  </button>
+                ) : null}
                 <button
                   type="submit"
                   disabled={searching}
@@ -320,11 +340,12 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
                 </button>
               </form>
               {finding ? <LookupResult finding={finding} terrain={terrain} /> : null}
+              {finding && searchedPoint && reports ? <NearbyReports point={searchedPoint} reports={reportsState.reports} available={reportsState.available} canReport={report} /> : null}
               {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alert">{error}</p> : null}
             </div>
           ) : reports ? (
             <div className="hidden w-full max-w-xs lg:block">
-              <ReportPanel status={reportsState} readOnly={!report} />
+              <ReportPanel status={reportsState} readOnly={!report || finding !== null} />
             </div>
           ) : (
             <div className="flex-1" />
@@ -335,7 +356,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
         <div className="flex flex-col items-start gap-2 sm:flex-row">
           {searcher && reports ? (
             <div className="hidden w-full max-w-xs lg:block">
-              <ReportPanel status={reportsState} readOnly={!report} />
+              <ReportPanel status={reportsState} readOnly={!report || finding !== null} />
             </div>
           ) : null}
           {scenario ? (
@@ -357,11 +378,11 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
         className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--sheet-peek)+0.75rem)] z-[600] p-3 sm:p-4 lg:bottom-0 lg:right-auto"
       >
         <div className="flex items-end gap-3">
-          <div className={`min-w-0 flex-1 lg:flex-none ${isMobileReportsOpen ? "max-lg:hidden" : ""}`}>
+          <div className={`min-w-0 flex-1 lg:flex-none ${isMobileReportsOpen || finding ? "max-lg:hidden" : ""}`}>
             <MapLegend officialZones={collection?.features.length ?? 0} overlays={overlays} withReports={reports} />
           </div>
-          {reports && isMobileReportsOpen ? <MobileReportPanel status={reportsState} readOnly={!report} /> : null}
-          {reports ? <ReportFab status={reportsState} readOnly={!report} open={isMobileReportsOpen} onToggle={toggleMobileReports} /> : null}
+          {reports && isMobileReportsOpen && !finding ? <MobileReportPanel status={reportsState} readOnly={!report || finding !== null} /> : null}
+          {reports && !finding ? <ReportFab status={reportsState} readOnly={!report} open={isMobileReportsOpen} onToggle={toggleMobileReports} /> : null}
         </div>
       </div>
     </div>

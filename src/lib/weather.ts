@@ -101,3 +101,19 @@ async function fetchWeatherUncached(): Promise<WeatherNow> {
     fetchedAt: new Date().toISOString(),
   };
 }
+
+export type RainIntensity = "light" | "heavy";
+
+const HEAVY_RAIN_MM = 2.5;
+const RAINY_ICONS: ReadonlySet<WeatherIcon> = new Set(["drizzle", "rain", "storm", "hail"]);
+const HEAVY_ICONS: ReadonlySet<WeatherIcon> = new Set(["storm", "hail"]);
+
+export function rainIntensity(weather: WeatherNow | null): RainIntensity | null {
+  if (!weather) {
+    return null;
+  }
+  if (weather.rainNow >= HEAVY_RAIN_MM || HEAVY_ICONS.has(weather.icon)) {
+    return "heavy";
+  }
+  return weather.rainNow > 0 || RAINY_ICONS.has(weather.icon) ? "light" : null;
+}

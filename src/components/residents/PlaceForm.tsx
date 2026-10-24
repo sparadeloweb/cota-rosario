@@ -57,10 +57,10 @@ export function PlaceForm({ address, name, busy, full, message, fullNotice, onAd
         inputClassName="w-full rounded-lg border border-rule bg-ground py-3 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none disabled:opacity-50"
       />
       <div className="grid grid-cols-2 gap-2">
-        <button type="submit" disabled={locked || !address.trim()} className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-ground transition-opacity hover:opacity-90 disabled:opacity-30">
+        <button type="submit" disabled={locked || !address.trim()} className="whitespace-nowrap rounded-lg bg-ink px-3 py-2.5 text-sm font-medium text-ground transition-opacity hover:opacity-90 disabled:opacity-30">
           {busy ? "Buscando…" : "Guardar dirección"}
         </button>
-        <button type="button" onClick={onLocate} disabled={locked} className="flex items-center justify-center gap-2 rounded-lg border border-rule px-4 py-2.5 text-sm text-ink-soft transition-colors hover:border-ink-soft hover:text-ink disabled:opacity-40">
+        <button type="button" onClick={onLocate} disabled={locked} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-rule px-3 py-2.5 text-sm text-ink-soft transition-colors hover:border-ink-soft hover:text-ink disabled:opacity-40">
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
             <path d="M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z M12 2v3 M12 19v3 M2 12h3 M19 12h3" />
           </svg>

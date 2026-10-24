@@ -10,11 +10,12 @@ export const RESIDENTS_HOME = "/";
 export const PANEL_HOME = "/operaciones";
 export const HELP_HREF = "/como-funciona";
 export const EMERGENCY_PHONE = "103";
+export const REPORT_HREF = "/reportar";
 
 export const RESIDENTS_TABS: readonly NavItem[] = [
   { href: RESIDENTS_HOME, label: "Mapa", icon: "map" },
   { href: "/zona", label: "Mi zona", icon: "zone" },
-  { href: "/reportar", label: "Reportar", icon: "report" },
+  { href: REPORT_HREF, label: "Reportar", icon: "report" },
   { href: "/mas", label: "Más", icon: "more" },
 ];
 
