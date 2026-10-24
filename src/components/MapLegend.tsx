@@ -60,16 +60,32 @@ function RiskScale({ officialZones }: { officialZones: number }) {
   );
 }
 
+function LayerSwitch({ on, color }: { on: boolean; color: string }) {
+  return (
+    <span
+      className={`relative flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition-[background-color,border-color,box-shadow] duration-200 ${on ? "" : "border-rule bg-ground group-hover:border-ink-faint"}`}
+      style={on ? { background: `${color}38`, borderColor: color, boxShadow: `0 0 12px -2px ${color}80` } : undefined}
+      aria-hidden="true"
+    >
+      <span
+        className={`flex size-[1.125rem] items-center justify-center rounded-full shadow-[0_1px_3px_rgb(0_0_0/0.6)] transition-[transform,background-color] duration-200 ease-out motion-reduce:transition-none ${on ? "translate-x-5 text-ground" : "translate-x-0 bg-ink-faint text-transparent"}`}
+        style={on ? { background: color } : undefined}
+      >
+        <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m5 12 5 5 9-10" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+
 function OverlayRow({ overlay }: { overlay: LegendOverlay }) {
   return (
     <div className="flex flex-col gap-2">
-      <button type="button" onClick={overlay.onToggle} aria-pressed={overlay.visible} className="group flex items-center gap-3 text-left">
+      <button type="button" onClick={overlay.onToggle} aria-pressed={overlay.visible} className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-panel-soft focus-visible:outline-offset-2">
         <span className={`size-3.5 shrink-0 rounded-[5px] border border-rule transition-opacity ${overlay.visible ? "" : "opacity-30"}`} style={{ background: overlay.color }} aria-hidden="true" />
         <span className={`min-w-0 flex-1 text-sm transition-colors ${overlay.visible ? "text-ink" : "text-ink-soft group-hover:text-ink"}`}>{overlay.label}</span>
-        <span className={`relative h-5 w-9 shrink-0 rounded-full border transition-colors ${overlay.visible ? "border-ink bg-ink" : "border-rule bg-ground group-hover:border-ink-faint"}`} aria-hidden="true">
-          <span className={`absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full transition-transform duration-200 ${overlay.visible ? "translate-x-[1.125rem] bg-ground" : "translate-x-[0.1875rem] bg-ink-faint"}`} />
-        </span>
-        <span className="sr-only">{overlay.visible ? "Ocultar capa" : "Mostrar capa"}</span>
+        <LayerSwitch on={overlay.visible} color={overlay.color} />
       </button>
       <p className="text-[0.6875rem] leading-snug text-ink-faint">{overlay.note}</p>
       <div className="flex flex-wrap gap-1.5">
