@@ -63,18 +63,13 @@ function RiskScale({ officialZones }: { officialZones: number }) {
 function LayerSwitch({ on, color }: { on: boolean; color: string }) {
   return (
     <span
-      className={`relative flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition-[background-color,border-color,box-shadow] duration-200 ${on ? "" : "border-rule bg-ground group-hover:border-ink-faint"}`}
-      style={on ? { background: `${color}38`, borderColor: color, boxShadow: `0 0 12px -2px ${color}80` } : undefined}
+      className={`relative inline-flex h-6 w-10 shrink-0 items-center rounded-full p-[3px] transition-colors duration-200 motion-reduce:transition-none ${on ? "" : "bg-rule group-hover:bg-ink-faint/60"}`}
+      style={on ? { background: color } : undefined}
       aria-hidden="true"
     >
       <span
-        className={`flex size-[1.125rem] items-center justify-center rounded-full shadow-[0_1px_3px_rgb(0_0_0/0.6)] transition-[transform,background-color] duration-200 ease-out motion-reduce:transition-none ${on ? "translate-x-5 text-ground" : "translate-x-0 bg-ink-faint text-transparent"}`}
-        style={on ? { background: color } : undefined}
-      >
-        <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m5 12 5 5 9-10" />
-        </svg>
-      </span>
+        className={`size-[18px] rounded-full bg-white shadow-[0_1px_2px_rgb(0_0_0/0.45),0_0_0_0.5px_rgb(0_0_0/0.15)] transition-transform duration-200 ease-[cubic-bezier(0.3,0.7,0.4,1)] motion-reduce:transition-none ${on ? "translate-x-4" : "translate-x-0"}`}
+      />
     </span>
   );
 }
