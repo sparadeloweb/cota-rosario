@@ -1,3 +1,4 @@
+import { REPORT_HREF } from "@/lib/navigation";
 import { isInsideRosario } from "@/lib/places";
 import { DESCRIPTION_MAX_CHARS, REPORT_TYPES, type ReportType } from "@/lib/reportTypes";
 
@@ -61,4 +62,35 @@ export function appendPhrase(description: string, phrase: string): string {
   }
   const next = current ? `${current}${PHRASE_SEPARATOR}${phrase}` : phrase;
   return next.length > DESCRIPTION_MAX_CHARS ? description : next;
+}
+
+const HANDOFF_DECIMALS = 5;
+const HANDOFF_LABEL_MAX_CHARS = 120;
+const HANDOFF_DEFAULT_LABEL = "Dirección consultada";
+
+export type ReportQuery = Record<string, string | string[] | undefined>;
+
+export function reportHrefFor(point: { lat: number; lon: number; label: string }): string {
+  const params = new URLSearchParams({
+    lat: point.lat.toFixed(HANDOFF_DECIMALS),
+    lon: point.lon.toFixed(HANDOFF_DECIMALS),
+    lugar: point.label.trim().slice(0, HANDOFF_LABEL_MAX_CHARS),
+  });
+  return `${REPORT_HREF}?${params}`;
+}
+
+function single(value: string | string[] | undefined): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+export function draftFromQuery(query: ReportQuery): ReportDraftFlow {
+  const latText = single(query.lat);
+  const lonText = single(query.lon);
+  const lat = latText === null || latText.trim() === "" ? Number.NaN : Number(latText);
+  const lon = lonText === null || lonText.trim() === "" ? Number.NaN : Number(lonText);
+  if (!isInsideRosario(lat, lon)) {
+    return EMPTY_DRAFT;
+  }
+  const label = (single(query.lugar) ?? "").trim().slice(0, HANDOFF_LABEL_MAX_CHARS);
+  return { ...EMPTY_DRAFT, lat, lon, placeLabel: label || HANDOFF_DEFAULT_LABEL };
 }

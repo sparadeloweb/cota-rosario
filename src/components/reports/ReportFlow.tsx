@@ -45,15 +45,15 @@ function ChangeLink({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function ReportFlow() {
+export function ReportFlow({ initialDraft = EMPTY_DRAFT }: { initialDraft?: ReportDraftFlow }) {
   const [step, setStep] = useState<ReportStep>("type");
-  const [draft, setDraft] = useState<ReportDraftFlow>(EMPTY_DRAFT);
+  const [draft, setDraft] = useState<ReportDraftFlow>(initialDraft);
   const [address, setAddress] = useState("");
   const [searching, setSearching] = useState(false);
   const [placeNotice, setPlaceNotice] = useState<string | null>(null);
   const [submission, setSubmission] = useState<Submission>({ status: "editing" });
   const [reports, setReports] = useState<Report[]>([]);
-  const [focus, setFocus] = useState<{ lat: number; lon: number } | null>(null);
+  const [focus, setFocus] = useState<{ lat: number; lon: number } | null>(initialDraft.lat !== null && initialDraft.lon !== null ? { lat: initialDraft.lat, lon: initialDraft.lon } : null);
 
   useEffect(() => {
     let active = true;

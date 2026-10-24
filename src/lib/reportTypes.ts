@@ -1,3 +1,4 @@
+import { distanceMeters } from "@/lib/places";
 export const REPORT_TYPES = {
   street: { label: "Calle anegada", color: "#5f9bb8" },
   home: { label: "Agua en viviendas", color: "#dc5449" },
@@ -19,3 +20,15 @@ export interface Report {
 
 export const REPORT_TTL_HOURS = 24;
 export const DESCRIPTION_MAX_CHARS = 140;
+
+export interface NearbyReport {
+  report: Report;
+  meters: number;
+}
+
+export function reportsNear(reports: readonly Report[], point: { lat: number; lon: number }, radiusMeters: number): NearbyReport[] {
+  return reports
+    .map((report) => ({ report, meters: distanceMeters(point, report) }))
+    .filter((entry) => entry.meters <= radiusMeters)
+    .sort((a, b) => a.meters - b.meters);
+}

@@ -7,6 +7,7 @@ import { LookupResult } from "@/components/LookupResult";
 import { AddressSearch } from "@/components/AddressSearch";
 import { MapLegend, type LegendOverlay } from "@/components/MapLegend";
 import { MobileReportPanel, ReportFab } from "@/components/reports/MobileReports";
+import { NearbyReports } from "@/components/reports/NearbyReports";
 import { ReportPanel } from "@/components/reports/ReportPanel";
 import { useReports } from "@/components/reports/useReports";
 import { useSimulation } from "@/components/SimulationContext";
@@ -86,6 +87,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
   const [searchText, setSearchText] = useState("");
   const [searching, setSearching] = useState(false);
   const [finding, setFinding] = useState<Finding | null>(null);
+  const [searchedPoint, setSearchedPoint] = useState<GeocodedPlace | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMobileReportsOpen, setMobileReportsOpen] = useState(false);
   const reportsState = useReports(mapRef, mapReady && reports);
@@ -225,12 +227,14 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
       map.setView([lat, lon], FOUND_ZOOM);
     }
     setFinding({ ...reading, label: place.label, level: reading.zone ? zoneLevel(reading.zone) : undefined });
+    setSearchedPoint(place);
   };
 
   const locate = async (findPlace: () => Promise<GeocodedPlace | null>) => {
     setSearching(true);
     setError(null);
     setFinding(null);
+    setSearchedPoint(null);
     try {
       const found = await findPlace();
       if (!found) {
@@ -317,6 +321,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
                 </button>
               </form>
               {finding ? <LookupResult finding={finding} terrain={terrain} /> : null}
+              {finding && searchedPoint && reports ? <NearbyReports point={searchedPoint} reports={reportsState.reports} available={reportsState.available} canReport={report} /> : null}
               {error ? <p className="border-t border-rule px-4 py-3 text-sm text-alert">{error}</p> : null}
             </div>
           ) : reports ? (
