@@ -52,6 +52,15 @@ interface PointMapProps {
   crosshair?: boolean;
 }
 
+function whenSized(map: import("leaflet").Map, action: () => void) {
+  const size = map.invalidateSize(false).getSize();
+  if (size.x > 0 && size.y > 0) {
+    action();
+    return;
+  }
+  map.once("resize", action);
+}
+
 function pointIcon(L: Leaflet, point: MapPoint) {
   if (point.kind === "report") {
     const html = `<svg viewBox="0 0 24 24" width="${DROP_SIZE}" height="${DROP_SIZE}" aria-hidden="true"><path d="M12 2.5c3.6 4.6 6.5 8.3 6.5 12a6.5 6.5 0 1 1-13 0c0-3.7 2.9-7.4 6.5-12Z" fill="${escapeHtml(point.color)}" fill-opacity="0.85" stroke="#0b0c0e" stroke-width="1.5"/></svg>`;
@@ -121,7 +130,7 @@ export function PointMap({ points, pin, focus, fitPoints = false, onMapClick, on
       return;
     }
     layer.clearLayers();
-    for (const point of JSON.parse(pointsKey) as MapPoint[]) {
+    for (const point of (JSON.parse(pointsKey) as MapPoint[]).filter((entry) => Number.isFinite(entry.lat) && Number.isFinite(entry.lon))) {
       const marker = leaflet.marker([point.lat, point.lon], { icon: pointIcon(leaflet, point), keyboard: false, zIndexOffset: point.selected ? 500 : 0 });
       marker.bindTooltip(escapeHtml(point.label), { direction: "top", offset: [0, point.kind === "report" ? -DROP_SIZE : -DOT_SIZE / 2] });
       marker.on("click", () => handlers.current.onPointSelect?.(point.id));
@@ -135,8 +144,15 @@ export function PointMap({ points, pin, focus, fitPoints = false, onMapClick, on
     if (!leaflet || !map || !fitKey) {
       return;
     }
-    const bounds = leaflet.latLngBounds(fitKey.split("|").map((pair) => pair.split(",").map(Number) as [number, number]));
-    map.fitBounds(bounds, { padding: [FIT_PADDING_PX, FIT_PADDING_PX], maxZoom: MAX_FIT_ZOOM });
+    const corners = fitKey
+      .split("|")
+      .map((pair) => pair.split(",").map(Number) as [number, number])
+      .filter(([lat, lon]) => Number.isFinite(lat) && Number.isFinite(lon));
+    if (corners.length === 0) {
+      return;
+    }
+    const fit = () => map.fitBounds(leaflet.latLngBounds(corners), { padding: [FIT_PADDING_PX, FIT_PADDING_PX], maxZoom: MAX_FIT_ZOOM });
+    whenSized(map, fit);
   }, [leaflet, fitKey]);
 
   const pinLat = pin?.lat;
@@ -173,7 +189,10 @@ export function PointMap({ points, pin, focus, fitPoints = false, onMapClick, on
     if (!leaflet || !map || focusLat === undefined || focusLon === undefined) {
       return;
     }
-    map.flyTo([focusLat, focusLon], Math.max(map.getZoom(), FOCUS_ZOOM), { duration: 0.6 });
+    if (!Number.isFinite(focusLat) || !Number.isFinite(focusLon)) {
+      return;
+    }
+    whenSized(map, () => map.flyTo([focusLat, focusLon], Math.max(map.getZoom(), FOCUS_ZOOM), { duration: 0.6 }));
   }, [leaflet, focusLat, focusLon]);
 
   return (
