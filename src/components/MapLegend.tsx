@@ -79,6 +79,25 @@ function LayerSwitch({ on, color }: { on: boolean; color: string }) {
   );
 }
 
+function alphaHex(opacity: number): string {
+  return Math.round(Math.min(Math.max(opacity, 0), 1) * 255)
+    .toString(16)
+    .padStart(2, "0");
+}
+
+function SwatchScale({ color, swatches }: { color: string; swatches: LegendOverlay["swatches"] }) {
+  return (
+    <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${swatches.length}, minmax(0, 1fr))` }}>
+      {swatches.map((swatch) => (
+        <div key={swatch.label} className="flex flex-col gap-1.5">
+          <span className="h-3 rounded-full border" style={{ background: `${color}${alphaHex(swatch.opacity)}`, borderColor: color }} aria-hidden="true" />
+          <span className="text-[0.6875rem] leading-tight text-ink-soft">{swatch.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function OverlayRow({ overlay }: { overlay: LegendOverlay }) {
   return (
     <div className="flex flex-col gap-2">
@@ -88,14 +107,7 @@ function OverlayRow({ overlay }: { overlay: LegendOverlay }) {
         <LayerSwitch on={overlay.visible} color={overlay.color} />
       </button>
       <p className="text-[0.6875rem] leading-snug text-ink-faint">{overlay.note}</p>
-      <div className="flex flex-wrap gap-1.5">
-        {overlay.swatches.map((swatch) => (
-          <span key={swatch.label} className="flex items-center gap-1.5 rounded-md border border-rule-soft bg-ground/60 px-2 py-1 text-[0.6875rem] text-ink-soft">
-            <span className="h-2 w-3.5 rounded-sm" style={{ background: overlay.color, opacity: swatch.opacity }} aria-hidden="true" />
-            {swatch.label}
-          </span>
-        ))}
-      </div>
+      <SwatchScale color={overlay.color} swatches={overlay.swatches} />
     </div>
   );
 }
