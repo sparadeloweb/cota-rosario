@@ -16,7 +16,7 @@ const BRAND = {
 
 export function LogoMark({ size = DEFAULT_SIZE, className = "" }: LogoMarkProps) {
   return (
-    <svg viewBox="12 6 232 232" width={size} height={size} className={className} role="img" aria-label="Cota">
+    <svg viewBox="16 22 224 224" width={size} height={size} className={className} role="img" aria-label="Cota">
       <path fill={BRAND.sky} d="M118 40Q128 24 138 40C161 74 208 120 208 164A80 80 0 0 1 48 164C48 120 95 74 118 40Z" />
       <path fill={BRAND.deep} d="M59.9 206Q94 199 128 206Q162 213 196.1 206A80 80 0 0 1 59.9 206Z" />
       <path fill={BRAND.white} d="M80 136a21 25 0 1 0 42 0a21 25 0 1 0-42 0Z M134 136a21 25 0 1 0 42 0a21 25 0 1 0-42 0Z" />
