@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Nunito } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { MOTION_READY_FLAG } from "@/components/motion/flag";
@@ -9,12 +9,6 @@ const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-});
-
-const brandFont = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-  weight: ["900"],
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -46,7 +40,7 @@ const MOTION_GATE_SCRIPT = `(function(){try{if(window.matchMedia("(prefers-reduc
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${plexSans.variable} ${plexMono.variable} ${brandFont.variable} h-dvh antialiased`} suppressHydrationWarning>
+    <html lang="es" className={`${plexSans.variable} ${plexMono.variable} h-dvh antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: MOTION_GATE_SCRIPT }} />
       </head>

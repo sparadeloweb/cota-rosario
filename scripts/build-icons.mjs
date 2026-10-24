@@ -1,9 +1,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 
-const SOURCE = "src/app/icon.svg";
+const SOURCE = "docs/brand/cota-symbol-color.svg";
+const FAVICON_SOURCE = "src/app/icon.svg";
 const OUT_DIR = "public/icons";
-const MASKABLE_BACKGROUND = "#74ACDF";
+const MASKABLE_BACKGROUND = "#0B0C0E";
 const MASKABLE_SAFE_ZONE = 0.8;
 const FAVICON_FILE = "src/app/favicon.ico";
 const FAVICON_SIZE = 32;
@@ -17,6 +18,7 @@ const SIZES = [
 ];
 
 const svg = await readFile(SOURCE);
+const faviconSvg = await readFile(FAVICON_SOURCE);
 await mkdir(OUT_DIR, { recursive: true });
 
 for (const { file, size, maskable } of SIZES) {
@@ -29,7 +31,7 @@ for (const { file, size, maskable } of SIZES) {
     .toFile(`${OUT_DIR}/${file}`);
 }
 
-const faviconPng = await sharp(svg, { density: 1200 }).resize(FAVICON_SIZE, FAVICON_SIZE).png().toBuffer();
+const faviconPng = await sharp(faviconSvg, { density: 1200 }).resize(FAVICON_SIZE, FAVICON_SIZE).png().toBuffer();
 const header = Buffer.alloc(ICO_HEADER_BYTES + ICO_ENTRY_BYTES);
 header.writeUInt16LE(0, 0);
 header.writeUInt16LE(1, 2);

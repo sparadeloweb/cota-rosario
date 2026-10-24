@@ -40,7 +40,6 @@
   --color-critical: var(--critical);
   --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-plex-mono);
-  --font-brand: var(--font-nunito);
 }
 
 html {
