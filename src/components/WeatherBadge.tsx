@@ -32,7 +32,7 @@ export function WeatherLine({ weather }: WeatherBadgeProps) {
     return null;
   }
   return (
-    <div className="flex items-center gap-3 border-b border-rule px-5 pb-3 pt-1 sm:px-5 lg:hidden" title={`${weather.description} · dato modelado`}>
+    <div className="flex items-center gap-3 border-b border-rule px-5 pb-3 pt-1 sm:hidden" title={`${weather.description} · dato modelado`}>
       <WeatherIconSvg icon={weather.icon} className="size-6 shrink-0 text-ink-soft" />
       <span className="readout text-lg leading-none text-ink">{weather.temperature}°</span>
       <span className="min-w-0 flex-1 truncate text-xs text-ink-soft">{weather.description}</span>
@@ -50,28 +50,23 @@ export function WeatherLine({ weather }: WeatherBadgeProps) {
   );
 }
 
-export function WeatherBadge({ weather }: WeatherBadgeProps) {
+export function HeaderWeather({ weather }: WeatherBadgeProps) {
   if (!weather) {
     return null;
   }
+  const details = `${weather.description} · sensación ${weather.feelsLike}° · humedad ${weather.humidity} % · ${weather.pressure} hPa · viento ${weather.wind} km/h · lluvia próx. ${weather.windowHours} h ${rainChance(weather)} · dato modelado`;
   return (
-    <div
-      className="pointer-events-auto flex items-center gap-3 rounded-md border border-rule bg-panel/95 px-3 py-2 shadow-xl backdrop-blur"
-      title={`${weather.description} · dato modelado · sensación ${weather.feelsLike}° · viento ${weather.wind} km/h · fecha ${weather.measuredAt.slice(11, 16)}`}
-    >
-      <WeatherIconSvg icon={weather.icon} className="size-7 shrink-0 text-ink-soft" />
-      <div className="flex flex-col leading-tight">
-        <span className="flex items-baseline gap-2">
-          <span className="readout text-lg text-ink">{weather.temperature}°</span>
-          <span className="text-xs text-ink-soft">{weather.description}</span>
-        </span>
-        <span className="readout text-[0.6875rem] text-ink-faint">
-          <span className="hidden sm:inline">
-            humedad {weather.humidity} % · {weather.pressure} hPa ·{" "}
-          </span>
-          lluvia próx. {weather.windowHours} h {rainChance(weather)}
-        </span>
-      </div>
+    <div className="flex h-8 items-center gap-2 rounded-full border border-rule bg-ground/60 pl-2 pr-3 max-sm:hidden" title={details} aria-label={`Clima en Rosario: ${weather.temperature}°, ${details}`}>
+      <WeatherIconSvg icon={weather.icon} className="size-[1.125rem] shrink-0 text-ink-soft" />
+      <span className="readout text-[0.8125rem] text-ink">{weather.temperature}°</span>
+      <span className="text-[0.8125rem] text-ink-soft max-xl:hidden">{weather.description}</span>
+      <span className="h-3.5 w-px bg-rule max-lg:hidden" aria-hidden="true" />
+      <span className="readout flex items-center gap-1 text-[0.6875rem] text-ink-faint max-lg:hidden">
+        <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <path d="M12 3c3.2 4.1 5.8 7.4 5.8 10.7a5.8 5.8 0 1 1-11.6 0C6.2 10.4 8.8 7.1 12 3Z" />
+        </svg>
+        {weather.windowHours} h <span className="text-ink-soft">{rainChance(weather)}</span>
+      </span>
     </div>
   );
 }

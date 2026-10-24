@@ -9,7 +9,7 @@ import { Provenance } from "@/components/Provenance";
 import { RainStrip } from "@/components/RainStrip";
 import { RiverGauge } from "@/components/RiverGauge";
 import { SourceDown } from "@/components/SourceDown";
-import { WeatherBadge, WeatherLine } from "@/components/WeatherBadge";
+import { WeatherLine } from "@/components/WeatherBadge";
 import { riskColor } from "@/components/status";
 import { DataStatus } from "@/components/DataStatus";
 import { loadStatus } from "@/lib/status";
@@ -26,7 +26,7 @@ export default async function ResidentsPage() {
 
   return (
     <Workspace
-    canvas={<FloodMap zones={risk.zones} searcher reports report corner={<WeatherBadge weather={weather} />} />}
+    canvas={<FloodMap zones={risk.zones} searcher reports report />}
     rail={
       <div className="flex flex-col">
         <WeatherLine weather={weather} />
