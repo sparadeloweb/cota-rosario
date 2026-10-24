@@ -25,7 +25,7 @@ interface PlaceFormProps {
 export function PlaceForm({ address, name, busy, full, message, fullNotice, onAddress, onName, onSearch, onLocate, onPick, hint }: PlaceFormProps) {
   const locked = full || busy;
   return (
-    <form onSubmit={onSearch} className="flex flex-col gap-3 rounded-xl border border-rule bg-panel/70 p-4">
+    <form onSubmit={onSearch} className="flex flex-col gap-4 rounded-xl border border-rule bg-panel/70 p-5">
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Nombre del lugar">
         {NAME_SUGGESTIONS.map((suggestion) => (
           <button
