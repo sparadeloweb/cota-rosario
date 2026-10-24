@@ -56,7 +56,7 @@ export function HeaderWeather({ weather }: WeatherBadgeProps) {
   }
   const details = `${weather.description} · sensación ${weather.feelsLike}° · humedad ${weather.humidity} % · ${weather.pressure} hPa · viento ${weather.wind} km/h · lluvia próx. ${weather.windowHours} h ${rainChance(weather)} · dato modelado`;
   return (
-    <div className="flex h-8 items-center gap-2 rounded-full border border-rule bg-ground/60 pl-2 pr-3 max-sm:hidden" title={details} aria-label={`Clima en Rosario: ${weather.temperature}°, ${details}`}>
+    <div className="flex h-8 items-center gap-2 rounded-full border border-rule bg-ground/60 pl-3 pr-3.5 max-sm:hidden" title={details} aria-label={`Clima en Rosario: ${weather.temperature}°, ${details}`}>
       <WeatherIconSvg icon={weather.icon} className="size-[1.125rem] shrink-0 text-ink-soft" />
       <span className="readout text-[0.8125rem] text-ink">{weather.temperature}°</span>
       <span className="text-[0.8125rem] text-ink-soft max-xl:hidden">{weather.description}</span>
