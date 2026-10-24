@@ -253,7 +253,10 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
     event.preventDefault();
     const term = searchText.trim();
     if (term) {
-      void locate(() => geocode(term));
+      void locate(async () => {
+        const found = await geocode(term);
+        return found ? { ...found, label: term } : null;
+      });
     }
   };
 
@@ -326,7 +329,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
             </div>
           ) : reports ? (
             <div className="hidden w-full max-w-xs lg:block">
-              <ReportPanel status={reportsState} readOnly={!report} />
+              <ReportPanel status={reportsState} readOnly={!report || finding !== null} />
             </div>
           ) : (
             <div className="flex-1" />
@@ -337,7 +340,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
         <div className="flex flex-col items-start gap-2 sm:flex-row">
           {searcher && reports ? (
             <div className="hidden w-full max-w-xs lg:block">
-              <ReportPanel status={reportsState} readOnly={!report} />
+              <ReportPanel status={reportsState} readOnly={!report || finding !== null} />
             </div>
           ) : null}
           {scenario ? (
@@ -362,7 +365,7 @@ export function FloodMap({ zones, searcher = false, reports = false, report = fa
           <div className={`min-w-0 flex-1 lg:flex-none ${isMobileReportsOpen ? "max-lg:hidden" : ""}`}>
             <MapLegend officialZones={collection?.features.length ?? 0} overlays={overlays} withReports={reports} />
           </div>
-          {reports && isMobileReportsOpen ? <MobileReportPanel status={reportsState} readOnly={!report} /> : null}
+          {reports && isMobileReportsOpen ? <MobileReportPanel status={reportsState} readOnly={!report || finding !== null} /> : null}
           {reports ? <ReportFab status={reportsState} readOnly={!report} open={isMobileReportsOpen} onToggle={toggleMobileReports} /> : null}
         </div>
       </div>
