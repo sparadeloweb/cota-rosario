@@ -5,7 +5,7 @@ import { CLIMATE_CATEGORY_LABEL, type Finding, type TerrainMeta } from "@/lib/lo
 import type { Place } from "@/lib/places";
 import { riskLabel, type RiskLevel } from "@/lib/risk";
 
-const OUTSIDE_COLOR = "var(--ink-soft)";
+const OUTSIDE_COLOR = "#74ACDF";
 const LOADING_COLOR = "var(--ink-faint)";
 
 export function titleCase(text: string): string {
