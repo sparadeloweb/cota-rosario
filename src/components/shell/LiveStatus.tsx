@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import { StatusPill, StatusPillPending } from "@/components/TopBar";
 import { OfflineBanner } from "@/components/shell/OfflineBanner";
 import { HeaderWeather } from "@/components/WeatherBadge";
+import { RainFlag } from "@/components/rain/RainFlag";
 import { loadStatus } from "@/lib/status";
+import { rainIntensity } from "@/lib/weather";
 
 async function CurrentStatusPill() {
   const { risk } = await loadStatus();
@@ -12,6 +14,19 @@ async function CurrentStatusPill() {
 async function CurrentWeather() {
   const { weather } = await loadStatus();
   return <HeaderWeather weather={weather} />;
+}
+
+async function CurrentRain() {
+  const { weather } = await loadStatus();
+  return <RainFlag intensity={rainIntensity(weather)} />;
+}
+
+export function LiveRain() {
+  return (
+    <Suspense fallback={null}>
+      <CurrentRain />
+    </Suspense>
+  );
 }
 
 async function CurrentOfflineBanner() {
